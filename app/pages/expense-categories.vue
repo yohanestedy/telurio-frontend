@@ -104,7 +104,7 @@ onMounted(loadCategories)
       :title="editing ? 'Edit kategori' : 'Tambah kategori'"
       description="Kategori ini akan tersedia pada form pengeluaran."
     >
-      <ExpenseCategoryForm
+      <FormsExpenseCategoryForm
         :submitting="submitting"
         :is-edit="Boolean(editing)"
         :initial-value="editing ? {

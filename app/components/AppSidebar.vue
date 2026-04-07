@@ -35,6 +35,9 @@ const menu = useRoleMenu()
         <p class="mt-3 text-xs text-ink-500">
           Scope kandang: {{ auth.user.coopAccesses.length || 0 }}
         </p>
+        <div class="mt-4 flex justify-end">
+          <UiButton variant="ghost" size="sm" @click="useAuth().logout()">Logout</UiButton>
+        </div>
       </div>
     </div>
   </aside>

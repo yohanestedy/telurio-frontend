@@ -14,6 +14,12 @@ const menu = useRoleMenu()
       >
         {{ item.label }}
       </NuxtLink>
+      <button
+        @click="useAuth().logout()"
+        class="rounded-2xl px-3 py-2 text-center text-xs font-medium text-ink-600 transition"
+      >
+        Logout
+      </button>
     </div>
   </nav>
 </template>

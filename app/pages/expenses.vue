@@ -151,7 +151,7 @@ onMounted(async () => {
       description="Expense akan masuk ke laporan net income kandang."
       size="xl"
     >
-      <ExpenseForm
+      <FormsExpenseForm
         :coop-options="coopOptions"
         :category-options="categoryOptions"
         :submitting="submitting"
@@ -174,7 +174,7 @@ onMounted(async () => {
       title="Hapus pengeluaran"
       description="Masukkan alasan agar perubahan tetap jelas di audit trail."
     >
-      <DeleteReasonForm :submitting="submitting" @submit="deleteExpense" />
+      <FormsDeleteReasonForm :submitting="submitting" @submit="deleteExpense" />
     </UiDialog>
   </div>
 </template>

@@ -102,7 +102,7 @@ onMounted(loadCustomers)
       :title="editing ? 'Edit pelanggan' : 'Tambah pelanggan'"
       description="Pelanggan baru akan langsung tersedia saat form order dibuka."
     >
-      <CustomerForm
+      <FormsCustomerForm
         :initial-value="editing ? {
           name: editing.name,
           phone: editing.phone ?? '',

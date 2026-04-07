@@ -110,7 +110,7 @@ onMounted(loadCoops)
       :title="editing ? 'Edit kandang' : 'Tambah kandang'"
       description="Pastikan field kandang sesuai master data backend."
     >
-      <CoopForm
+      <FormsCoopForm
         :initial-value="editing ? {
           name: editing.name,
           population: String(editing.population),

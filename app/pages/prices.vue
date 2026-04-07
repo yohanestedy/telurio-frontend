@@ -107,7 +107,7 @@ onMounted(loadPrices)
       :title="editing ? 'Edit harga' : 'Tambah harga baru'"
       description="Harga akan dipakai saat order dibayar lunas atau delivery dimulai."
     >
-      <PriceForm
+      <FormsPriceForm
         :is-edit="Boolean(editing)"
         :submitting="submitting"
         :initial-value="editing ? {

@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import type { CustomerItem, OrderItem } from '../../types/domain'
+import {
+  deliveryStatuses,
+  orderLifecycleStatuses,
+  paymentStatuses,
+} from '../../types/domain'
+import { deliveryStatusLabel, paymentStatusLabel } from '../../utils/formatters'
 
 definePageMeta({
   title: 'Orders',
@@ -24,6 +30,21 @@ const deliveryStatus = ref('')
 const paymentStatus = ref('')
 const lifecycleStatus = ref('')
 
+const deliveryStatusOptions = deliveryStatuses.map((item) => ({
+  label: deliveryStatusLabel(item),
+  value: item,
+}))
+
+const paymentStatusOptions = paymentStatuses.map((item) => ({
+  label: paymentStatusLabel(item),
+  value: item,
+}))
+
+const lifecycleStatusOptions = orderLifecycleStatuses.map((item) => ({
+  label: item,
+  value: item,
+}))
+
 const customerOptions = computed(() =>
   customers.value.map((item) => ({ label: item.name, value: item.id })),
 )
@@ -32,7 +53,7 @@ async function loadSupporting() {
   if (auth.role !== 'ADMIN') {
     return
   }
-  const response = await api.getPage<CustomerItem[]>('/customers', { page: 1, limit: 100 })
+  const response = await api.getPage<CustomerItem[]>('/customers', { page: 1, limit: 20 })
   customers.value = response.data
 }
 
@@ -87,19 +108,19 @@ onMounted(async () => {
         v-model="deliveryStatus"
         label="Status delivery"
         placeholder="Semua"
-        :options="deliveryStatuses.map((item) => ({ label: deliveryStatusLabel(item), value: item }))"
+        :options="deliveryStatusOptions"
       />
       <UiSelect
         v-model="paymentStatus"
         label="Status pembayaran"
         placeholder="Semua"
-        :options="paymentStatuses.map((item) => ({ label: paymentStatusLabel(item), value: item }))"
+        :options="paymentStatusOptions"
       />
       <UiSelect
         v-model="lifecycleStatus"
         label="Lifecycle"
         placeholder="Semua"
-        :options="orderLifecycleStatuses.map((item) => ({ label: item, value: item }))"
+        :options="lifecycleStatusOptions"
       />
       <template #actions>
         <UiButton variant="secondary" @click="loadOrders">Refresh</UiButton>
@@ -161,7 +182,7 @@ onMounted(async () => {
       description="Harga final akan dikunci saat delivery dimulai atau saat order langsung lunas."
       size="xl"
     >
-      <OrderForm
+      <FormsOrderForm
         :is-edit="Boolean(editing)"
         :customer-options="customerOptions"
         :submitting="submitting"

@@ -158,7 +158,7 @@ onMounted(async () => {
       :title="editing ? 'Edit produksi' : 'Tambah produksi'"
       description="Gunakan collection time aktual agar multi-input per hari tetap valid."
     >
-      <ProductionForm
+      <FormsProductionForm
         :coop-options="coopOptions"
         :submitting="submitting"
         :is-edit="Boolean(editing)"
@@ -180,7 +180,7 @@ onMounted(async () => {
       title="Hapus produksi"
       description="Penghapusan memerlukan alasan agar tetap audit-friendly."
     >
-      <DeleteReasonForm :submitting="submitting" @submit="deleteProduction" />
+      <FormsDeleteReasonForm :submitting="submitting" @submit="deleteProduction" />
     </UiDialog>
   </div>
 </template>

@@ -132,7 +132,7 @@ onMounted(async () => {
       description="User OWNER dan OPERATOR dapat memiliki akses ke lebih dari satu kandang."
       size="xl"
     >
-      <UserForm
+      <FormsUserForm
         :coop-options="coopOptions"
         :submitting="submitting"
         :is-edit="Boolean(editing)"

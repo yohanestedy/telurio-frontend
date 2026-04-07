@@ -5,6 +5,7 @@ import type {
   OrderItem,
   PaymentHistoryItem,
 } from '../../types/domain'
+import { deliveryStatusLabel, paymentStatusLabel } from '../../utils/formatters'
 
 definePageMeta({
   title: 'Order Detail',
@@ -43,7 +44,7 @@ async function loadOrder() {
 
     const list = await api.getPage<OrderItem[]>('/orders', {
       page: 1,
-      limit: 200,
+      limit: 20,
       deliveryDate,
     })
 
@@ -56,7 +57,7 @@ async function loadOrder() {
     const [allocationList, paymentList, coopList] = await Promise.all([
       api.get<AllocationItem[]>(`/orders/${route.params.id}/allocations`),
       api.get<PaymentHistoryItem[]>(`/orders/${route.params.id}/payment-history`),
-      api.getPage<CoopItem[]>('/coops', { page: 1, limit: 100 }),
+      api.getPage<CoopItem[]>('/coops', { page: 1, limit: 20 }),
     ])
 
     allocations.value = allocationList
@@ -243,7 +244,7 @@ onMounted(loadOrder)
         title="Start Delivery"
         description="Masukkan alokasi kandang hingga totalnya sama dengan quantity order."
       >
-        <DeliveryAllocationForm
+        <FormsDeliveryAllocationForm
           :coop-options="coopOptions"
           :order-quantity-kg="order.quantityKg"
           :submitting="submitting"
@@ -256,7 +257,7 @@ onMounted(loadOrder)
         title="Payment Update"
         description="Semua update pembayaran akan masuk ke payment history."
       >
-        <PaymentUpdateForm :submitting="submitting" @submit="updatePayment" />
+        <FormsPaymentUpdateForm :submitting="submitting" @submit="updatePayment" />
       </UiDialog>
 
       <UiDialog
@@ -264,7 +265,7 @@ onMounted(loadOrder)
         title="Cancel Order"
         description="Pembatalan hanya berlaku untuk order aktif yang belum dihantar."
       >
-        <CancelOrderForm :submitting="submitting" @submit="cancelOrder" />
+        <FormsCancelOrderForm :submitting="submitting" @submit="cancelOrder" />
       </UiDialog>
     </template>
   </div>
