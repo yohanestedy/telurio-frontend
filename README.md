@@ -1,75 +1,80 @@
-# Nuxt Minimal Starter
+# Telurio Frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Frontend Nuxt 4 untuk **Telurio Egg Farm Management System**, terhubung ke backend NestJS di `http://localhost:3000/api`.
 
-## Setup
+## Stack
 
-Make sure to install dependencies:
+- Nuxt 4 + TypeScript
+- Tailwind CSS
+- Pinia
+- VueUse
+- vee-validate + zod
+- dayjs
+- FullCalendar Vue
+- shadcn-nuxt package + `components/ui` pattern
+
+## Environment
+
+Salin `.env.example` bila perlu, lalu pastikan nilainya seperti berikut:
 
 ```bash
-# npm
+NUXT_PUBLIC_API_BASE_URL=http://localhost:3000
+NUXT_PUBLIC_API_PREFIX=/api
+NUXT_PORT=3001
+```
+
+## Install
+
+```bash
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+## Run
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+npm run dev -- --port 3001
 ```
 
-## Production
-
-Build the application for production:
+## Production Build
 
 ```bash
-# npm
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+node .output/server/index.mjs
 ```
 
-Locally preview production build:
+## Struktur Utama
 
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+```text
+frontend/
+├── app/
+│   ├── assets/css/
+│   ├── components/
+│   │   ├── forms/
+│   │   └── ui/
+│   ├── composables/
+│   ├── layouts/
+│   ├── middleware/
+│   ├── pages/
+│   │   └── orders/
+│   ├── stores/
+│   ├── types/
+│   └── utils/
+├── nuxt.config.ts
+├── tailwind.config.ts
+└── package.json
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Yang Sudah Ada
+
+- Auth flow: login, `me`, logout, change password
+- App shell role-based: sidebar desktop, topbar blur, mobile bottom nav
+- Route guard global + policy map terpusat
+- Fetch wrapper dengan Bearer token + error mapping backend
+- Halaman inti: dashboard, calendar, orders, order detail, productions, expenses, expense categories, coops, users, customers, prices, reports, profile
+- Form utama sudah memakai `vee-validate` + `zod`
+- Toast, loading state, empty/error state, reusable glass cards
+
+## Catatan
+
+- Build produksi berhasil dengan `npm run build`.
+- TypeScript dibuat `strict`, tetapi Nuxt type-check runtime dimatikan karena environment lokal belum punya `vue-tsc` yang bisa diunduh tanpa akses registry tambahan.
