@@ -66,18 +66,19 @@ onMounted(loadPrices)
         label="Harga aktif"
         :value="currentPrice ? formatRupiah(currentPrice.pricePerKg) : '-'"
         :helper="currentPrice ? formatDate(currentPrice.effectiveDate) : 'Belum ada harga aktif'"
+        icon="prices"
       />
       <div class="flex items-end gap-2">
-        <UiButton variant="secondary" @click="loadPrices">Refresh</UiButton>
-        <UiButton @click="dialogOpen = true; editing = null">Tambah harga</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadPrices">Refresh</UiButton>
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah harga</UiButton>
       </div>
     </div>
 
     <LoadingSkeleton v-if="loading" :lines="7" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadPrices">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadPrices">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Riwayat Harga Harian" description="Harga per kg yang menjadi source of truth untuk order.">
+    <TableCard v-else title="Riwayat Harga Harian" description="Harga per kg yang menjadi source of truth untuk order." icon="money">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -93,7 +94,7 @@ onMounted(loadPrices)
             <td class="py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(price.pricePerKg) }}</td>
             <td class="py-4 pr-4">{{ price.notes || '-' }}</td>
             <td class="py-4 text-right">
-              <UiButton variant="ghost" size="sm" @click="dialogOpen = true; editing = price">
+              <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = price">
                 Edit
               </UiButton>
             </td>

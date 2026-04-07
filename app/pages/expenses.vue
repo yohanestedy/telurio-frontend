@@ -110,16 +110,16 @@ onMounted(async () => {
         placeholder="Semua kandang"
       />
       <template #actions>
-        <UiButton variant="secondary" @click="loadExpenses">Refresh</UiButton>
-        <UiButton @click="dialogOpen = true; editing = null">Tambah expense</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadExpenses">Refresh</UiButton>
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah expense</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="8" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadExpenses">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadExpenses">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Pengeluaran Kandang" description="Pengeluaran tersambung ke kandang dan kategori owner.">
+    <TableCard v-else title="Pengeluaran Kandang" description="Pengeluaran tersambung ke kandang dan kategori owner." icon="expenses">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -137,8 +137,8 @@ onMounted(async () => {
             <td class="py-4 pr-4">{{ item.categoryLabel }}</td>
             <td class="py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.amount) }}</td>
             <td class="py-4 text-right">
-              <UiButton variant="ghost" size="sm" @click="dialogOpen = true; editing = item">Edit</UiButton>
-              <UiButton variant="ghost" size="sm" @click="deleteDialogOpen = true; deleting = item">Hapus</UiButton>
+              <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = item">Edit</UiButton>
+              <UiButton variant="ghost" size="sm" icon="delete" @click="deleteDialogOpen = true; deleting = item">Hapus</UiButton>
             </td>
           </tr>
         </tbody>

@@ -132,7 +132,7 @@ onMounted(loadOrder)
   <div class="space-y-6">
     <LoadingSkeleton v-if="loading" :lines="10" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadOrder">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadOrder">Coba lagi</UiButton>
     </ErrorState>
     <template v-else-if="order">
       <GlassCard>
@@ -147,6 +147,7 @@ onMounted(loadOrder)
           <div class="flex flex-wrap gap-2">
             <UiButton
               v-if="can('orders.deliver') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
+              icon="package"
               @click="startDeliveryOpen = true"
             >
               Start Delivery
@@ -154,16 +155,18 @@ onMounted(loadOrder)
             <UiButton
               v-if="auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR'"
               variant="secondary"
+              icon="chevronRight"
               @click="completeDelivery"
             >
               Complete Delivery
             </UiButton>
-            <UiButton v-if="can('orders.pay')" variant="secondary" @click="paymentOpen = true">
+            <UiButton v-if="can('orders.pay')" variant="secondary" icon="money" @click="paymentOpen = true">
               Payment Update
             </UiButton>
             <UiButton
               v-if="can('orders.cancel') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
               variant="destructive"
+              icon="delete"
               @click="cancelOpen = true"
             >
               Cancel Order
@@ -173,17 +176,17 @@ onMounted(loadOrder)
       </GlassCard>
 
       <div class="flex flex-wrap gap-2">
-        <UiButton :variant="activeTab === 'summary' ? 'primary' : 'secondary'" @click="activeTab = 'summary'">Summary</UiButton>
-        <UiButton :variant="activeTab === 'allocations' ? 'primary' : 'secondary'" @click="activeTab = 'allocations'">Allocations</UiButton>
-        <UiButton :variant="activeTab === 'payments' ? 'primary' : 'secondary'" @click="activeTab = 'payments'">Payment History</UiButton>
+        <UiButton :variant="activeTab === 'summary' ? 'primary' : 'secondary'" icon="dashboard" @click="activeTab = 'summary'">Summary</UiButton>
+        <UiButton :variant="activeTab === 'allocations' ? 'primary' : 'secondary'" icon="package" @click="activeTab = 'allocations'">Allocations</UiButton>
+        <UiButton :variant="activeTab === 'payments' ? 'primary' : 'secondary'" icon="money" @click="activeTab = 'payments'">Payment History</UiButton>
       </div>
 
-      <TableCard v-if="activeTab === 'summary'" title="Ringkasan Order" description="Ikhtisar status delivery dan pembayaran.">
+      <TableCard v-if="activeTab === 'summary'" title="Ringkasan Order" description="Ikhtisar status delivery dan pembayaran." icon="orders">
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Delivery" :value="deliveryStatusLabel(order.deliveryStatus)" />
-          <MetricCard label="Payment" :value="paymentStatusLabel(order.paymentStatus)" />
-          <MetricCard label="Harga/kg" :value="formatRupiah(order.pricePerKg)" />
-          <MetricCard label="Total invoice" :value="formatRupiah(order.totalInvoice)" />
+          <MetricCard label="Delivery" :value="deliveryStatusLabel(order.deliveryStatus)" icon="package" />
+          <MetricCard label="Payment" :value="paymentStatusLabel(order.paymentStatus)" icon="money" />
+          <MetricCard label="Harga/kg" :value="formatRupiah(order.pricePerKg)" icon="prices" />
+          <MetricCard label="Total invoice" :value="formatRupiah(order.totalInvoice)" icon="wallet" />
         </div>
         <div class="mt-6 rounded-2xl border border-white/40 bg-white/60 p-4 text-sm text-ink-700">
           <p><span class="font-medium text-ink-900">Deliver before:</span> {{ order.deliverBefore || '-' }}</p>
@@ -195,6 +198,7 @@ onMounted(loadOrder)
         v-else-if="activeTab === 'allocations'"
         title="Source Allocations"
         description="Gross income per kandang berasal dari alokasi aktual ini."
+        icon="package"
       >
         <div v-if="allocations.length" class="space-y-3 text-sm">
           <div
@@ -218,6 +222,7 @@ onMounted(loadOrder)
         v-else
         title="Payment History"
         description="Riwayat perubahan status pembayaran order."
+        icon="money"
       >
         <div v-if="paymentHistory.length" class="space-y-3 text-sm">
           <div

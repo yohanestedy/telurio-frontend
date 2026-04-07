@@ -113,16 +113,16 @@ onMounted(async () => {
         placeholder="Pilih owner"
       />
       <template #actions>
-        <UiButton @click="loadReports">Refresh</UiButton>
+        <UiButton icon="refresh" @click="loadReports">Refresh</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="8" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadReports">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadReports">Coba lagi</UiButton>
     </ErrorState>
     <template v-else>
-      <TableCard title="Gross Income" description="Pendapatan kotor per kandang dari source allocation order yang sudah delivered.">
+      <TableCard title="Gross Income" description="Pendapatan kotor per kandang dari source allocation order yang sudah delivered." icon="reports">
         <table class="min-w-full text-left text-sm">
           <thead class="text-ink-500">
             <tr>
@@ -143,7 +143,7 @@ onMounted(async () => {
         </table>
       </TableCard>
 
-      <TableCard title="Net Income" description="Gross income dikurangi expense dan penyusutan aktif kandang.">
+      <TableCard title="Net Income" description="Gross income dikurangi expense dan penyusutan aktif kandang." icon="money">
         <table class="min-w-full text-left text-sm">
           <thead class="text-ink-500">
             <tr>
@@ -169,12 +169,14 @@ onMounted(async () => {
       <TableCard
         title="Monthly Summary Owner"
         description="Ringkasan owner share per kandang berdasarkan ownership share percent."
+        icon="wallet"
       >
         <div v-if="monthlySummary" class="space-y-4">
           <MetricCard
             label="Total Owner Share"
             :value="formatRupiah(monthlySummary.totalOwnerShare)"
             :helper="`${monthlySummary.ownerName} • ${monthlySummary.month}/${monthlySummary.year}`"
+            icon="wallet"
           />
           <table class="min-w-full text-left text-sm">
             <thead class="text-ink-500">

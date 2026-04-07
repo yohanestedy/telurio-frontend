@@ -41,10 +41,10 @@ async function changePassword(payload: { currentPassword: string; newPassword: s
       </div>
     </GlassCard>
 
-    <TableCard title="Keamanan" description="Ubah password akun untuk menjaga akses tetap aman.">
+    <TableCard title="Keamanan" description="Ubah password akun untuk menjaga akses tetap aman." icon="key">
       <FormsChangePasswordForm :submitting="submitting" @submit="changePassword" />
       <div class="mt-4 flex justify-end">
-        <UiButton variant="ghost" @click="useAuth().logout()">Logout</UiButton>
+        <UiButton variant="ghost" icon="logout" @click="useAuth().logout()">Logout</UiButton>
       </div>
     </TableCard>
   </div>

@@ -83,16 +83,16 @@ onMounted(async () => {
         ]"
       />
       <template #actions>
-        <UiButton variant="secondary" @click="loadUsers">Refresh</UiButton>
-        <UiButton @click="dialogOpen = true; editing = null">Tambah user</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadUsers">Refresh</UiButton>
+        <UiButton icon="addUser" @click="dialogOpen = true; editing = null">Tambah user</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="8" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadUsers">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadUsers">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Daftar User" description="Owner dan operator yang terhubung ke kandang.">
+    <TableCard v-else title="Daftar User" description="Owner dan operator yang terhubung ke kandang." icon="users">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -117,7 +117,7 @@ onMounted(async () => {
               </UiBadge>
             </td>
             <td class="py-4 text-right">
-              <UiButton variant="ghost" size="sm" @click="dialogOpen = true; editing = user">
+              <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = user">
                 Edit
               </UiButton>
             </td>

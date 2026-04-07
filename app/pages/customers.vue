@@ -63,16 +63,16 @@ onMounted(loadCustomers)
     <FilterBar>
       <UiInput v-model="search" label="Cari pelanggan" placeholder="Nama atau nomor telepon" />
       <template #actions>
-        <UiButton variant="secondary" @click="loadCustomers">Cari</UiButton>
-        <UiButton @click="dialogOpen = true; editing = null">Tambah pelanggan</UiButton>
+        <UiButton variant="secondary" icon="search" @click="loadCustomers">Cari</UiButton>
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah pelanggan</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="7" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadCustomers">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadCustomers">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Daftar Pelanggan" description="Data customer yang dipakai saat membuat order.">
+    <TableCard v-else title="Daftar Pelanggan" description="Data customer yang dipakai saat membuat order." icon="customers">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -88,7 +88,7 @@ onMounted(loadCustomers)
             <td class="py-4 pr-4">{{ customer.phone || '-' }}</td>
             <td class="py-4 pr-4">{{ customer.address || '-' }}</td>
             <td class="py-4 text-right">
-              <UiButton variant="ghost" size="sm" @click="dialogOpen = true; editing = customer">
+              <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = customer">
                 Edit
               </UiButton>
             </td>

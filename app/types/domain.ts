@@ -230,6 +230,7 @@ export interface MenuItem {
   path: string
   description: string
   permission: Permission
+  icon: AppIconName
 }
 
 export type Permission =
@@ -256,3 +257,4 @@ export type Permission =
   | 'prices.manage'
   | 'reports.view'
   | 'profile.view'
+import type { AppIconName } from '../utils/icons'

@@ -114,7 +114,7 @@ const dashboardCards = computed(() => [
       <LoadingSkeleton v-for="index in 3" :key="index" :lines="4" />
     </div>
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadDashboard">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadDashboard">Coba lagi</UiButton>
     </ErrorState>
     <template v-else>
       <div class="grid gap-4 md:grid-cols-3">
@@ -124,6 +124,7 @@ const dashboardCards = computed(() => [
           :label="card.label"
           :value="card.value"
           :helper="card.helper"
+          :icon="card.label === 'Harga Aktif' ? 'prices' : card.label === 'Order Hari Ini' ? 'orders' : 'reports'"
         />
       </div>
 
@@ -131,6 +132,7 @@ const dashboardCards = computed(() => [
         <TableCard
           title="Agenda Hari Ini"
           description="Order, produksi, expense, dan perubahan harga yang jatuh hari ini."
+          icon="calendar"
         >
           <div v-if="todayCalendar" class="space-y-5 text-sm text-ink-700">
             <div>
@@ -166,7 +168,7 @@ const dashboardCards = computed(() => [
           </div>
         </TableCard>
 
-        <TableCard title="Prioritas Cepat" description="Arahkan tim ke halaman yang paling sering dipakai.">
+        <TableCard title="Prioritas Cepat" description="Arahkan tim ke halaman yang paling sering dipakai." icon="chevronRight">
           <div class="grid gap-3">
             <NuxtLink
               to="/orders"
@@ -199,7 +201,7 @@ const dashboardCards = computed(() => [
       </div>
 
       <div class="grid gap-6 xl:grid-cols-2">
-        <TableCard title="Order Terdekat" description="Pesanan yang perlu diperhatikan lebih dulu.">
+        <TableCard title="Order Terdekat" description="Pesanan yang perlu diperhatikan lebih dulu." icon="orders">
           <table class="min-w-full text-left text-sm">
             <thead class="text-ink-500">
               <tr>
@@ -223,6 +225,7 @@ const dashboardCards = computed(() => [
         <TableCard
           :title="auth.role === 'OPERATOR' ? 'Produksi Terbaru' : 'Pengeluaran Terbaru'"
           description="Feed ringkas dari aktivitas terbaru di backend."
+          :icon="auth.role === 'OPERATOR' ? 'productions' : 'expenses'"
         >
           <div class="space-y-3 text-sm">
             <template v-if="auth.role === 'OPERATOR'">

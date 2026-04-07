@@ -102,16 +102,16 @@ onMounted(async () => {
         placeholder="Semua kandang"
       />
       <template #actions>
-        <UiButton variant="secondary" @click="loadProductions">Refresh</UiButton>
-        <UiButton v-if="can('productions.manage')" @click="dialogOpen = true; editing = null">Tambah produksi</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadProductions">Refresh</UiButton>
+        <UiButton v-if="can('productions.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah produksi</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="8" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadProductions">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadProductions">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Produksi Harian" description="Mendukung lebih dari satu pengambilan per hari per kandang.">
+    <TableCard v-else title="Produksi Harian" description="Mendukung lebih dari satu pengambilan per hari per kandang." icon="productions">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -135,6 +135,7 @@ onMounted(async () => {
                 v-if="can('productions.manage') && useAuthStore().role === 'ADMIN'"
                 variant="ghost"
                 size="sm"
+                icon="edit"
                 @click="dialogOpen = true; editing = item"
               >
                 Edit
@@ -143,6 +144,7 @@ onMounted(async () => {
                 v-if="can('productions.manage') && useAuthStore().role === 'ADMIN'"
                 variant="ghost"
                 size="sm"
+                icon="delete"
                 @click="deleteDialogOpen = true; deleting = item"
               >
                 Hapus

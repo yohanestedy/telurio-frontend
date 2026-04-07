@@ -4,16 +4,23 @@ const menu = useRoleMenu()
 </script>
 
 <template>
-  <aside class="hidden border-r border-white/40 bg-white/45 p-4 backdrop-blur-md lg:block">
+  <aside class="hidden border-r border-slate-200/70 bg-white/64 p-4 backdrop-blur-xl lg:block">
     <div class="sticky top-4 space-y-6">
       <div class="glass-panel rounded-[28px] p-5">
-        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">
-          Telurio
-        </p>
-        <h2 class="mt-2 text-xl font-semibold text-ink-900">Egg Farm Management</h2>
-        <p class="mt-2 text-sm text-ink-600">
-          Operasional telur harian yang rapi, ringan, dan bisa dilacak.
-        </p>
+        <div class="flex items-start gap-3">
+          <div class="rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 p-3 text-white shadow-[0_12px_24px_rgba(22,101,52,0.22)]">
+            <UiIcon name="productions" class="h-5 w-5" />
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">
+              Telurio
+            </p>
+            <h2 class="mt-2 text-xl font-semibold text-ink-900">Egg Farm Management</h2>
+            <p class="mt-2 text-sm text-ink-600">
+              Operasional telur harian yang rapi, ringan, dan bisa dilacak.
+            </p>
+          </div>
+        </div>
       </div>
 
       <nav class="glass-panel rounded-[28px] p-3">
@@ -21,11 +28,16 @@ const menu = useRoleMenu()
           v-for="item in menu.desktop"
           :key="item.path"
           :to="item.path"
-          class="mb-1 block rounded-2xl px-4 py-3 transition hover:bg-white/60"
-          active-class="bg-brand-600 text-white shadow-soft"
+          class="mb-1 flex items-center gap-3 rounded-2xl px-4 py-3 transition hover:bg-slate-50"
+          active-class="bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-soft"
         >
-          <div class="font-medium">{{ item.label }}</div>
-          <div class="text-xs opacity-75">{{ item.description }}</div>
+          <div class="rounded-xl bg-slate-100/80 p-2 text-brand-700 transition">
+            <UiIcon :name="item.icon" class="h-4 w-4" />
+          </div>
+          <div>
+            <div class="font-medium">{{ item.label }}</div>
+            <div class="text-xs opacity-75">{{ item.description }}</div>
+          </div>
         </NuxtLink>
       </nav>
 
@@ -36,7 +48,7 @@ const menu = useRoleMenu()
           Scope kandang: {{ auth.user.coopAccesses.length || 0 }}
         </p>
         <div class="mt-4 flex justify-end">
-          <UiButton variant="ghost" size="sm" @click="useAuth().logout()">Logout</UiButton>
+          <UiButton variant="ghost" size="sm" icon="logout" @click="useAuth().logout()">Logout</UiButton>
         </div>
       </div>
     </div>

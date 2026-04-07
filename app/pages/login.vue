@@ -57,7 +57,10 @@ const onSubmit = handleSubmit(async (values) => {
 <template>
   <GlassCard>
     <div class="mb-8 text-center">
-      <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Telurio</p>
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-[0_20px_40px_rgba(22,101,52,0.22)]">
+        <UiIcon name="profile" class="h-7 w-7" />
+      </div>
+      <p class="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Telurio</p>
       <h1 class="mt-3 text-3xl font-semibold text-ink-900">Egg Farm Management</h1>
       <p class="mt-3 text-sm text-ink-600">
         Masuk untuk mengelola order, produksi, pengeluaran, dan laporan kandang.
@@ -67,7 +70,7 @@ const onSubmit = handleSubmit(async (values) => {
     <form class="space-y-4" @submit.prevent="onSubmit">
       <UiInput v-model="username" label="Username" :error="errors.username" />
       <UiInput v-model="password" label="Password" type="password" :error="errors.password" />
-      <UiButton block :disabled="pending" type="submit">
+      <UiButton block :disabled="pending" type="submit" icon="key">
         {{ pending ? 'Memproses...' : 'Masuk' }}
       </UiButton>
     </form>

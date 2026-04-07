@@ -62,17 +62,17 @@ onMounted(loadCalendar)
         label="View kalender"
       />
       <template #actions>
-        <UiButton variant="secondary" @click="loadCalendar">Refresh</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadCalendar">Refresh</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="8" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadCalendar">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadCalendar">Coba lagi</UiButton>
     </ErrorState>
     <div v-else class="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
       <CalendarBoard :days="days" @select="selectDate" />
-      <TableCard title="Detail Tanggal" :description="selectedDate">
+      <TableCard title="Detail Tanggal" :description="selectedDate" icon="calendar">
         <div v-if="selectedDay" class="space-y-4 text-sm text-ink-700">
           <div>
             <p class="font-semibold text-ink-900">Orders</p>

@@ -58,16 +58,16 @@ onMounted(loadCoops)
   <div class="space-y-6">
     <FilterBar>
       <template #actions>
-        <UiButton variant="secondary" @click="loadCoops">Refresh</UiButton>
-        <UiButton @click="dialogOpen = true; editing = null">Tambah kandang</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadCoops">Refresh</UiButton>
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah kandang</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="7" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadCoops">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadCoops">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Daftar Kandang" description="Master kandang dan parameter penyusutan aktif.">
+    <TableCard v-else title="Daftar Kandang" description="Master kandang dan parameter penyusutan aktif." icon="coops">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -95,6 +95,7 @@ onMounted(loadCoops)
               <UiButton
                 variant="ghost"
                 size="sm"
+                icon="edit"
                 @click="dialogOpen = true; editing = coop"
               >
                 Edit

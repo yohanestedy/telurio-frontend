@@ -123,16 +123,16 @@ onMounted(async () => {
         :options="lifecycleStatusOptions"
       />
       <template #actions>
-        <UiButton variant="secondary" @click="loadOrders">Refresh</UiButton>
-        <UiButton v-if="can('orders.manage')" @click="dialogOpen = true; editing = null">Tambah order</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadOrders">Refresh</UiButton>
+        <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah order</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="8" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadOrders">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadOrders">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Daftar Order" description="Delivery status dan payment status dipisah sesuai flow bisnis.">
+    <TableCard v-else title="Daftar Order" description="Delivery status dan payment status dipisah sesuai flow bisnis." icon="orders">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -158,6 +158,7 @@ onMounted(async () => {
               <UiButton
                 variant="ghost"
                 size="sm"
+                icon="search"
                 @click="navigateTo({ path: `/orders/${order.id}`, query: { deliveryDate: order.deliveryDate } })"
               >
                 Detail
@@ -166,6 +167,7 @@ onMounted(async () => {
                 v-if="can('orders.manage') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
                 variant="ghost"
                 size="sm"
+                icon="edit"
                 @click="dialogOpen = true; editing = order"
               >
                 Edit

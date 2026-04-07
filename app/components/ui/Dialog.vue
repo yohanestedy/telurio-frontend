@@ -47,7 +47,7 @@ function close() {
             <h3 class="text-lg font-semibold text-ink-900">{{ title }}</h3>
             <p v-if="description" class="mt-1 text-sm text-ink-600">{{ description }}</p>
           </div>
-          <UiButton variant="ghost" size="sm" @click="close">Tutup</UiButton>
+          <UiButton variant="ghost" size="sm" icon="close" @click="close">Tutup</UiButton>
         </div>
         <slot />
       </div>

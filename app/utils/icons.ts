@@ -1,0 +1,123 @@
+import {
+  BarChart3,
+  CalendarDays,
+  ChevronRight,
+  CircleDollarSign,
+  CircleUserRound,
+  Coins,
+  Egg,
+  Filter,
+  Home,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  MoreHorizontal,
+  Package,
+  Pencil,
+  Plus,
+  Receipt,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  ShoppingCart,
+  Trash2,
+  UserPlus,
+  Users,
+  Wallet,
+  Warehouse,
+  X,
+  type LucideIcon,
+} from 'lucide-vue-next'
+
+export const appIcons = {
+  home: Home,
+  dashboard: LayoutDashboard,
+  calendar: CalendarDays,
+  orders: ShoppingCart,
+  coops: Warehouse,
+  users: Users,
+  user: CircleUserRound,
+  addUser: UserPlus,
+  customers: CircleUserRound,
+  prices: Coins,
+  money: CircleDollarSign,
+  reports: BarChart3,
+  profile: ShieldCheck,
+  more: MoreHorizontal,
+  productions: Egg,
+  expenses: Receipt,
+  categories: Wallet,
+  refresh: RefreshCw,
+  plus: Plus,
+  edit: Pencil,
+  delete: Trash2,
+  search: Search,
+  filter: Filter,
+  logout: LogOut,
+  close: X,
+  key: KeyRound,
+  package: Package,
+  chevronRight: ChevronRight,
+} satisfies Record<string, LucideIcon>
+
+export type AppIconName = keyof typeof appIcons
+
+export function resolveAppIcon(name?: AppIconName) {
+  if (!name) {
+    return null
+  }
+
+  return appIcons[name]
+}
+
+export function getPageIcon(path: string): AppIconName {
+  if (path === '/') {
+    return 'dashboard'
+  }
+
+  if (path.startsWith('/calendar')) {
+    return 'calendar'
+  }
+
+  if (path.startsWith('/orders')) {
+    return 'orders'
+  }
+
+  if (path.startsWith('/coops')) {
+    return 'coops'
+  }
+
+  if (path.startsWith('/users')) {
+    return 'users'
+  }
+
+  if (path.startsWith('/customers')) {
+    return 'customers'
+  }
+
+  if (path.startsWith('/prices')) {
+    return 'prices'
+  }
+
+  if (path.startsWith('/reports')) {
+    return 'reports'
+  }
+
+  if (path.startsWith('/expenses')) {
+    return 'expenses'
+  }
+
+  if (path.startsWith('/expense-categories')) {
+    return 'categories'
+  }
+
+  if (path.startsWith('/productions')) {
+    return 'productions'
+  }
+
+  if (path.startsWith('/profile')) {
+    return 'profile'
+  }
+
+  return 'home'
+}

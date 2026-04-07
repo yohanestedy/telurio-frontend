@@ -56,16 +56,16 @@ onMounted(loadCategories)
   <div class="space-y-6">
     <FilterBar>
       <template #actions>
-        <UiButton variant="secondary" @click="loadCategories">Refresh</UiButton>
-        <UiButton v-if="auth.role === 'OWNER'" @click="dialogOpen = true; editing = null">Tambah kategori</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="loadCategories">Refresh</UiButton>
+        <UiButton v-if="auth.role === 'OWNER'" icon="plus" @click="dialogOpen = true; editing = null">Tambah kategori</UiButton>
       </template>
     </FilterBar>
 
     <LoadingSkeleton v-if="loading" :lines="6" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton @click="loadCategories">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadCategories">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Kategori Pengeluaran" description="Owner dapat mengelola kategori miliknya sendiri.">
+    <TableCard v-else title="Kategori Pengeluaran" description="Owner dapat mengelola kategori miliknya sendiri." icon="categories">
       <table class="min-w-full text-left text-sm">
         <thead class="text-ink-500">
           <tr>
@@ -89,6 +89,7 @@ onMounted(loadCategories)
                 v-if="auth.role === 'OWNER'"
                 variant="ghost"
                 size="sm"
+                icon="edit"
                 @click="dialogOpen = true; editing = category"
               >
                 Edit
