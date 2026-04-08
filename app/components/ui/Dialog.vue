@@ -27,13 +27,13 @@ function close() {
   <Teleport to="body">
     <div
       v-if="props.open"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/25 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-50 overflow-y-auto bg-ink-900/25 p-3 backdrop-blur-sm sm:p-4"
       @click.self="close"
     >
       <div
         :class="
           cn(
-            'glass-panel w-full rounded-[28px] p-5 sm:p-6',
+            'glass-panel relative mx-auto my-auto w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[28px] p-5 sm:max-h-[calc(100dvh-2rem)] sm:p-6',
             {
               'max-w-2xl': props.size === 'md',
               'max-w-4xl': props.size === 'lg',

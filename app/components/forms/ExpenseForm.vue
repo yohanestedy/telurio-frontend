@@ -66,8 +66,9 @@ const [amount] = defineField('amount')
 const [notes] = defineField('notes')
 
 watch(
-  () => props.initialValue,
-  (value) => {
+  () => JSON.stringify(props.initialValue ?? null),
+  () => {
+    const value = props.initialValue
     resetForm({
       values: {
         date: value?.date ?? '',
@@ -80,7 +81,7 @@ watch(
       },
     })
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 )
 
 watch(expenseCategoryId, (value) => {

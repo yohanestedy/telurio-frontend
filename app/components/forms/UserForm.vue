@@ -68,8 +68,9 @@ const [role] = defineField('role')
 const [isActive] = defineField('isActive')
 
 watch(
-  () => props.initialValue,
-  (value) => {
+  () => JSON.stringify(props.initialValue ?? null),
+  () => {
+    const value = props.initialValue
     resetForm({
       values: {
         name: value?.name ?? '',
@@ -84,7 +85,7 @@ watch(
       (value?.coopAccesses ?? []).map((item) => [item.coopId, item.ownershipSharePercent ?? '']),
     )
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 )
 
 function toggleCoop(coopId: string, checked: boolean) {

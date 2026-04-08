@@ -34,8 +34,9 @@ const [name] = defineField('name')
 const [isActive] = defineField('isActive')
 
 watch(
-  () => props.initialValue,
-  (value) => {
+  () => JSON.stringify(props.initialValue ?? null),
+  () => {
+    const value = props.initialValue
     resetForm({
       values: {
         name: value?.name ?? '',
@@ -43,7 +44,7 @@ watch(
       },
     })
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 )
 
 const onSubmit = handleSubmit((values) => {

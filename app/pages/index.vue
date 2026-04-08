@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type {
   CalendarDay,
+  CustomerItem,
   ExpenseItem,
   GrossIncomeItem,
   MonthlySummaryResponse,
@@ -16,6 +17,7 @@ definePageMeta({
 
 const api = useApi()
 const auth = useAuthStore()
+const toast = useToast()
 
 const loading = ref(true)
 const error = ref('')
@@ -26,6 +28,9 @@ const productions = ref<ProductionItem[]>([])
 const expenses = ref<ExpenseItem[]>([])
 const grossIncome = ref<GrossIncomeItem[]>([])
 const monthlySummary = ref<MonthlySummaryResponse | null>(null)
+const customers = ref<CustomerItem[]>([])
+const createOrderOpen = ref(false)
+const creatingOrder = ref(false)
 
 async function loadDashboard() {
   loading.value = true
@@ -51,6 +56,14 @@ async function loadDashboard() {
         grossIncome.value = value
       }),
     ]
+
+    if (auth.role === 'ADMIN') {
+      tasks.push(
+        api.getPage<CustomerItem[]>('/customers', { page: 1, limit: 100 }).then((value) => {
+          customers.value = value.data
+        }),
+      )
+    }
 
     if (auth.role === 'OPERATOR') {
       tasks.push(
@@ -106,6 +119,24 @@ const dashboardCards = computed(() => [
     helper: 'Ringkasan cepat untuk monitoring',
   },
 ])
+
+const customerOptions = computed(() =>
+  customers.value.map((item) => ({ label: item.name, value: item.id })),
+)
+
+async function createOrder(payload: Record<string, unknown>) {
+  creatingOrder.value = true
+  try {
+    await api.post('/orders', payload)
+    toast.success('Order berhasil dibuat', 'Pesanan baru sudah masuk ke daftar order.')
+    createOrderOpen.value = false
+    await loadDashboard()
+  } catch (caught) {
+    toast.error('Gagal membuat order', api.mapError(caught).message)
+  } finally {
+    creatingOrder.value = false
+  }
+}
 </script>
 
 <template>
@@ -170,6 +201,14 @@ const dashboardCards = computed(() => [
 
         <TableCard title="Prioritas Cepat" description="Arahkan tim ke halaman yang paling sering dipakai." icon="chevronRight">
           <div class="grid gap-3">
+            <UiButton
+              v-if="auth.role === 'ADMIN'"
+              icon="plus"
+              class="justify-start"
+              @click="createOrderOpen = true"
+            >
+              Buat pesanan baru
+            </UiButton>
             <NuxtLink
               to="/orders"
               class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
@@ -252,5 +291,18 @@ const dashboardCards = computed(() => [
         </TableCard>
       </div>
     </template>
+
+    <UiDialog
+      v-model:open="createOrderOpen"
+      title="Buat Pesanan Baru"
+      description="Quick action admin untuk membuat order langsung dari dashboard."
+      size="xl"
+    >
+      <FormsOrderForm
+        :customer-options="customerOptions"
+        :submitting="creatingOrder"
+        @submit="createOrder"
+      />
+    </UiDialog>
   </div>
 </template>

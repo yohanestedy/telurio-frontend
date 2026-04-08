@@ -1,6 +1,7 @@
 import {
   BarChart3,
   CalendarDays,
+  ChevronDown,
   ChevronRight,
   CircleDollarSign,
   CircleUserRound,
@@ -58,6 +59,7 @@ export const appIcons = {
   key: KeyRound,
   package: Package,
   chevronRight: ChevronRight,
+  chevronDown: ChevronDown,
 } satisfies Record<string, LucideIcon>
 
 export type AppIconName = keyof typeof appIcons
