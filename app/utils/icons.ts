@@ -1,6 +1,7 @@
 import {
   BarChart3,
   CalendarDays,
+  Clock3,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -35,6 +36,7 @@ export const appIcons = {
   home: Home,
   dashboard: LayoutDashboard,
   calendar: CalendarDays,
+  clock: Clock3,
   orders: ShoppingCart,
   coops: Warehouse,
   users: Users,

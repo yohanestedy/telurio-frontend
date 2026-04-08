@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { paymentMethods, paymentStatuses } from '../../types/domain'
 import { mapZodErrors } from '../../utils/form'
+import type { AppIconName } from '../../utils/icons'
 
 const createSchema = z
   .object({
@@ -10,12 +12,21 @@ const createSchema = z
     quantityKg: z.coerce.number().min(0.001, 'Jumlah minimal 0.001 kg'),
     deliveryDate: z.string().min(1, 'Tanggal wajib diisi'),
     deliverBefore: z.string().optional(),
-    paymentStatus: z.enum(paymentStatuses).optional(),
+    paymentStatus: z.enum(paymentStatuses),
     paymentMethod: z.enum(paymentMethods).optional(),
     dpAmount: z.coerce.number().min(0, 'DP tidak boleh negatif').optional(),
     notes: z.string().optional(),
   })
   .superRefine((value, ctx) => {
+    const deliveryDate = dayjs(value.deliveryDate).startOf('day')
+    if (deliveryDate.isValid() && deliveryDate.isAfter(dayjs().startOf('day')) && value.paymentStatus === 'LUNAS') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['paymentStatus'],
+        message: 'Status Lunas hanya bisa untuk pengiriman hari ini',
+      })
+    }
+
     if (value.paymentStatus === 'DP') {
       if (!value.paymentMethod) {
         ctx.addIssue({
@@ -93,6 +104,44 @@ const [paymentMethod] = defineField('paymentMethod')
 const [dpAmount] = defineField('dpAmount')
 const [notes] = defineField('notes')
 
+const isFutureDelivery = computed(() => {
+  if (!deliveryDate.value) {
+    return false
+  }
+
+  const pickedDate = dayjs(deliveryDate.value).startOf('day')
+  if (!pickedDate.isValid()) {
+    return false
+  }
+
+  return pickedDate.isAfter(dayjs().startOf('day'))
+})
+
+const paymentStatusOptions = computed(() =>
+  paymentStatuses
+    .filter((status) => status !== 'LUNAS' || !isFutureDelivery.value)
+    .map((status) => ({
+      label: paymentStatusLabel(status),
+      value: status,
+    })),
+)
+
+const paymentStatusCards = computed<Array<{ value: (typeof paymentStatuses)[number]; label: string; icon: AppIconName }>>(() =>
+  paymentStatusOptions.value.map((status) => ({
+    value: status.value,
+    label: status.label,
+    icon: status.value === 'BELUM_BAYAR' ? 'clock' : status.value === 'DP' ? 'money' : 'wallet',
+  })),
+)
+
+const shouldShowPaymentMethod = computed(() =>
+  !props.isEdit && paymentStatus.value !== 'BELUM_BAYAR',
+)
+
+const shouldShowDpAmount = computed(() =>
+  !props.isEdit && paymentStatus.value === 'DP',
+)
+
 watch(
   () => JSON.stringify(props.initialValue ?? null),
   () => {
@@ -113,6 +162,23 @@ watch(
   { immediate: true },
 )
 
+watch(deliveryDate, () => {
+  if (isFutureDelivery.value && paymentStatus.value === 'LUNAS') {
+    paymentStatus.value = 'BELUM_BAYAR'
+  }
+})
+
+watch(paymentStatus, (value) => {
+  if (value === 'BELUM_BAYAR') {
+    paymentMethod.value = ''
+    dpAmount.value = ''
+  }
+
+  if (value === 'LUNAS') {
+    dpAmount.value = ''
+  }
+})
+
 const onSubmit = handleSubmit((values) => {
   const parsed = (props.isEdit ? updateSchema : createSchema).safeParse(values)
   if (!parsed.success) {
@@ -132,55 +198,109 @@ const onSubmit = handleSubmit((values) => {
         quantityKg: parsed.data.quantityKg,
         deliveryDate: parsed.data.deliveryDate,
         deliverBefore: parsed.data.deliverBefore || undefined,
-        paymentStatus: parsed.data.paymentStatus || undefined,
-        paymentMethod: parsed.data.paymentMethod || undefined,
-        dpAmount: values.dpAmount ? parsed.data.dpAmount : undefined,
+        paymentStatus: parsed.data.paymentStatus,
+        ...(parsed.data.paymentStatus === 'BELUM_BAYAR'
+          ? {}
+          : { paymentMethod: parsed.data.paymentMethod || undefined }),
+        ...(parsed.data.paymentStatus === 'DP'
+          ? { dpAmount: parsed.data.dpAmount }
+          : {}),
         notes: parsed.data.notes || undefined,
       })
 })
 </script>
 
 <template>
-  <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiSelect
-      v-if="!isEdit"
-      v-model="customerId"
-      :options="customerOptions"
-      label="Pelanggan"
-      placeholder="Pilih pelanggan"
-      :error="errors.customerId"
-    />
-    <UiInput v-model="quantityKg" label="Jumlah kg" type="number" :error="errors.quantityKg" />
-    <UiInput v-model="deliveryDate" label="Tanggal kirim" type="date" :error="errors.deliveryDate" />
-    <UiInput v-model="deliverBefore" label="Antar sebelum" placeholder="09:00" :error="errors.deliverBefore" />
-    <UiSelect
-      v-if="!isEdit"
-      v-model="paymentStatus"
-      :options="paymentStatuses.map((value) => ({ label: paymentStatusLabel(value), value }))"
-      label="Status pembayaran awal"
-      :error="errors.paymentStatus"
-    />
-    <UiSelect
-      v-if="!isEdit"
-      v-model="paymentMethod"
-      :options="paymentMethods.map((value) => ({ label: value, value }))"
-      label="Metode pembayaran"
-      placeholder="Opsional"
-      :error="errors.paymentMethod"
-    />
-    <UiInput
-      v-if="!isEdit && paymentStatus === 'DP'"
-      v-model="dpAmount"
-      label="Jumlah DP"
-      type="number"
-      :error="errors.dpAmount"
-    />
-    <div class="md:col-span-2">
-      <UiTextarea v-model="notes" label="Catatan" :error="errors.notes" />
+  <form class="space-y-5" @submit.prevent="onSubmit">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <UiSelect
+        v-if="!isEdit"
+        v-model="customerId"
+        :options="customerOptions"
+        label="Pilih pelanggan"
+        placeholder="Pilih nama pelanggan..."
+        :error="errors.customerId"
+      />
+      <UiInput v-model="quantityKg" label="Kuantitas (kg)" type="number" :error="errors.quantityKg" placeholder="0.00" />
     </div>
-    <div class="md:col-span-2 flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan order' }}
+
+    <div class="rounded-3xl border border-white/50 bg-white/55 p-4 sm:p-5">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <UiDatePicker
+          v-model="deliveryDate"
+          label="Tanggal antar"
+          placeholder="Pilih tanggal kirim"
+          :error="errors.deliveryDate"
+        />
+        <UiTimePicker
+          v-model="deliverBefore"
+          label="Antar sebelum"
+          placeholder="--:--"
+          :error="errors.deliverBefore"
+        />
+      </div>
+    </div>
+
+    <div v-if="!isEdit" class="space-y-3">
+      <p class="text-sm font-semibold text-ink-800">Status pembayaran</p>
+      <div class="grid gap-3 sm:grid-cols-3">
+        <button
+          v-for="option in paymentStatusCards"
+          :key="option.value"
+          type="button"
+          class="rounded-2xl border px-4 py-3 text-left transition"
+          :class="paymentStatus === option.value
+            ? 'border-amber-400 bg-amber-50 shadow-[0_8px_20px_rgba(251,191,36,0.22)]'
+            : 'border-white/60 bg-white/60 hover:bg-white/85'"
+          @click="paymentStatus = option.value"
+        >
+          <div class="flex items-center gap-2">
+            <UiIcon :name="option.icon" class="h-4 w-4 text-ink-600" />
+            <p class="text-sm font-semibold text-ink-900">{{ option.label }}</p>
+          </div>
+        </button>
+      </div>
+      <p v-if="isFutureDelivery" class="text-xs text-amber-700">
+        Untuk tanggal kirim setelah hari ini, status Lunas tidak tersedia.
+      </p>
+      <p v-if="errors.paymentStatus" class="text-xs font-medium text-rose-600">
+        {{ errors.paymentStatus }}
+      </p>
+    </div>
+
+    <div
+      v-if="shouldShowPaymentMethod"
+      class="grid gap-4 sm:grid-cols-2"
+    >
+      <UiInput
+        v-if="shouldShowDpAmount"
+        v-model="dpAmount"
+        label="Nominal DP (Rp)"
+        type="number"
+        placeholder="500000"
+        :error="errors.dpAmount"
+      />
+      <UiSelect
+        v-model="paymentMethod"
+        :options="paymentMethods.map((value) => ({ label: value, value }))"
+        label="Metode pembayaran"
+        placeholder="Pilih metode"
+        :error="errors.paymentMethod"
+        :class="{ 'sm:col-span-2': !shouldShowDpAmount }"
+      />
+    </div>
+
+    <UiTextarea
+      v-model="notes"
+      label="Catatan tambahan"
+      placeholder="Contoh: packing peti kayu, titip ke satpam, dll..."
+      :error="errors.notes"
+      :rows="3"
+    />
+
+    <div class="flex justify-end">
+      <UiButton :disabled="submitting" type="submit" class="min-w-40">
+        {{ submitting ? 'Menyimpan...' : 'Simpan pesanan' }}
       </UiButton>
     </div>
   </form>
