@@ -117,7 +117,11 @@ onMounted(async () => {
       </template>
     </FilterBar>
 
-    <LoadingSkeleton v-if="loading" :lines="8" />
+    <div v-if="loading" class="space-y-4">
+      <LoadingSkeleton variant="table" :rows="6" :columns="4" />
+      <LoadingSkeleton variant="table" :rows="6" :columns="5" />
+      <LoadingSkeleton variant="table" :rows="6" :columns="4" />
+    </div>
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadReports">Coba lagi</UiButton>
     </ErrorState>

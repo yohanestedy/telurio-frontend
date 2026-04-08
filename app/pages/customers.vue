@@ -55,6 +55,21 @@ async function submitCustomer(payload: Record<string, unknown>) {
   }
 }
 
+async function searchCustomers() {
+  pagination.resetPage()
+  await loadCustomers()
+}
+
+async function onPageChange(nextPage: number) {
+  pagination.setPage(nextPage)
+  await loadCustomers()
+}
+
+async function onLimitChange(nextLimit: number) {
+  pagination.setLimit(nextLimit)
+  await loadCustomers()
+}
+
 onMounted(loadCustomers)
 </script>
 
@@ -63,12 +78,17 @@ onMounted(loadCustomers)
     <FilterBar>
       <UiInput v-model="search" label="Cari pelanggan" placeholder="Nama atau nomor telepon" />
       <template #actions>
-        <UiButton variant="secondary" icon="search" @click="loadCustomers">Cari</UiButton>
+        <UiButton variant="secondary" icon="search" @click="searchCustomers">Cari</UiButton>
         <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah pelanggan</UiButton>
       </template>
     </FilterBar>
 
-    <LoadingSkeleton v-if="loading" :lines="7" />
+    <LoadingSkeleton
+      v-if="loading"
+      variant="table"
+      :rows="pagination.limit.value"
+      :columns="4"
+    />
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadCustomers">Coba lagi</UiButton>
     </ErrorState>
@@ -95,6 +115,17 @@ onMounted(loadCustomers)
           </tr>
         </tbody>
       </table>
+      <TablePagination
+        :page="pagination.page.value"
+        :limit="pagination.limit.value"
+        :total="pagination.total.value"
+        :total-pages="pagination.totalPages.value"
+        :has-next-page="pagination.hasNextPage.value"
+        :has-prev-page="pagination.hasPrevPage.value"
+        :loading="loading"
+        @update:page="onPageChange"
+        @update:limit="onLimitChange"
+      />
     </TableCard>
 
     <UiDialog

@@ -95,8 +95,23 @@ async function deleteExpense(payload: { deleteReason: string }) {
   }
 }
 
+async function onPageChange(nextPage: number) {
+  pagination.setPage(nextPage)
+  await loadExpenses()
+}
+
+async function onLimitChange(nextLimit: number) {
+  pagination.setLimit(nextLimit)
+  await loadExpenses()
+}
+
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadExpenses()])
+})
+
+watch(coopFilter, () => {
+  pagination.resetPage()
+  loadExpenses()
 })
 </script>
 
@@ -115,7 +130,12 @@ onMounted(async () => {
       </template>
     </FilterBar>
 
-    <LoadingSkeleton v-if="loading" :lines="8" />
+    <LoadingSkeleton
+      v-if="loading"
+      variant="table"
+      :rows="pagination.limit.value"
+      :columns="5"
+    />
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadExpenses">Coba lagi</UiButton>
     </ErrorState>
@@ -143,6 +163,17 @@ onMounted(async () => {
           </tr>
         </tbody>
       </table>
+      <TablePagination
+        :page="pagination.page.value"
+        :limit="pagination.limit.value"
+        :total="pagination.total.value"
+        :total-pages="pagination.totalPages.value"
+        :has-next-page="pagination.hasNextPage.value"
+        :has-prev-page="pagination.hasPrevPage.value"
+        :loading="loading"
+        @update:page="onPageChange"
+        @update:limit="onLimitChange"
+      />
     </TableCard>
 
     <UiDialog

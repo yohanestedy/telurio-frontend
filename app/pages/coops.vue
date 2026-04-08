@@ -51,6 +51,16 @@ async function submitCoop(payload: Record<string, unknown>) {
   }
 }
 
+async function onPageChange(nextPage: number) {
+  pagination.setPage(nextPage)
+  await loadCoops()
+}
+
+async function onLimitChange(nextLimit: number) {
+  pagination.setLimit(nextLimit)
+  await loadCoops()
+}
+
 onMounted(loadCoops)
 </script>
 
@@ -63,7 +73,12 @@ onMounted(loadCoops)
       </template>
     </FilterBar>
 
-    <LoadingSkeleton v-if="loading" :lines="7" />
+    <LoadingSkeleton
+      v-if="loading"
+      variant="table"
+      :rows="pagination.limit.value"
+      :columns="5"
+    />
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadCoops">Coba lagi</UiButton>
     </ErrorState>
@@ -104,6 +119,17 @@ onMounted(loadCoops)
           </tr>
         </tbody>
       </table>
+      <TablePagination
+        :page="pagination.page.value"
+        :limit="pagination.limit.value"
+        :total="pagination.total.value"
+        :total-pages="pagination.totalPages.value"
+        :has-next-page="pagination.hasNextPage.value"
+        :has-prev-page="pagination.hasPrevPage.value"
+        :loading="loading"
+        @update:page="onPageChange"
+        @update:limit="onLimitChange"
+      />
     </TableCard>
 
     <UiDialog

@@ -2,6 +2,7 @@ import {
   BarChart3,
   CalendarDays,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   CircleUserRound,
@@ -59,6 +60,7 @@ export const appIcons = {
   key: KeyRound,
   package: Package,
   chevronRight: ChevronRight,
+  chevronLeft: ChevronLeft,
   chevronDown: ChevronDown,
 } satisfies Record<string, LucideIcon>
 

@@ -61,7 +61,12 @@ onMounted(loadCategories)
       </template>
     </FilterBar>
 
-    <LoadingSkeleton v-if="loading" :lines="6" />
+    <LoadingSkeleton
+      v-if="loading"
+      variant="table"
+      :rows="6"
+      :columns="4"
+    />
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadCategories">Coba lagi</UiButton>
     </ErrorState>

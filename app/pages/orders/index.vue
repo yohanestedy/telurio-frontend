@@ -15,6 +15,7 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
+const ui = useUiStore()
 const { can } = useAuth()
 const pagination = usePagination()
 
@@ -26,9 +27,40 @@ const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
 
-const deliveryStatus = ref('')
-const paymentStatus = ref('')
-const lifecycleStatus = ref('')
+const deliveryStatus = computed({
+  get: () => ui.orderFilters.deliveryStatus,
+  set: (value: string) => {
+    ui.orderFilters.deliveryStatus = value
+  },
+})
+
+const paymentStatus = computed({
+  get: () => ui.orderFilters.paymentStatus,
+  set: (value: string) => {
+    ui.orderFilters.paymentStatus = value
+  },
+})
+
+const lifecycleStatus = computed({
+  get: () => ui.orderFilters.lifecycleStatus,
+  set: (value: string) => {
+    ui.orderFilters.lifecycleStatus = value
+  },
+})
+
+const sortBy = computed({
+  get: () => ui.orderFilters.sortBy,
+  set: (value: string) => {
+    ui.orderFilters.sortBy = value
+  },
+})
+
+const sortOrder = computed({
+  get: () => ui.orderFilters.order,
+  set: (value: 'asc' | 'desc') => {
+    ui.orderFilters.order = value
+  },
+})
 
 const deliveryStatusOptions = deliveryStatuses.map((item) => ({
   label: deliveryStatusLabel(item),
@@ -45,6 +77,19 @@ const lifecycleStatusOptions = orderLifecycleStatuses.map((item) => ({
   value: item,
 }))
 
+const orderByOptions = [
+  { label: 'Tanggal kirim', value: 'deliveryDate' },
+  { label: 'Dibuat', value: 'createdAt' },
+  { label: 'Jumlah kg', value: 'quantityKg' },
+  { label: 'Status delivery', value: 'deliveryStatus' },
+  { label: 'Status payment', value: 'paymentStatus' },
+]
+
+const sortOrderOptions = [
+  { label: 'Ascending', value: 'asc' },
+  { label: 'Descending', value: 'desc' },
+]
+
 const customerOptions = computed(() =>
   customers.value.map((item) => ({ label: item.name, value: item.id })),
 )
@@ -53,7 +98,7 @@ async function loadSupporting() {
   if (auth.role !== 'ADMIN') {
     return
   }
-  const response = await api.getPage<CustomerItem[]>('/customers', { page: 1, limit: 20 })
+  const response = await api.getPage<CustomerItem[]>('/customers', { page: 1 })
   customers.value = response.data
 }
 
@@ -63,6 +108,8 @@ async function loadOrders() {
   try {
     const response = await api.getPage<OrderItem[]>('/orders', {
       ...pagination.query.value,
+      sortBy: sortBy.value,
+      order: sortOrder.value,
       deliveryStatus: deliveryStatus.value || undefined,
       paymentStatus: paymentStatus.value || undefined,
       lifecycleStatus: lifecycleStatus.value || undefined,
@@ -96,14 +143,43 @@ async function submitOrder(payload: Record<string, unknown>) {
   }
 }
 
+async function onPageChange(nextPage: number) {
+  pagination.setPage(nextPage)
+  await loadOrders()
+}
+
+async function onLimitChange(nextLimit: number) {
+  pagination.setLimit(nextLimit)
+  await loadOrders()
+}
+
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadOrders()])
+})
+
+watch([deliveryStatus, paymentStatus, lifecycleStatus, sortBy, sortOrder], () => {
+  pagination.resetPage()
+  if (!loading.value) {
+    loadOrders()
+  }
 })
 </script>
 
 <template>
   <div class="space-y-6">
     <FilterBar>
+      <UiSelect
+        v-model="sortBy"
+        label="Urutkan"
+        placeholder="Pilih field"
+        :options="orderByOptions"
+      />
+      <UiSelect
+        v-model="sortOrder"
+        label="Arah"
+        placeholder="Pilih arah"
+        :options="sortOrderOptions"
+      />
       <UiSelect
         v-model="deliveryStatus"
         label="Status delivery"
@@ -128,7 +204,12 @@ onMounted(async () => {
       </template>
     </FilterBar>
 
-    <LoadingSkeleton v-if="loading" :lines="8" />
+    <LoadingSkeleton
+      v-if="loading"
+      variant="table"
+      :rows="pagination.limit.value"
+      :columns="6"
+    />
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadOrders">Coba lagi</UiButton>
     </ErrorState>
@@ -176,6 +257,17 @@ onMounted(async () => {
           </tr>
         </tbody>
       </table>
+      <TablePagination
+        :page="pagination.page.value"
+        :limit="pagination.limit.value"
+        :total="pagination.total.value"
+        :total-pages="pagination.totalPages.value"
+        :has-next-page="pagination.hasNextPage.value"
+        :has-prev-page="pagination.hasPrevPage.value"
+        :loading="loading"
+        @update:page="onPageChange"
+        @update:limit="onLimitChange"
+      />
     </TableCard>
 
     <UiDialog

@@ -65,8 +65,23 @@ async function submitUser(payload: Record<string, unknown>) {
   }
 }
 
+async function onPageChange(nextPage: number) {
+  pagination.setPage(nextPage)
+  await loadUsers()
+}
+
+async function onLimitChange(nextLimit: number) {
+  pagination.setLimit(nextLimit)
+  await loadUsers()
+}
+
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadUsers()])
+})
+
+watch(roleFilter, () => {
+  pagination.resetPage()
+  loadUsers()
 })
 </script>
 
@@ -88,7 +103,12 @@ onMounted(async () => {
       </template>
     </FilterBar>
 
-    <LoadingSkeleton v-if="loading" :lines="8" />
+    <LoadingSkeleton
+      v-if="loading"
+      variant="table"
+      :rows="pagination.limit.value"
+      :columns="5"
+    />
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadUsers">Coba lagi</UiButton>
     </ErrorState>
@@ -124,6 +144,17 @@ onMounted(async () => {
           </tr>
         </tbody>
       </table>
+      <TablePagination
+        :page="pagination.page.value"
+        :limit="pagination.limit.value"
+        :total="pagination.total.value"
+        :total-pages="pagination.totalPages.value"
+        :has-next-page="pagination.hasNextPage.value"
+        :has-prev-page="pagination.hasPrevPage.value"
+        :loading="loading"
+        @update:page="onPageChange"
+        @update:limit="onLimitChange"
+      />
     </TableCard>
 
     <UiDialog
