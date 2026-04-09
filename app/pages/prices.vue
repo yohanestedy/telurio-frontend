@@ -66,6 +66,11 @@ async function onLimitChange(nextLimit: number) {
   await loadPrices()
 }
 
+async function onAllChange(nextAll: boolean) {
+  pagination.setAll(nextAll)
+  await loadPrices()
+}
+
 onMounted(loadPrices)
 </script>
 
@@ -119,6 +124,7 @@ onMounted(loadPrices)
       <TablePagination
         :page="pagination.page.value"
         :limit="pagination.limit.value"
+        :all="pagination.all.value"
         :total="pagination.total.value"
         :total-pages="pagination.totalPages.value"
         :has-next-page="pagination.hasNextPage.value"
@@ -126,6 +132,7 @@ onMounted(loadPrices)
         :loading="loading"
         @update:page="onPageChange"
         @update:limit="onLimitChange"
+        @update:all="onAllChange"
       />
     </TableCard>
 

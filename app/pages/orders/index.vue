@@ -98,7 +98,7 @@ async function loadSupporting() {
   if (auth.role !== 'ADMIN') {
     return
   }
-  const response = await api.getPage<CustomerItem[]>('/customers', { page: 1 })
+  const response = await api.getPage<CustomerItem[]>('/customers', { all: true })
   customers.value = response.data
 }
 
@@ -150,6 +150,11 @@ async function onPageChange(nextPage: number) {
 
 async function onLimitChange(nextLimit: number) {
   pagination.setLimit(nextLimit)
+  await loadOrders()
+}
+
+async function onAllChange(nextAll: boolean) {
+  pagination.setAll(nextAll)
   await loadOrders()
 }
 
@@ -260,6 +265,7 @@ watch([deliveryStatus, paymentStatus, lifecycleStatus, sortBy, sortOrder], () =>
       <TablePagination
         :page="pagination.page.value"
         :limit="pagination.limit.value"
+        :all="pagination.all.value"
         :total="pagination.total.value"
         :total-pages="pagination.totalPages.value"
         :has-next-page="pagination.hasNextPage.value"
@@ -267,6 +273,7 @@ watch([deliveryStatus, paymentStatus, lifecycleStatus, sortBy, sortOrder], () =>
         :loading="loading"
         @update:page="onPageChange"
         @update:limit="onLimitChange"
+        @update:all="onAllChange"
       />
     </TableCard>
 

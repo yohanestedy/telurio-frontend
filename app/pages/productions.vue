@@ -27,7 +27,7 @@ const coopOptions = computed(() =>
 )
 
 async function loadSupporting() {
-  const response = await api.getPage<CoopItem[]>('/coops', { page: 1, limit: 100 })
+  const response = await api.getPage<CoopItem[]>('/coops', { all: true })
   coops.value = response.data
 }
 
@@ -94,6 +94,11 @@ async function onPageChange(nextPage: number) {
 
 async function onLimitChange(nextLimit: number) {
   pagination.setLimit(nextLimit)
+  await loadProductions()
+}
+
+async function onAllChange(nextAll: boolean) {
+  pagination.setAll(nextAll)
   await loadProductions()
 }
 
@@ -176,6 +181,7 @@ watch(coopFilter, () => {
       <TablePagination
         :page="pagination.page.value"
         :limit="pagination.limit.value"
+        :all="pagination.all.value"
         :total="pagination.total.value"
         :total-pages="pagination.totalPages.value"
         :has-next-page="pagination.hasNextPage.value"
@@ -183,6 +189,7 @@ watch(coopFilter, () => {
         :loading="loading"
         @update:page="onPageChange"
         @update:limit="onLimitChange"
+        @update:all="onAllChange"
       />
     </TableCard>
 

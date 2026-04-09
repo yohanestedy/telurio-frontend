@@ -57,7 +57,7 @@ async function loadOrder() {
     const [allocationList, paymentList, coopList] = await Promise.all([
       api.get<AllocationItem[]>(`/orders/${route.params.id}/allocations`),
       api.get<PaymentHistoryItem[]>(`/orders/${route.params.id}/payment-history`),
-      api.getPage<CoopItem[]>('/coops', { page: 1, limit: 20 }),
+      api.getPage<CoopItem[]>('/coops', { all: true }),
     ])
 
     allocations.value = allocationList

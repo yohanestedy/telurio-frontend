@@ -39,9 +39,9 @@ const ownerOptions = computed(() =>
 
 async function loadSupporting() {
   const [coopList, ownerList] = await Promise.all([
-    api.getPage<CoopItem[]>('/coops', { page: 1, limit: 100 }),
+    api.getPage<CoopItem[]>('/coops', { all: true }),
     auth.role === 'ADMIN'
-      ? api.getPage<UserItem[]>('/users', { page: 1, limit: 100, role: 'OWNER' })
+      ? api.getPage<UserItem[]>('/users', { all: true, role: 'OWNER' })
       : Promise.resolve({ data: [] as UserItem[] }),
   ])
 

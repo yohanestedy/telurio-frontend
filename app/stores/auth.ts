@@ -1,59 +1,71 @@
-import { defineStore } from 'pinia'
-import type { LoginResponse, Role, UserProfile } from '../types/domain'
+import { defineStore } from "pinia";
+import type { LoginResponse, Role, UserProfile } from "../types/domain";
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    token: '' as string,
-    user: null as UserProfile | null,
-    initialized: false,
-    loading: false,
-  }),
-  getters: {
-    isAuthenticated: (state) => Boolean(state.token && state.user),
-    role: (state): Role | undefined => state.user?.role,
-  },
-  actions: {
-    syncTokenFromCookie() {
-      const tokenCookie = useCookie<string | null>('telurio_token', {
-        default: () => null,
-      })
-      this.token = tokenCookie.value ?? ''
-    },
-    setSession(payload: LoginResponse) {
-      this.token = payload.token
-      this.user = payload.user
-      const tokenCookie = useCookie<string | null>('telurio_token')
-      tokenCookie.value = payload.token
-    },
-    clearSession() {
-      this.token = ''
-      this.user = null
-      this.initialized = true
-      const tokenCookie = useCookie<string | null>('telurio_token')
-      tokenCookie.value = null
-    },
-    async bootstrap() {
-      if (this.initialized) {
-        return
-      }
+export const useAuthStore = defineStore("auth", () => {
+  const tokenCookie = useCookie<string | null>("telurio_token", {
+    default: () => null,
+  });
 
-      this.syncTokenFromCookie()
+  const token = ref(tokenCookie.value ?? "");
+  const user = ref<UserProfile | null>(null);
+  const initialized = ref(false);
+  const loading = ref(false);
 
-      if (!this.token) {
-        this.initialized = true
-        return
-      }
+  const isAuthenticated = computed(() => Boolean(token.value && user.value));
+  const role = computed<Role | undefined>(() => user.value?.role);
 
-      this.loading = true
-      try {
-        const api = useApi()
-        this.user = await api.get<UserProfile>('/auth/me')
-      } catch {
-        this.clearSession()
-      } finally {
-        this.loading = false
-        this.initialized = true
-      }
-    },
-  },
-})
+  function syncTokenFromCookie() {
+    token.value = tokenCookie.value ?? "";
+  }
+
+  function setSession(payload: LoginResponse) {
+    token.value = payload.token;
+    user.value = payload.user;
+    tokenCookie.value = payload.token;
+    initialized.value = true;
+  }
+
+  function clearSession() {
+    token.value = "";
+    user.value = null;
+    initialized.value = true;
+    tokenCookie.value = null;
+  }
+
+  async function bootstrap() {
+    if (initialized.value) {
+      return;
+    }
+
+    syncTokenFromCookie();
+
+    if (!token.value) {
+      initialized.value = true;
+      return;
+    }
+
+    loading.value = true;
+    try {
+      const api = useApi();
+      user.value = await api.get<UserProfile>("/auth/me");
+    } catch {
+      clearSession();
+    } finally {
+      loading.value = false;
+      initialized.value = true;
+    }
+  }
+
+  return {
+    token,
+    user,
+    initialized,
+    loading,
+    isAuthenticated,
+    role,
+    syncTokenFromCookie,
+    setSession,
+    clearSession,
+    bootstrap,
+  };
+});

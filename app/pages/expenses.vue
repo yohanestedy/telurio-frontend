@@ -32,7 +32,7 @@ const categoryOptions = computed(() =>
 
 async function loadSupporting() {
   const [coopsResponse, categoryList] = await Promise.all([
-    api.getPage<CoopItem[]>('/coops', { page: 1, limit: 100 }),
+    api.getPage<CoopItem[]>('/coops', { all: true }),
     api.get<ExpenseCategoryItem[]>('/expense-categories'),
   ])
   coops.value = coopsResponse.data
@@ -105,6 +105,11 @@ async function onLimitChange(nextLimit: number) {
   await loadExpenses()
 }
 
+async function onAllChange(nextAll: boolean) {
+  pagination.setAll(nextAll)
+  await loadExpenses()
+}
+
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadExpenses()])
 })
@@ -166,6 +171,7 @@ watch(coopFilter, () => {
       <TablePagination
         :page="pagination.page.value"
         :limit="pagination.limit.value"
+        :all="pagination.all.value"
         :total="pagination.total.value"
         :total-pages="pagination.totalPages.value"
         :has-next-page="pagination.hasNextPage.value"
@@ -173,6 +179,7 @@ watch(coopFilter, () => {
         :loading="loading"
         @update:page="onPageChange"
         @update:limit="onLimitChange"
+        @update:all="onAllChange"
       />
     </TableCard>
 

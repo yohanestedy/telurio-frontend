@@ -2,6 +2,7 @@
 interface Props {
   page: number
   limit: number
+  all?: boolean
   total: number
   totalPages: number
   hasNextPage: boolean
@@ -18,9 +19,27 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:page': [value: number]
   'update:limit': [value: number]
+  'update:all': [value: boolean]
 }>()
 
+const SHOW_ALL_VALUE = '__all__'
+
 const safeTotalPages = computed(() => Math.max(props.totalPages, 1))
+const selectedLimit = computed(() =>
+  props.all ? SHOW_ALL_VALUE : String(props.limit),
+)
+const limitSelectOptions = computed(() =>
+  [
+    ...props.limitOptions.map((value) => ({
+      label: `${value} / page`,
+      value: String(value),
+    })),
+    {
+      label: 'Show All',
+      value: SHOW_ALL_VALUE,
+    },
+  ],
+)
 
 function previousPage() {
   if (props.loading || !props.hasPrevPage) {
@@ -37,6 +56,21 @@ function nextPage() {
 
   emit('update:page', props.page + 1)
 }
+
+function updateLimit(nextLimit: string) {
+  if (nextLimit === SHOW_ALL_VALUE) {
+    emit('update:all', true)
+    return
+  }
+
+  const parsed = Number(nextLimit)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return
+  }
+
+  emit('update:all', false)
+  emit('update:limit', parsed)
+}
 </script>
 
 <template>
@@ -45,7 +79,17 @@ function nextPage() {
       Page {{ page }} of {{ safeTotalPages }} • {{ total }} data
     </p>
 
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="w-36">
+        <UiSelect
+          :model-value="selectedLimit"
+          :options="limitSelectOptions"
+          placeholder="Per page"
+          :searchable="false"
+          :disabled="loading"
+          @update:model-value="updateLimit"
+        />
+      </div>
       <UiButton
         size="sm"
         variant="ghost"

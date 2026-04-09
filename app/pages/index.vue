@@ -59,7 +59,7 @@ async function loadDashboard() {
 
     if (auth.role === 'ADMIN') {
       tasks.push(
-        api.getPage<CustomerItem[]>('/customers', { page: 1, limit: 100 }).then((value) => {
+        api.getPage<CustomerItem[]>('/customers', { all: true }).then((value) => {
           customers.value = value.data
         }),
       )

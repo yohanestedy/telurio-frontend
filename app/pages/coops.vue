@@ -61,6 +61,11 @@ async function onLimitChange(nextLimit: number) {
   await loadCoops()
 }
 
+async function onAllChange(nextAll: boolean) {
+  pagination.setAll(nextAll)
+  await loadCoops()
+}
+
 onMounted(loadCoops)
 </script>
 
@@ -122,6 +127,7 @@ onMounted(loadCoops)
       <TablePagination
         :page="pagination.page.value"
         :limit="pagination.limit.value"
+        :all="pagination.all.value"
         :total="pagination.total.value"
         :total-pages="pagination.totalPages.value"
         :has-next-page="pagination.hasNextPage.value"
@@ -129,6 +135,7 @@ onMounted(loadCoops)
         :loading="loading"
         @update:page="onPageChange"
         @update:limit="onLimitChange"
+        @update:all="onAllChange"
       />
     </TableCard>
 
