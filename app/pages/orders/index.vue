@@ -27,6 +27,7 @@ const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
 const activeFilterMenu = ref<'sort' | 'filter' | null>(null)
+const sortMenuRef = ref<HTMLElement | null>(null)
 const filterMenuRef = ref<HTMLElement | null>(null)
 const perPageMenuOpen = ref(false)
 const perPageMenuRef = ref<HTMLElement | null>(null)
@@ -222,8 +223,16 @@ watch(
   },
 )
 
+onClickOutside(sortMenuRef, () => {
+  if (activeFilterMenu.value === 'sort') {
+    activeFilterMenu.value = null
+  }
+})
+
 onClickOutside(filterMenuRef, () => {
-  activeFilterMenu.value = null
+  if (activeFilterMenu.value === 'filter') {
+    activeFilterMenu.value = null
+  }
 })
 
 onClickOutside(perPageMenuRef, () => {
@@ -254,7 +263,7 @@ onClickOutside(perPageMenuRef, () => {
     </GlassCard>
 
     <GlassCard :overflow-visible="true">
-      <div ref="filterMenuRef" class="relative z-20 mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="relative z-20 mb-3 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <button
             type="button"
@@ -276,7 +285,7 @@ onClickOutside(perPageMenuRef, () => {
           </button>
         </div>
 
-        <div ref="perPageMenuRef" class="relative flex items-center gap-1.5">
+        <div class="relative flex items-center gap-1.5">
           <div class="h-6 w-px bg-slate-200" />
           <button
             type="button"
@@ -307,6 +316,7 @@ onClickOutside(perPageMenuRef, () => {
 
           <div
             v-if="perPageMenuOpen"
+            ref="perPageMenuRef"
             class="surface-outline absolute right-0 top-[calc(100%+0.55rem)] z-[120] w-36 rounded-2xl p-1.5 shadow-soft"
           >
             <button
@@ -324,6 +334,7 @@ onClickOutside(perPageMenuRef, () => {
 
         <div
           v-if="activeFilterMenu === 'sort'"
+          ref="sortMenuRef"
           class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] w-[min(92vw,22rem)] rounded-2xl p-3 shadow-soft"
         >
           <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
@@ -351,6 +362,7 @@ onClickOutside(perPageMenuRef, () => {
 
         <div
           v-if="activeFilterMenu === 'filter'"
+          ref="filterMenuRef"
           class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] w-[min(92vw,22rem)] rounded-2xl p-3 shadow-soft"
         >
           <div class="mb-3 flex items-center gap-2">
@@ -427,7 +439,7 @@ onClickOutside(perPageMenuRef, () => {
             >
               <td class="px-4 py-4">
                 <div class="h-4 w-11/12 animate-pulse rounded-md bg-slate-200/70" />
-                <div class="mt-2 h-3 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
+                <div class="mt-2 h-4 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
               </td>
               <td class="px-4 py-4">
                 <div class="h-4 w-9/12 animate-pulse rounded-md bg-slate-200/70" />
@@ -436,13 +448,13 @@ onClickOutside(perPageMenuRef, () => {
                 <div class="h-4 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
               </td>
               <td class="px-4 py-4">
-                <div class="h-7 w-24 animate-pulse rounded-full bg-slate-200/70" />
+                <div class="h-4 w-24 animate-pulse rounded-full bg-slate-200/70" />
               </td>
               <td class="px-4 py-4">
-                <div class="h-7 w-24 animate-pulse rounded-full bg-slate-200/70" />
+                <div class="h-4 w-24 animate-pulse rounded-full bg-slate-200/70" />
               </td>
               <td class="px-4 py-4">
-                <div class="ml-auto h-8 w-32 animate-pulse rounded-xl bg-slate-200/70" />
+                <div class="ml-auto h-4 w-32 animate-pulse rounded-xl bg-slate-200/70" />
               </td>
             </tr>
           </tbody>
