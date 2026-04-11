@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { onClickOutside } from '@vueuse/core'
 import type { CustomerItem, OrderItem } from '../../types/domain'
 import {
   deliveryStatuses,
-  orderLifecycleStatuses,
   paymentStatuses,
 } from '../../types/domain'
 import { deliveryStatusLabel, paymentStatusLabel } from '../../utils/formatters'
@@ -26,6 +26,10 @@ const customers = ref<CustomerItem[]>([])
 const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
+const activeFilterMenu = ref<'sort' | 'delivery' | 'payment' | null>(null)
+const filterMenuRef = ref<HTMLElement | null>(null)
+const perPageMenuOpen = ref(false)
+const perPageMenuRef = ref<HTMLElement | null>(null)
 
 const deliveryStatus = computed({
   get: () => ui.orderFilters.deliveryStatus,
@@ -38,13 +42,6 @@ const paymentStatus = computed({
   get: () => ui.orderFilters.paymentStatus,
   set: (value: string) => {
     ui.orderFilters.paymentStatus = value
-  },
-})
-
-const lifecycleStatus = computed({
-  get: () => ui.orderFilters.lifecycleStatus,
-  set: (value: string) => {
-    ui.orderFilters.lifecycleStatus = value
   },
 })
 
@@ -72,11 +69,6 @@ const paymentStatusOptions = paymentStatuses.map((item) => ({
   value: item,
 }))
 
-const lifecycleStatusOptions = orderLifecycleStatuses.map((item) => ({
-  label: item,
-  value: item,
-}))
-
 const orderByOptions = [
   { label: 'Tanggal kirim', value: 'deliveryDate' },
   { label: 'Dibuat', value: 'createdAt' },
@@ -86,13 +78,44 @@ const orderByOptions = [
 ]
 
 const sortOrderOptions = [
-  { label: 'Ascending', value: 'asc' },
-  { label: 'Descending', value: 'desc' },
+  { label: 'Terlama', value: 'asc' },
+  { label: 'Terbaru', value: 'desc' },
 ]
+const pageSizeOptions = [10, 25, 50, 100]
 
 const customerOptions = computed(() =>
   customers.value.map((item) => ({ label: item.name, value: item.id })),
 )
+
+const pageRangeLabel = computed(() => {
+  if (pagination.total.value <= 0) {
+    return '0 Dari 0'
+  }
+
+  const start = (pagination.page.value - 1) * pagination.limit.value + 1
+  const end = Math.min(pagination.page.value * pagination.limit.value, pagination.total.value)
+  return `${start}-${end} Dari ${pagination.total.value}`
+})
+
+function toggleFilterMenu(menu: 'sort' | 'delivery' | 'payment') {
+  activeFilterMenu.value = activeFilterMenu.value === menu ? null : menu
+  perPageMenuOpen.value = false
+}
+
+function togglePerPageMenu() {
+  perPageMenuOpen.value = !perPageMenuOpen.value
+  activeFilterMenu.value = null
+}
+
+function clearFilter(type: 'delivery' | 'payment') {
+  if (type === 'delivery') {
+    deliveryStatus.value = ''
+  }
+
+  if (type === 'payment') {
+    paymentStatus.value = ''
+  }
+}
 
 async function loadSupporting() {
   if (auth.role !== 'ADMIN') {
@@ -112,7 +135,6 @@ async function loadOrders() {
       order: sortOrder.value,
       deliveryStatus: deliveryStatus.value || undefined,
       paymentStatus: paymentStatus.value || undefined,
-      lifecycleStatus: lifecycleStatus.value || undefined,
     })
     orders.value = response.data
     pagination.applyMeta(response.meta)
@@ -150,11 +172,7 @@ async function onPageChange(nextPage: number) {
 
 async function onLimitChange(nextLimit: number) {
   pagination.setLimit(nextLimit)
-  await loadOrders()
-}
-
-async function onAllChange(nextAll: boolean) {
-  pagination.setAll(nextAll)
+  perPageMenuOpen.value = false
   await loadOrders()
 }
 
@@ -162,52 +180,43 @@ onMounted(async () => {
   await Promise.all([loadSupporting(), loadOrders()])
 })
 
-watch([deliveryStatus, paymentStatus, lifecycleStatus, sortBy, sortOrder], () => {
+watch([deliveryStatus, paymentStatus, sortBy, sortOrder], () => {
   pagination.resetPage()
   if (!loading.value) {
     loadOrders()
   }
 })
+
+onClickOutside(filterMenuRef, () => {
+  activeFilterMenu.value = null
+})
+
+onClickOutside(perPageMenuRef, () => {
+  perPageMenuOpen.value = false
+})
 </script>
 
 <template>
-  <div class="space-y-6">
-    <FilterBar>
-      <UiSelect
-        v-model="sortBy"
-        label="Urutkan"
-        placeholder="Pilih field"
-        :options="orderByOptions"
-      />
-      <UiSelect
-        v-model="sortOrder"
-        label="Arah"
-        placeholder="Pilih arah"
-        :options="sortOrderOptions"
-      />
-      <UiSelect
-        v-model="deliveryStatus"
-        label="Status delivery"
-        placeholder="Semua"
-        :options="deliveryStatusOptions"
-      />
-      <UiSelect
-        v-model="paymentStatus"
-        label="Status pembayaran"
-        placeholder="Semua"
-        :options="paymentStatusOptions"
-      />
-      <UiSelect
-        v-model="lifecycleStatus"
-        label="Lifecycle"
-        placeholder="Semua"
-        :options="lifecycleStatusOptions"
-      />
-      <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadOrders">Refresh</UiButton>
-        <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah order</UiButton>
-      </template>
-    </FilterBar>
+  <div class="space-y-4">
+    <GlassCard>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="surface-outline rounded-2xl p-2.5 text-brand-700">
+            <UiIcon name="orders" class="h-5 w-5" />
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-ink-900">Daftar Order</h2>
+            <p class="mt-1 text-sm text-ink-600">
+              Delivery status dan payment status dipisah sesuai flow bisnis.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <UiButton variant="secondary" icon="refresh" @click="loadOrders">Refresh</UiButton>
+          <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah order</UiButton>
+        </div>
+      </div>
+    </GlassCard>
 
     <LoadingSkeleton
       v-if="loading"
@@ -218,64 +227,209 @@ watch([deliveryStatus, paymentStatus, lifecycleStatus, sortBy, sortOrder], () =>
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadOrders">Coba lagi</UiButton>
     </ErrorState>
-    <TableCard v-else title="Daftar Order" description="Delivery status dan payment status dipisah sesuai flow bisnis." icon="orders">
-      <table class="min-w-full text-left text-sm">
-        <thead class="text-ink-500">
-          <tr>
-            <th class="pb-3 pr-4">Customer</th>
-            <th class="pb-3 pr-4">Tanggal kirim</th>
-            <th class="pb-3 pr-4">Kg</th>
-            <th class="pb-3 pr-4">Delivery</th>
-            <th class="pb-3 pr-4">Payment</th>
-            <th class="pb-3 pr-4 text-right">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="order in orders" :key="order.id" class="border-t border-white/40">
-            <td class="py-4 pr-4">
-              <p class="font-medium text-ink-900">{{ order.customer.name }}</p>
-              <p class="text-xs text-ink-500">{{ order.customer.phone || '-' }}</p>
-            </td>
-            <td class="py-4 pr-4">{{ formatDate(order.deliveryDate) }}</td>
-            <td class="py-4 pr-4">{{ order.quantityKg }}</td>
-            <td class="py-4 pr-4"><StatusChip kind="delivery" :value="order.deliveryStatus" /></td>
-            <td class="py-4 pr-4"><StatusChip kind="payment" :value="order.paymentStatus" /></td>
-            <td class="py-4 text-right">
-              <UiButton
-                variant="ghost"
-                size="sm"
-                icon="search"
-                @click="navigateTo({ path: `/orders/${order.id}`, query: { deliveryDate: order.deliveryDate } })"
-              >
-                Detail
-              </UiButton>
-              <UiButton
-                v-if="can('orders.manage') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
-                variant="ghost"
-                size="sm"
-                icon="edit"
-                @click="dialogOpen = true; editing = order"
-              >
-                Edit
-              </UiButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <TablePagination
-        :page="pagination.page.value"
-        :limit="pagination.limit.value"
-        :all="pagination.all.value"
-        :total="pagination.total.value"
-        :total-pages="pagination.totalPages.value"
-        :has-next-page="pagination.hasNextPage.value"
-        :has-prev-page="pagination.hasPrevPage.value"
-        :loading="loading"
-        @update:page="onPageChange"
-        @update:limit="onLimitChange"
-        @update:all="onAllChange"
-      />
-    </TableCard>
+    <GlassCard v-else>
+      <div ref="filterMenuRef" class="relative flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            title="Urutkan data"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
+            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'sort' }"
+            @click="toggleFilterMenu('sort')"
+          >
+            <UiIcon name="sort" class="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            title="Filter status delivery"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
+            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'delivery' || Boolean(deliveryStatus) }"
+            @click="toggleFilterMenu('delivery')"
+          >
+            <UiIcon name="delivery" class="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            title="Filter status pembayaran"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
+            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'payment' || Boolean(paymentStatus) }"
+            @click="toggleFilterMenu('payment')"
+          >
+            <UiIcon name="money" class="h-4 w-4" />
+          </button>
+        </div>
+
+        <div ref="perPageMenuRef" class="relative flex items-center gap-1.5">
+          <div class="h-6 w-px bg-slate-200" />
+          <button
+            type="button"
+            title="Ubah jumlah data per halaman"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
+            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': perPageMenuOpen }"
+            @click="togglePerPageMenu"
+          >
+            <UiIcon name="layers" class="h-4 w-4" />
+          </button>
+          <p class="min-w-auto text-sm text-ink-700">{{ pageRangeLabel }}</p>
+          <button
+            type="button"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
+            :disabled="loading || !pagination.hasPrevPage.value"
+            @click="onPageChange(pagination.page.value - 1)"
+          >
+            <UiIcon name="chevronLeft" class="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
+            :disabled="loading || !pagination.hasNextPage.value"
+            @click="onPageChange(pagination.page.value + 1)"
+          >
+            <UiIcon name="chevronRight" class="h-4 w-4" />
+          </button>
+
+          <div
+            v-if="perPageMenuOpen"
+            class="surface-outline absolute right-0 top-[calc(100%+0.55rem)] z-30 w-36 rounded-2xl p-1.5 shadow-soft"
+          >
+            <button
+              v-for="size in pageSizeOptions"
+              :key="size"
+              type="button"
+              class="w-full rounded-xl px-3 py-2 text-left text-sm transition"
+              :class="pagination.limit.value === size ? 'bg-brand-100/70 text-brand-800' : 'text-ink-700 hover:bg-slate-100/80'"
+              @click="onLimitChange(size)"
+            >
+              {{ size }} Item
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="activeFilterMenu === 'sort'"
+          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-30 w-[min(92vw,22rem)] rounded-2xl p-3 shadow-soft"
+        >
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
+          <div class="mt-2 grid gap-2 sm:grid-cols-2">
+            <select
+              :value="sortBy"
+              class="field-shell py-2.5"
+              @change="sortBy = ($event.target as HTMLSelectElement).value"
+            >
+              <option v-for="item in orderByOptions" :key="item.value" :value="item.value">
+                {{ item.label }}
+              </option>
+            </select>
+            <select
+              :value="sortOrder"
+              class="field-shell py-2.5"
+              @change="sortOrder = ($event.target as HTMLSelectElement).value as 'asc' | 'desc'"
+            >
+              <option v-for="item in sortOrderOptions" :key="item.value" :value="item.value">
+                {{ item.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="activeFilterMenu === 'delivery'"
+          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-30 w-[min(92vw,18rem)] rounded-2xl p-3 shadow-soft"
+        >
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Status Delivery</p>
+            <button type="button" class="text-xs text-ink-500 hover:text-ink-700" @click="clearFilter('delivery')">Reset</button>
+          </div>
+          <select
+            :value="deliveryStatus"
+            class="field-shell py-2.5"
+            @change="deliveryStatus = ($event.target as HTMLSelectElement).value"
+          >
+            <option value="">Semua</option>
+            <option v-for="item in deliveryStatusOptions" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </option>
+          </select>
+        </div>
+
+        <div
+          v-if="activeFilterMenu === 'payment'"
+          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-30 w-[min(92vw,18rem)] rounded-2xl p-3 shadow-soft"
+        >
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Status Pembayaran</p>
+            <button type="button" class="text-xs text-ink-500 hover:text-ink-700" @click="clearFilter('payment')">Reset</button>
+          </div>
+          <select
+            :value="paymentStatus"
+            class="field-shell py-2.5"
+            @change="paymentStatus = ($event.target as HTMLSelectElement).value"
+          >
+            <option value="">Semua</option>
+            <option v-for="item in paymentStatusOptions" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+     
+
+      <div class="h-[420px] overflow-auto rounded-2xl border border-slate-200/80 bg-white/55">
+        <table class="min-w-full text-left text-sm">
+          <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
+            <tr>
+              <th class="px-4 py-3 pr-4">Customer</th>
+              <th class="px-4 py-3 pr-4">Tanggal kirim</th>
+              <th class="px-4 py-3 pr-4">Kg</th>
+              <th class="px-4 py-3 pr-4">Delivery</th>
+              <th class="px-4 py-3 pr-4">Payment</th>
+              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody v-if="orders.length">
+            <tr v-for="order in orders" :key="order.id" class="border-t border-slate-200/70">
+              <td class="px-4 py-4 pr-4">
+                <p class="font-medium text-ink-900">{{ order.customer.name }}</p>
+                <p class="text-xs text-ink-500">{{ order.customer.phone || '-' }}</p>
+              </td>
+              <td class="px-4 py-4 pr-4">{{ formatDate(order.deliveryDate) }}</td>
+              <td class="px-4 py-4 pr-4">{{ order.quantityKg }}</td>
+              <td class="px-4 py-4 pr-4"><StatusChip kind="delivery" :value="order.deliveryStatus" /></td>
+              <td class="px-4 py-4 pr-4"><StatusChip kind="payment" :value="order.paymentStatus" /></td>
+              <td class="px-4 py-4 text-right">
+                <div class="flex justify-end gap-2">
+                  <UiButton
+                    variant="ghost"
+                    size="sm"
+                    icon="search"
+                    @click="navigateTo({ path: `/orders/${order.id}`, query: { deliveryDate: order.deliveryDate } })"
+                  >
+                    Detail
+                  </UiButton>
+                  <UiButton
+                    v-if="can('orders.manage') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
+                    variant="ghost"
+                    size="sm"
+                    icon="edit"
+                    @click="dialogOpen = true; editing = order"
+                  >
+                    Edit
+                  </UiButton>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else>
+            <tr>
+              <td colspan="6" class="px-4 py-14 text-center text-sm text-ink-500">
+                Belum ada order untuk filter saat ini.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </GlassCard>
 
     <UiDialog
       v-model:open="dialogOpen"
