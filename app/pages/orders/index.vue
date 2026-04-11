@@ -136,10 +136,20 @@ function clearDraftFilters() {
   draftPaymentStatus.value = ''
 }
 
+async function resetFilters() {
+  clearDraftFilters()
+  deliveryStatus.value = ''
+  paymentStatus.value = ''
+  pagination.resetPage()
+  activeFilterMenu.value = null
+  await loadOrders()
+}
+
 async function applyFilters() {
   deliveryStatus.value = draftDeliveryStatus.value
   paymentStatus.value = draftPaymentStatus.value
   pagination.resetPage()
+  activeFilterMenu.value = null
   await loadOrders()
 }
 
@@ -407,7 +417,7 @@ onClickOutside(perPageMenuRef, () => {
           </div>
 
           <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
-            <UiButton size="sm" variant="ghost" icon="refresh" @click="clearDraftFilters">
+            <UiButton size="sm" variant="ghost" icon="refresh" @click="resetFilters">
               Reset
             </UiButton>
             <UiButton size="sm" icon="filter" @click="applyFilters">
