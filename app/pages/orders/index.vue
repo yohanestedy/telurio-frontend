@@ -26,7 +26,7 @@ const customers = ref<CustomerItem[]>([])
 const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
-const activeFilterMenu = ref<'sort' | 'delivery' | 'payment' | null>(null)
+const activeFilterMenu = ref<'sort' | 'filter' | null>(null)
 const filterMenuRef = ref<HTMLElement | null>(null)
 const perPageMenuOpen = ref(false)
 const perPageMenuRef = ref<HTMLElement | null>(null)
@@ -44,6 +44,8 @@ const paymentStatus = computed({
     ui.orderFilters.paymentStatus = value
   },
 })
+const draftDeliveryStatus = ref('')
+const draftPaymentStatus = ref('')
 
 const sortBy = computed({
   get: () => ui.orderFilters.sortBy,
@@ -70,22 +72,43 @@ const paymentStatusOptions = paymentStatuses.map((item) => ({
 }))
 
 const orderByOptions = [
-  { label: 'Tanggal kirim', value: 'deliveryDate' },
-  { label: 'Dibuat', value: 'createdAt' },
-  { label: 'Jumlah kg', value: 'quantityKg' },
-  { label: 'Status delivery', value: 'deliveryStatus' },
-  { label: 'Status payment', value: 'paymentStatus' },
-]
-
-const sortOrderOptions = [
-  { label: 'Terlama', value: 'asc' },
-  { label: 'Terbaru', value: 'desc' },
+  { label: 'Tanggal kirim', value: 'deliveryDate', kind: 'date' as const },
+  { label: 'Dibuat', value: 'createdAt', kind: 'date' as const },
+  { label: 'Jumlah kg', value: 'quantityKg', kind: 'number' as const },
+  { label: 'Status delivery', value: 'deliveryStatus', kind: 'text' as const },
+  { label: 'Status payment', value: 'paymentStatus', kind: 'text' as const },
 ]
 const pageSizeOptions = [10, 25, 50, 100]
 
 const customerOptions = computed(() =>
   customers.value.map((item) => ({ label: item.name, value: item.id })),
 )
+
+const selectedSortKind = computed(() => {
+  const option = orderByOptions.find((item) => item.value === sortBy.value)
+  return option?.kind ?? 'text'
+})
+
+const sortOrderOptions = computed(() => {
+  if (selectedSortKind.value === 'date') {
+    return [
+      { label: 'Terlama', value: 'asc' },
+      { label: 'Terbaru', value: 'desc' },
+    ]
+  }
+
+  if (selectedSortKind.value === 'number') {
+    return [
+      { label: 'Kecil ke besar', value: 'asc' },
+      { label: 'Besar ke kecil', value: 'desc' },
+    ]
+  }
+
+  return [
+    { label: 'A - Z', value: 'asc' },
+    { label: 'Z - A', value: 'desc' },
+  ]
+})
 
 const pageRangeLabel = computed(() => {
   if (pagination.total.value <= 0) {
@@ -97,7 +120,7 @@ const pageRangeLabel = computed(() => {
   return `${start}-${end} Dari ${pagination.total.value}`
 })
 
-function toggleFilterMenu(menu: 'sort' | 'delivery' | 'payment') {
+function toggleFilterMenu(menu: 'sort' | 'filter') {
   activeFilterMenu.value = activeFilterMenu.value === menu ? null : menu
   perPageMenuOpen.value = false
 }
@@ -107,14 +130,16 @@ function togglePerPageMenu() {
   activeFilterMenu.value = null
 }
 
-function clearFilter(type: 'delivery' | 'payment') {
-  if (type === 'delivery') {
-    deliveryStatus.value = ''
-  }
+function clearDraftFilters() {
+  draftDeliveryStatus.value = ''
+  draftPaymentStatus.value = ''
+}
 
-  if (type === 'payment') {
-    paymentStatus.value = ''
-  }
+async function applyFilters() {
+  deliveryStatus.value = draftDeliveryStatus.value
+  paymentStatus.value = draftPaymentStatus.value
+  pagination.resetPage()
+  await loadOrders()
 }
 
 async function loadSupporting() {
@@ -177,15 +202,25 @@ async function onLimitChange(nextLimit: number) {
 }
 
 onMounted(async () => {
+  draftDeliveryStatus.value = deliveryStatus.value
+  draftPaymentStatus.value = paymentStatus.value
   await Promise.all([loadSupporting(), loadOrders()])
 })
 
-watch([deliveryStatus, paymentStatus, sortBy, sortOrder], () => {
+watch([sortBy, sortOrder], () => {
   pagination.resetPage()
   if (!loading.value) {
     loadOrders()
   }
 })
+
+watch(
+  [deliveryStatus, paymentStatus],
+  ([nextDelivery, nextPayment]) => {
+    draftDeliveryStatus.value = nextDelivery
+    draftPaymentStatus.value = nextPayment
+  },
+)
 
 onClickOutside(filterMenuRef, () => {
   activeFilterMenu.value = null
@@ -218,17 +253,8 @@ onClickOutside(perPageMenuRef, () => {
       </div>
     </GlassCard>
 
-    <LoadingSkeleton
-      v-if="loading"
-      variant="table"
-      :rows="pagination.limit.value"
-      :columns="6"
-    />
-    <ErrorState v-else-if="error" :message="error">
-      <UiButton icon="refresh" @click="loadOrders">Coba lagi</UiButton>
-    </ErrorState>
-    <GlassCard v-else>
-      <div ref="filterMenuRef" class="relative flex flex-wrap items-center justify-between gap-3 mb-3">
+    <GlassCard :overflow-visible="true">
+      <div ref="filterMenuRef" class="relative z-20 mb-3 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <button
             type="button"
@@ -241,21 +267,12 @@ onClickOutside(perPageMenuRef, () => {
           </button>
           <button
             type="button"
-            title="Filter status delivery"
+            title="Filter data"
             class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'delivery' || Boolean(deliveryStatus) }"
-            @click="toggleFilterMenu('delivery')"
+            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'filter' || Boolean(deliveryStatus) || Boolean(paymentStatus) }"
+            @click="toggleFilterMenu('filter')"
           >
-            <UiIcon name="delivery" class="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            title="Filter status pembayaran"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'payment' || Boolean(paymentStatus) }"
-            @click="toggleFilterMenu('payment')"
-          >
-            <UiIcon name="money" class="h-4 w-4" />
+            <UiIcon name="filter" class="h-4 w-4" />
           </button>
         </div>
 
@@ -290,7 +307,7 @@ onClickOutside(perPageMenuRef, () => {
 
           <div
             v-if="perPageMenuOpen"
-            class="surface-outline absolute right-0 top-[calc(100%+0.55rem)] z-30 w-36 rounded-2xl p-1.5 shadow-soft"
+            class="surface-outline absolute right-0 top-[calc(100%+0.55rem)] z-[120] w-36 rounded-2xl p-1.5 shadow-soft"
           >
             <button
               v-for="size in pageSizeOptions"
@@ -307,7 +324,7 @@ onClickOutside(perPageMenuRef, () => {
 
         <div
           v-if="activeFilterMenu === 'sort'"
-          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-30 w-[min(92vw,22rem)] rounded-2xl p-3 shadow-soft"
+          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] w-[min(92vw,22rem)] rounded-2xl p-3 shadow-soft"
         >
           <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
@@ -333,49 +350,64 @@ onClickOutside(perPageMenuRef, () => {
         </div>
 
         <div
-          v-if="activeFilterMenu === 'delivery'"
-          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-30 w-[min(92vw,18rem)] rounded-2xl p-3 shadow-soft"
+          v-if="activeFilterMenu === 'filter'"
+          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] w-[min(92vw,22rem)] rounded-2xl p-3 shadow-soft"
         >
-          <div class="mb-2 flex items-center justify-between gap-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Status Delivery</p>
-            <button type="button" class="text-xs text-ink-500 hover:text-ink-700" @click="clearFilter('delivery')">Reset</button>
+          <div class="mb-3 flex items-center gap-2">
+            <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
           </div>
-          <select
-            :value="deliveryStatus"
-            class="field-shell py-2.5"
-            @change="deliveryStatus = ($event.target as HTMLSelectElement).value"
-          >
-            <option value="">Semua</option>
-            <option v-for="item in deliveryStatusOptions" :key="item.value" :value="item.value">
-              {{ item.label }}
-            </option>
-          </select>
-        </div>
 
-        <div
-          v-if="activeFilterMenu === 'payment'"
-          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-30 w-[min(92vw,18rem)] rounded-2xl p-3 shadow-soft"
-        >
-          <div class="mb-2 flex items-center justify-between gap-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Status Pembayaran</p>
-            <button type="button" class="text-xs text-ink-500 hover:text-ink-700" @click="clearFilter('payment')">Reset</button>
+          <div class="space-y-3">
+            <div class="space-y-1.5">
+              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
+                <UiIcon name="delivery" class="h-3.5 w-3.5 text-ink-500" />
+                <span>Status Delivery</span>
+              </p>
+              <select
+                :value="draftDeliveryStatus"
+                class="field-shell py-2.5"
+                @change="draftDeliveryStatus = ($event.target as HTMLSelectElement).value"
+              >
+                <option value="">Semua</option>
+                <option v-for="item in deliveryStatusOptions" :key="item.value" :value="item.value">
+                  {{ item.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="space-y-1.5">
+              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
+                <UiIcon name="money" class="h-3.5 w-3.5 text-ink-500" />
+                <span>Status Pembayaran</span>
+              </p>
+              <select
+                :value="draftPaymentStatus"
+                class="field-shell py-2.5"
+                @change="draftPaymentStatus = ($event.target as HTMLSelectElement).value"
+              >
+                <option value="">Semua</option>
+                <option v-for="item in paymentStatusOptions" :key="item.value" :value="item.value">
+                  {{ item.label }}
+                </option>
+              </select>
+            </div>
           </div>
-          <select
-            :value="paymentStatus"
-            class="field-shell py-2.5"
-            @change="paymentStatus = ($event.target as HTMLSelectElement).value"
-          >
-            <option value="">Semua</option>
-            <option v-for="item in paymentStatusOptions" :key="item.value" :value="item.value">
-              {{ item.label }}
-            </option>
-          </select>
+
+          <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
+            <UiButton size="sm" variant="ghost" icon="refresh" @click="clearDraftFilters">
+              Reset
+            </UiButton>
+            <UiButton size="sm" icon="filter" @click="applyFilters">
+              Terapkan
+            </UiButton>
+          </div>
         </div>
       </div>
 
-     
+      <div class="my-3 h-px bg-slate-200/80" />
 
-      <div class="h-[420px] overflow-auto rounded-2xl border border-slate-200/80 bg-white/55">
+      <div class="relative z-10 h-[420px] overflow-auto rounded-2xl border border-slate-200/80 bg-white/55">
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
@@ -387,7 +419,44 @@ onClickOutside(perPageMenuRef, () => {
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody v-if="orders.length">
+          <tbody v-if="loading">
+            <tr
+              v-for="row in pagination.limit.value"
+              :key="`orders-skeleton-${row}`"
+              class="border-t border-slate-200/70"
+            >
+              <td class="px-4 py-4">
+                <div class="h-4 w-11/12 animate-pulse rounded-md bg-slate-200/70" />
+                <div class="mt-2 h-3 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="h-4 w-9/12 animate-pulse rounded-md bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="h-4 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="h-7 w-24 animate-pulse rounded-full bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="h-7 w-24 animate-pulse rounded-full bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="ml-auto h-8 w-32 animate-pulse rounded-xl bg-slate-200/70" />
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else-if="error">
+            <tr>
+              <td colspan="6" class="px-4 py-14 text-center">
+                <p class="text-sm text-rose-700">{{ error }}</p>
+                <div class="mt-3 flex justify-center">
+                  <UiButton size="sm" icon="refresh" @click="loadOrders">Coba lagi</UiButton>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else-if="orders.length">
             <tr v-for="order in orders" :key="order.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">
                 <p class="font-medium text-ink-900">{{ order.customer.name }}</p>

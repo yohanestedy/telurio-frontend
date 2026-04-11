@@ -18,7 +18,7 @@ const pageIcon = computed(() => getPageIcon(route.path))
 
 <template>
   <header class="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex max-w-none items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
       <div class="flex items-center gap-3">
         <div class="surface-outline rounded-2xl p-2.5 text-brand-700">
           <UiIcon :name="pageIcon" class="h-5 w-5" />
