@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CustomerItem, OrderItem } from '../../types/domain'
+import { defaultPageSizeOptions } from '../../utils/list'
 import {
   deliveryStatuses,
   paymentStatuses,
@@ -73,47 +74,14 @@ const orderByOptions = [
   { label: 'Status delivery', value: 'deliveryStatus', kind: 'text' as const },
   { label: 'Status payment', value: 'paymentStatus', kind: 'text' as const },
 ]
-const pageSizeOptions = [10, 25, 50, 100]
+const pageSizeOptions = defaultPageSizeOptions
 
 const customerOptions = computed(() =>
   customers.value.map((item) => ({ label: item.name, value: item.id })),
 )
 
-const selectedSortKind = computed(() => {
-  const option = orderByOptions.find((item) => item.value === sortBy.value)
-  return option?.kind ?? 'text'
-})
-
-const sortOrderOptions = computed(() => {
-  if (selectedSortKind.value === 'date') {
-    return [
-      { label: 'Terlama', value: 'asc' },
-      { label: 'Terbaru', value: 'desc' },
-    ]
-  }
-
-  if (selectedSortKind.value === 'number') {
-    return [
-      { label: 'Kecil ke besar', value: 'asc' },
-      { label: 'Besar ke kecil', value: 'desc' },
-    ]
-  }
-
-  return [
-    { label: 'A - Z', value: 'asc' },
-    { label: 'Z - A', value: 'desc' },
-  ]
-})
-
-const pageRangeLabel = computed(() => {
-  if (pagination.total.value <= 0) {
-    return '0 Dari 0'
-  }
-
-  const start = (pagination.page.value - 1) * pagination.limit.value + 1
-  const end = Math.min(pagination.page.value * pagination.limit.value, pagination.total.value)
-  return `${start}-${end} Dari ${pagination.total.value}`
-})
+const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
+const pageRangeLabel = usePageRangeLabel(pagination)
 
 function clearDraftFilters() {
   draftDeliveryStatus.value = ''
