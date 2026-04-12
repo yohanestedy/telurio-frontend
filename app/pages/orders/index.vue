@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useListFilterDrafts } from '../../composables/useListFilterDrafts'
 import type { CustomerItem, OrderItem } from '../../types/domain'
 import { defaultPageSizeOptions } from '../../utils/list'
 import {
@@ -40,8 +41,6 @@ const paymentStatus = computed({
     ui.orderFilters.paymentStatus = value
   },
 })
-const draftDeliveryStatus = ref('')
-const draftPaymentStatus = ref('')
 
 const sortBy = computed({
   get: () => ui.orderFilters.sortBy,
@@ -82,23 +81,19 @@ const customerOptions = computed(() =>
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-
-function clearDraftFilters() {
-  draftDeliveryStatus.value = ''
-  draftPaymentStatus.value = ''
-}
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
+  deliveryStatus,
+  paymentStatus,
+})
 
 async function resetFilters() {
-  clearDraftFilters()
-  deliveryStatus.value = ''
-  paymentStatus.value = ''
+  resetActive()
   pagination.resetPage()
   await loadOrders()
 }
 
 async function applyFilters() {
-  deliveryStatus.value = draftDeliveryStatus.value
-  paymentStatus.value = draftPaymentStatus.value
+  applyDrafts()
   pagination.resetPage()
   await loadOrders()
 }
@@ -162,8 +157,6 @@ async function onLimitChange(nextLimit: number) {
 }
 
 onMounted(async () => {
-  draftDeliveryStatus.value = deliveryStatus.value
-  draftPaymentStatus.value = paymentStatus.value
   await Promise.all([loadSupporting(), loadOrders()])
 })
 
@@ -174,13 +167,6 @@ watch([sortBy, sortOrder], () => {
   }
 })
 
-watch(
-  [deliveryStatus, paymentStatus],
-  ([nextDelivery, nextPayment]) => {
-    draftDeliveryStatus.value = nextDelivery
-    draftPaymentStatus.value = nextPayment
-  },
-)
 </script>
 
 <template>
@@ -246,9 +232,9 @@ watch(
                 <span>Status Delivery</span>
               </p>
               <select
-                :value="draftDeliveryStatus"
+                :value="draftFilters.deliveryStatus"
                 class="field-shell py-2.5"
-                @change="draftDeliveryStatus = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.deliveryStatus = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua</option>
                 <option v-for="item in deliveryStatusOptions" :key="item.value" :value="item.value">
@@ -263,9 +249,9 @@ watch(
                 <span>Status Pembayaran</span>
               </p>
               <select
-                :value="draftPaymentStatus"
+                :value="draftFilters.paymentStatus"
                 class="field-shell py-2.5"
-                @change="draftPaymentStatus = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.paymentStatus = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua</option>
                 <option v-for="item in paymentStatusOptions" :key="item.value" :value="item.value">

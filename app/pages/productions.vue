@@ -27,10 +27,6 @@ const coopFilter = ref('')
 const dateFilter = ref('')
 const startDateFilter = ref('')
 const endDateFilter = ref('')
-const draftCoopFilter = ref('')
-const draftDateFilter = ref('')
-const draftStartDateFilter = ref('')
-const draftEndDateFilter = ref('')
 const sortBy = ref('date')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -48,29 +44,31 @@ const coopOptions = computed(() =>
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-
-function clearDraftFilters() {
-  draftCoopFilter.value = ''
-  draftDateFilter.value = ''
-  draftStartDateFilter.value = ''
-  draftEndDateFilter.value = ''
-}
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
+  {
+    coopId: coopFilter,
+    date: dateFilter,
+    startDate: startDateFilter,
+    endDate: endDateFilter,
+  },
+  {
+    apply: (draftValues, activeFilters) => {
+      activeFilters.coopId.value = draftValues.coopId
+      activeFilters.date.value = draftValues.date
+      activeFilters.startDate.value = draftValues.date ? '' : draftValues.startDate
+      activeFilters.endDate.value = draftValues.date ? '' : draftValues.endDate
+    },
+  },
+)
 
 async function resetFilters() {
-  clearDraftFilters()
-  coopFilter.value = ''
-  dateFilter.value = ''
-  startDateFilter.value = ''
-  endDateFilter.value = ''
+  resetActive()
   pagination.resetPage()
   await loadProductions()
 }
 
 async function applyFilters() {
-  coopFilter.value = draftCoopFilter.value
-  dateFilter.value = draftDateFilter.value
-  startDateFilter.value = draftDateFilter.value ? '' : draftStartDateFilter.value
-  endDateFilter.value = draftDateFilter.value ? '' : draftEndDateFilter.value
+  applyDrafts()
   pagination.resetPage()
   await loadProductions()
 }
@@ -152,10 +150,6 @@ async function onLimitChange(nextLimit: number) {
 }
 
 onMounted(async () => {
-  draftCoopFilter.value = coopFilter.value
-  draftDateFilter.value = dateFilter.value
-  draftStartDateFilter.value = startDateFilter.value
-  draftEndDateFilter.value = endDateFilter.value
   await Promise.all([loadSupporting(), loadProductions()])
 })
 
@@ -166,15 +160,6 @@ watch([sortBy, sortOrder], () => {
   }
 })
 
-watch(
-  [coopFilter, dateFilter, startDateFilter, endDateFilter],
-  ([nextCoop, nextDate, nextStartDate, nextEndDate]) => {
-    draftCoopFilter.value = nextCoop
-    draftDateFilter.value = nextDate
-    draftStartDateFilter.value = nextStartDate
-    draftEndDateFilter.value = nextEndDate
-  },
-)
 </script>
 
 <template>
@@ -245,9 +230,9 @@ watch(
                 <span>Kandang</span>
               </p>
               <select
-                :value="draftCoopFilter"
+                :value="draftFilters.coopId"
                 class="field-shell py-2.5"
-                @change="draftCoopFilter = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.coopId = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua kandang</option>
                 <option v-for="item in coopOptions" :key="item.value" :value="item.value">
@@ -262,10 +247,10 @@ watch(
                 <span>Tanggal spesifik</span>
               </p>
               <input
-                :value="draftDateFilter"
+                :value="draftFilters.date"
                 type="date"
                 class="field-shell py-2.5"
-                @input="draftDateFilter = ($event.target as HTMLInputElement).value"
+                @input="draftFilters.date = ($event.target as HTMLInputElement).value"
               >
             </div>
 
@@ -276,11 +261,11 @@ watch(
                   <span>Dari tanggal</span>
                 </p>
                 <input
-                  :value="draftStartDateFilter"
+                  :value="draftFilters.startDate"
                   type="date"
                   class="field-shell py-2.5"
-                  :disabled="Boolean(draftDateFilter)"
-                  @input="draftStartDateFilter = ($event.target as HTMLInputElement).value"
+                  :disabled="Boolean(draftFilters.date)"
+                  @input="draftFilters.startDate = ($event.target as HTMLInputElement).value"
                 >
               </div>
               <div class="space-y-1.5">
@@ -289,11 +274,11 @@ watch(
                   <span>Sampai tanggal</span>
                 </p>
                 <input
-                  :value="draftEndDateFilter"
+                  :value="draftFilters.endDate"
                   type="date"
                   class="field-shell py-2.5"
-                  :disabled="Boolean(draftDateFilter)"
-                  @input="draftEndDateFilter = ($event.target as HTMLInputElement).value"
+                  :disabled="Boolean(draftFilters.date)"
+                  @input="draftFilters.endDate = ($event.target as HTMLInputElement).value"
                 >
               </div>
             </div>

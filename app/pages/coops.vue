@@ -15,7 +15,6 @@ const loading = ref(true)
 const error = ref('')
 const coops = ref<CoopItem[]>([])
 const activeFilter = ref('')
-const draftActiveFilter = ref('')
 const dialogOpen = ref(false)
 const editing = ref<CoopItem | null>(null)
 const submitting = ref(false)
@@ -32,16 +31,18 @@ const pageSizeOptions = defaultPageSizeOptions
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
+  active: activeFilter,
+})
 
 async function resetFilters() {
-  draftActiveFilter.value = ''
-  activeFilter.value = ''
+  resetActive()
   pagination.resetPage()
   await loadCoops()
 }
 
 async function applyFilters() {
-  activeFilter.value = draftActiveFilter.value
+  applyDrafts()
   pagination.resetPage()
   await loadCoops()
 }
@@ -95,10 +96,7 @@ async function onLimitChange(nextLimit: number) {
   await loadCoops()
 }
 
-onMounted(async () => {
-  draftActiveFilter.value = activeFilter.value
-  await loadCoops()
-})
+onMounted(loadCoops)
 
 watch([sortBy, sortOrder], () => {
   pagination.resetPage()
@@ -107,9 +105,6 @@ watch([sortBy, sortOrder], () => {
   }
 })
 
-watch(activeFilter, (nextValue) => {
-  draftActiveFilter.value = nextValue
-})
 </script>
 
 <template>
@@ -174,9 +169,9 @@ watch(activeFilter, (nextValue) => {
               <span>Status kandang</span>
             </p>
             <select
-              :value="draftActiveFilter"
+              :value="draftFilters.active"
               class="field-shell py-2.5"
-              @change="draftActiveFilter = ($event.target as HTMLSelectElement).value"
+              @change="draftFilters.active = ($event.target as HTMLSelectElement).value"
             >
               <option value="">Semua status</option>
               <option value="true">Aktif</option>

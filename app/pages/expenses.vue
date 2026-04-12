@@ -29,11 +29,6 @@ const ownerFilter = ref('')
 const categoryFilter = ref('')
 const startDateFilter = ref('')
 const endDateFilter = ref('')
-const draftCoopFilter = ref('')
-const draftOwnerFilter = ref('')
-const draftCategoryFilter = ref('')
-const draftStartDateFilter = ref('')
-const draftEndDateFilter = ref('')
 const sortBy = ref('date')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -63,32 +58,22 @@ const categoryFilterOptions = computed(() =>
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-
-function clearDraftFilters() {
-  draftCoopFilter.value = ''
-  draftOwnerFilter.value = ''
-  draftCategoryFilter.value = ''
-  draftStartDateFilter.value = ''
-  draftEndDateFilter.value = ''
-}
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
+  coopId: coopFilter,
+  ownerId: ownerFilter,
+  expenseCategoryId: categoryFilter,
+  startDate: startDateFilter,
+  endDate: endDateFilter,
+})
 
 async function resetFilters() {
-  clearDraftFilters()
-  coopFilter.value = ''
-  ownerFilter.value = ''
-  categoryFilter.value = ''
-  startDateFilter.value = ''
-  endDateFilter.value = ''
+  resetActive()
   pagination.resetPage()
   await loadExpenses()
 }
 
 async function applyFilters() {
-  coopFilter.value = draftCoopFilter.value
-  ownerFilter.value = draftOwnerFilter.value
-  categoryFilter.value = draftCategoryFilter.value
-  startDateFilter.value = draftStartDateFilter.value
-  endDateFilter.value = draftEndDateFilter.value
+  applyDrafts()
   pagination.resetPage()
   await loadExpenses()
 }
@@ -190,11 +175,6 @@ async function onLimitChange(nextLimit: number) {
 }
 
 onMounted(async () => {
-  draftCoopFilter.value = coopFilter.value
-  draftOwnerFilter.value = ownerFilter.value
-  draftCategoryFilter.value = categoryFilter.value
-  draftStartDateFilter.value = startDateFilter.value
-  draftEndDateFilter.value = endDateFilter.value
   await Promise.all([loadSupporting(), loadExpenses()])
 })
 
@@ -205,16 +185,6 @@ watch([sortBy, sortOrder], () => {
   }
 })
 
-watch(
-  [coopFilter, ownerFilter, categoryFilter, startDateFilter, endDateFilter],
-  ([nextCoop, nextOwner, nextCategory, nextStartDate, nextEndDate]) => {
-    draftCoopFilter.value = nextCoop
-    draftOwnerFilter.value = nextOwner
-    draftCategoryFilter.value = nextCategory
-    draftStartDateFilter.value = nextStartDate
-    draftEndDateFilter.value = nextEndDate
-  },
-)
 </script>
 
 <template>
@@ -280,9 +250,9 @@ watch(
                 <span>Kandang</span>
               </p>
               <select
-                :value="draftCoopFilter"
+                :value="draftFilters.coopId"
                 class="field-shell py-2.5"
-                @change="draftCoopFilter = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.coopId = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua kandang</option>
                 <option v-for="item in coopOptions" :key="item.value" :value="item.value">
@@ -297,9 +267,9 @@ watch(
                 <span>Owner</span>
               </p>
               <select
-                :value="draftOwnerFilter"
+                :value="draftFilters.ownerId"
                 class="field-shell py-2.5"
-                @change="draftOwnerFilter = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.ownerId = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua owner</option>
                 <option v-for="item in ownerOptions" :key="item.value" :value="item.value">
@@ -314,9 +284,9 @@ watch(
                 <span>Kategori</span>
               </p>
               <select
-                :value="draftCategoryFilter"
+                :value="draftFilters.expenseCategoryId"
                 class="field-shell py-2.5"
-                @change="draftCategoryFilter = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.expenseCategoryId = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua kategori</option>
                 <option v-for="item in categoryFilterOptions" :key="item.value" :value="item.value">
@@ -332,10 +302,10 @@ watch(
                   <span>Dari tanggal</span>
                 </p>
                 <input
-                  :value="draftStartDateFilter"
+                  :value="draftFilters.startDate"
                   type="date"
                   class="field-shell py-2.5"
-                  @input="draftStartDateFilter = ($event.target as HTMLInputElement).value"
+                  @input="draftFilters.startDate = ($event.target as HTMLInputElement).value"
                 >
               </div>
               <div class="space-y-1.5">
@@ -344,10 +314,10 @@ watch(
                   <span>Sampai tanggal</span>
                 </p>
                 <input
-                  :value="draftEndDateFilter"
+                  :value="draftFilters.endDate"
                   type="date"
                   class="field-shell py-2.5"
-                  @input="draftEndDateFilter = ($event.target as HTMLInputElement).value"
+                  @input="draftFilters.endDate = ($event.target as HTMLInputElement).value"
                 >
               </div>
             </div>

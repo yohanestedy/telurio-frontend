@@ -21,8 +21,6 @@ const submitting = ref(false)
 
 const startDateFilter = ref('')
 const endDateFilter = ref('')
-const draftStartDateFilter = ref('')
-const draftEndDateFilter = ref('')
 const sortBy = ref('effectiveDate')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -35,19 +33,19 @@ const pageSizeOptions = defaultPageSizeOptions
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
+  startDate: startDateFilter,
+  endDate: endDateFilter,
+})
 
 async function resetFilters() {
-  draftStartDateFilter.value = ''
-  draftEndDateFilter.value = ''
-  startDateFilter.value = ''
-  endDateFilter.value = ''
+  resetActive()
   pagination.resetPage()
   await loadPrices()
 }
 
 async function applyFilters() {
-  startDateFilter.value = draftStartDateFilter.value
-  endDateFilter.value = draftEndDateFilter.value
+  applyDrafts()
   pagination.resetPage()
   await loadPrices()
 }
@@ -106,11 +104,7 @@ async function onLimitChange(nextLimit: number) {
   await loadPrices()
 }
 
-onMounted(async () => {
-  draftStartDateFilter.value = startDateFilter.value
-  draftEndDateFilter.value = endDateFilter.value
-  await loadPrices()
-})
+onMounted(loadPrices)
 
 watch([sortBy, sortOrder], () => {
   pagination.resetPage()
@@ -119,10 +113,6 @@ watch([sortBy, sortOrder], () => {
   }
 })
 
-watch([startDateFilter, endDateFilter], ([nextStartDate, nextEndDate]) => {
-  draftStartDateFilter.value = nextStartDate
-  draftEndDateFilter.value = nextEndDate
-})
 </script>
 
 <template>
@@ -195,10 +185,10 @@ watch([startDateFilter, endDateFilter], ([nextStartDate, nextEndDate]) => {
                 <span>Dari tanggal</span>
               </p>
               <input
-                :value="draftStartDateFilter"
+                :value="draftFilters.startDate"
                 type="date"
                 class="field-shell py-2.5"
-                @input="draftStartDateFilter = ($event.target as HTMLInputElement).value"
+                @input="draftFilters.startDate = ($event.target as HTMLInputElement).value"
               >
             </div>
             <div class="space-y-1.5">
@@ -207,10 +197,10 @@ watch([startDateFilter, endDateFilter], ([nextStartDate, nextEndDate]) => {
                 <span>Sampai tanggal</span>
               </p>
               <input
-                :value="draftEndDateFilter"
+                :value="draftFilters.endDate"
                 type="date"
                 class="field-shell py-2.5"
-                @input="draftEndDateFilter = ($event.target as HTMLInputElement).value"
+                @input="draftFilters.endDate = ($event.target as HTMLInputElement).value"
               >
             </div>
           </div>

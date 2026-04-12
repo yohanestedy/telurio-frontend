@@ -15,7 +15,6 @@ const loading = ref(true)
 const error = ref('')
 const customers = ref<CustomerItem[]>([])
 const search = ref('')
-const draftSearch = ref('')
 const dialogOpen = ref(false)
 const editing = ref<CustomerItem | null>(null)
 const submitting = ref(false)
@@ -31,16 +30,23 @@ const pageSizeOptions = defaultPageSizeOptions
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
+  { search },
+  {
+    apply: (draftValues, activeFilters) => {
+      activeFilters.search.value = draftValues.search.trim()
+    },
+  },
+)
 
 async function resetFilters() {
-  draftSearch.value = ''
-  search.value = ''
+  resetActive()
   pagination.resetPage()
   await loadCustomers()
 }
 
 async function applyFilters() {
-  search.value = draftSearch.value.trim()
+  applyDrafts()
   pagination.resetPage()
   await loadCustomers()
 }
@@ -94,10 +100,7 @@ async function onLimitChange(nextLimit: number) {
   await loadCustomers()
 }
 
-onMounted(async () => {
-  draftSearch.value = search.value
-  await loadCustomers()
-})
+onMounted(loadCustomers)
 
 watch([sortBy, sortOrder], () => {
   pagination.resetPage()
@@ -106,9 +109,6 @@ watch([sortBy, sortOrder], () => {
   }
 })
 
-watch(search, (nextValue) => {
-  draftSearch.value = nextValue
-})
 </script>
 
 <template>
@@ -172,7 +172,7 @@ watch(search, (nextValue) => {
               <span>Cari pelanggan</span>
             </p>
             <input
-              v-model="draftSearch"
+              v-model="draftFilters.search"
               type="text"
               class="field-shell py-2.5"
               placeholder="Nama atau nomor telepon"

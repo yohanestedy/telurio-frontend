@@ -18,9 +18,6 @@ const coops = ref<CoopItem[]>([])
 const roleFilter = ref('')
 const activeFilter = ref('')
 const coopFilter = ref('')
-const draftRoleFilter = ref('')
-const draftActiveFilter = ref('')
-const draftCoopFilter = ref('')
 const dialogOpen = ref(false)
 const editing = ref<UserItem | null>(null)
 const submitting = ref(false)
@@ -41,26 +38,20 @@ const coopOptions = computed(() =>
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-
-function clearDraftFilters() {
-  draftRoleFilter.value = ''
-  draftActiveFilter.value = ''
-  draftCoopFilter.value = ''
-}
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
+  role: roleFilter,
+  active: activeFilter,
+  coopId: coopFilter,
+})
 
 async function resetFilters() {
-  clearDraftFilters()
-  roleFilter.value = ''
-  activeFilter.value = ''
-  coopFilter.value = ''
+  resetActive()
   pagination.resetPage()
   await loadUsers()
 }
 
 async function applyFilters() {
-  roleFilter.value = draftRoleFilter.value
-  activeFilter.value = draftActiveFilter.value
-  coopFilter.value = draftCoopFilter.value
+  applyDrafts()
   pagination.resetPage()
   await loadUsers()
 }
@@ -122,9 +113,6 @@ async function onLimitChange(nextLimit: number) {
 }
 
 onMounted(async () => {
-  draftRoleFilter.value = roleFilter.value
-  draftActiveFilter.value = activeFilter.value
-  draftCoopFilter.value = coopFilter.value
   await Promise.all([loadSupporting(), loadUsers()])
 })
 
@@ -135,14 +123,6 @@ watch([sortBy, sortOrder], () => {
   }
 })
 
-watch(
-  [roleFilter, activeFilter, coopFilter],
-  ([nextRole, nextActive, nextCoop]) => {
-    draftRoleFilter.value = nextRole
-    draftActiveFilter.value = nextActive
-    draftCoopFilter.value = nextCoop
-  },
-)
 </script>
 
 <template>
@@ -207,9 +187,9 @@ watch(
                 <span>Role</span>
               </p>
               <select
-                :value="draftRoleFilter"
+                :value="draftFilters.role"
                 class="field-shell py-2.5"
-                @change="draftRoleFilter = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.role = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua role</option>
                 <option value="OWNER">Owner</option>
@@ -223,9 +203,9 @@ watch(
                 <span>Status</span>
               </p>
               <select
-                :value="draftActiveFilter"
+                :value="draftFilters.active"
                 class="field-shell py-2.5"
-                @change="draftActiveFilter = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.active = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua status</option>
                 <option value="true">Aktif</option>
@@ -239,9 +219,9 @@ watch(
                 <span>Kandang</span>
               </p>
               <select
-                :value="draftCoopFilter"
+                :value="draftFilters.coopId"
                 class="field-shell py-2.5"
-                @change="draftCoopFilter = ($event.target as HTMLSelectElement).value"
+                @change="draftFilters.coopId = ($event.target as HTMLSelectElement).value"
               >
                 <option value="">Semua kandang</option>
                 <option v-for="item in coopOptions" :key="item.value" :value="item.value">
