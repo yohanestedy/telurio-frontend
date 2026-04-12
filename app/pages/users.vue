@@ -35,6 +35,13 @@ const pageSizeOptions = defaultPageSizeOptions
 const coopOptions = computed(() =>
   coops.value.map((item) => ({ label: item.name, value: item.id })),
 )
+const skeletonCells = [
+  { lines: [{ class: 'w-11/12' }, { class: 'mt-2 w-7/12' }] },
+  { lines: [{ class: 'w-20' }] },
+  { lines: [{ class: 'w-11/12' }] },
+  { lines: [{ class: 'w-20 rounded-full' }] },
+  { lines: [{ class: 'ml-auto w-20 rounded-xl' }] },
+]
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -252,30 +259,12 @@ watch([sortBy, sortOrder], () => {
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody v-if="loading">
-            <tr
-              v-for="row in pagination.limit.value"
-              :key="`users-skeleton-${row}`"
-              class="border-t border-slate-200/70"
-            >
-              <td class="px-4 py-4">
-                <div class="h-4 w-11/12 animate-pulse rounded-md bg-slate-200/70" />
-                <div class="mt-2 h-4 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-20 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-11/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-20 animate-pulse rounded-full bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="ml-auto h-4 w-20 animate-pulse rounded-xl bg-slate-200/70" />
-              </td>
-            </tr>
-          </tbody>
+          <ListTableSkeletonBody
+            v-if="loading"
+            :rows="pagination.limit.value"
+            row-key-prefix="users-skeleton"
+            :cells="skeletonCells"
+          />
           <tbody v-else-if="error">
             <tr>
               <td colspan="5" class="px-4 py-14 text-center">

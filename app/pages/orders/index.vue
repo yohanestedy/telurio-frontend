@@ -27,6 +27,7 @@ const customers = ref<CustomerItem[]>([])
 const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
+const latestOrderRequestId = ref(0)
 
 const deliveryStatus = computed({
   get: () => ui.orderFilters.deliveryStatus,
@@ -78,6 +79,14 @@ const pageSizeOptions = defaultPageSizeOptions
 const customerOptions = computed(() =>
   customers.value.map((item) => ({ label: item.name, value: item.id })),
 )
+const skeletonCells = [
+  { lines: [{ class: 'w-11/12' }, { class: 'mt-2 w-7/12' }] },
+  { lines: [{ class: 'w-9/12' }] },
+  { lines: [{ class: 'w-7/12' }] },
+  { lines: [{ class: 'w-24 rounded-full' }] },
+  { lines: [{ class: 'w-24 rounded-full' }] },
+  { lines: [{ class: 'ml-auto w-32 rounded-xl' }] },
+]
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -107,8 +116,16 @@ async function loadSupporting() {
 }
 
 async function loadOrders() {
+  const requestId = ++latestOrderRequestId.value
   loading.value = true
   error.value = ''
+
+  // Ensure skeleton gets a paint frame even when the request resolves very fast.
+  await nextTick()
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
+
   try {
     const response = await api.getPage<OrderItem[]>('/orders', {
       ...pagination.query.value,
@@ -117,12 +134,22 @@ async function loadOrders() {
       deliveryStatus: deliveryStatus.value || undefined,
       paymentStatus: paymentStatus.value || undefined,
     })
+    if (requestId !== latestOrderRequestId.value) {
+      return
+    }
+
     orders.value = response.data
     pagination.applyMeta(response.meta)
   } catch (caught) {
+    if (requestId !== latestOrderRequestId.value) {
+      return
+    }
+
     error.value = api.mapError(caught).message
   } finally {
-    loading.value = false
+    if (requestId === latestOrderRequestId.value) {
+      loading.value = false
+    }
   }
 }
 
@@ -283,33 +310,12 @@ watch([sortBy, sortOrder], () => {
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody v-if="loading">
-            <tr
-              v-for="row in pagination.limit.value"
-              :key="`orders-skeleton-${row}`"
-              class="border-t border-slate-200/70"
-            >
-              <td class="px-4 py-4">
-                <div class="h-4 w-11/12 animate-pulse rounded-md bg-slate-200/70" />
-                <div class="mt-2 h-4 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-9/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-7/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-24 animate-pulse rounded-full bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-24 animate-pulse rounded-full bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="ml-auto h-4 w-32 animate-pulse rounded-xl bg-slate-200/70" />
-              </td>
-            </tr>
-          </tbody>
+          <ListTableSkeletonBody
+            v-if="loading"
+            :rows="pagination.limit.value"
+            row-key-prefix="orders-skeleton"
+            :cells="skeletonCells"
+          />
           <tbody v-else-if="error">
             <tr>
               <td colspan="6" class="px-4 py-14 text-center">

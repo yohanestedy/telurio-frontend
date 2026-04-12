@@ -16,6 +16,12 @@ const categories = ref<ExpenseCategoryItem[]>([])
 const dialogOpen = ref(false)
 const editing = ref<ExpenseCategoryItem | null>(null)
 const submitting = ref(false)
+const skeletonCells = [
+  { lines: [{ class: 'w-10/12' }] },
+  { lines: [{ class: 'w-8/12' }] },
+  { lines: [{ class: 'w-20 rounded-full' }] },
+  { lines: [{ class: 'ml-auto w-20 rounded-xl' }] },
+]
 
 async function loadCategories() {
   loading.value = true
@@ -91,26 +97,12 @@ onMounted(loadCategories)
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody v-if="loading">
-            <tr
-              v-for="row in 8"
-              :key="`expense-categories-skeleton-${row}`"
-              class="border-t border-slate-200/70"
-            >
-              <td class="px-4 py-4">
-                <div class="h-4 w-10/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-8/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-20 animate-pulse rounded-full bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="ml-auto h-4 w-20 animate-pulse rounded-xl bg-slate-200/70" />
-              </td>
-            </tr>
-          </tbody>
+          <ListTableSkeletonBody
+            v-if="loading"
+            :rows="8"
+            row-key-prefix="expense-categories-skeleton"
+            :cells="skeletonCells"
+          />
           <tbody v-else-if="error">
             <tr>
               <td colspan="4" class="px-4 py-14 text-center">

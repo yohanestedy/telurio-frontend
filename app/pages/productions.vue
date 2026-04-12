@@ -37,6 +37,14 @@ const orderByOptions = [
   { label: 'Jumlah butir', value: 'goodCount', kind: 'number' as const },
 ]
 const pageSizeOptions = defaultPageSizeOptions
+const skeletonCells = [
+  { lines: [{ class: 'w-24' }] },
+  { lines: [{ class: 'w-10/12' }] },
+  { lines: [{ class: 'w-16' }] },
+  { lines: [{ class: 'w-16' }] },
+  { lines: [{ class: 'w-16' }] },
+  { lines: [{ class: 'ml-auto w-24 rounded-xl' }] },
+]
 
 const coopOptions = computed(() =>
   coops.value.map((item) => ({ label: item.name, value: item.id })),
@@ -306,32 +314,12 @@ watch([sortBy, sortOrder], () => {
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody v-if="loading">
-            <tr
-              v-for="row in pagination.limit.value"
-              :key="`productions-skeleton-${row}`"
-              class="border-t border-slate-200/70"
-            >
-              <td class="px-4 py-4">
-                <div class="h-4 w-24 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-10/12 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-16 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-16 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="h-4 w-16 animate-pulse rounded-md bg-slate-200/70" />
-              </td>
-              <td class="px-4 py-4">
-                <div class="ml-auto h-4 w-24 animate-pulse rounded-xl bg-slate-200/70" />
-              </td>
-            </tr>
-          </tbody>
+          <ListTableSkeletonBody
+            v-if="loading"
+            :rows="pagination.limit.value"
+            row-key-prefix="productions-skeleton"
+            :cells="skeletonCells"
+          />
           <tbody v-else-if="error">
             <tr>
               <td colspan="6" class="px-4 py-14 text-center">
