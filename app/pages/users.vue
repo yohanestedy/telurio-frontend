@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { onClickOutside } from '@vueuse/core'
 import type { CoopItem, UserItem } from '../types/domain'
 
 definePageMeta({
@@ -24,11 +23,6 @@ const draftCoopFilter = ref('')
 const dialogOpen = ref(false)
 const editing = ref<UserItem | null>(null)
 const submitting = ref(false)
-const activeFilterMenu = ref<'sort' | 'filter' | null>(null)
-const sortMenuRef = ref<HTMLElement | null>(null)
-const filterMenuRef = ref<HTMLElement | null>(null)
-const perPageMenuOpen = ref(false)
-const perPageMenuRef = ref<HTMLElement | null>(null)
 const sortBy = ref('createdAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -73,16 +67,6 @@ const pageRangeLabel = computed(() => {
   return `${start}-${end} Dari ${pagination.total.value}`
 })
 
-function toggleFilterMenu(menu: 'sort' | 'filter') {
-  activeFilterMenu.value = activeFilterMenu.value === menu ? null : menu
-  perPageMenuOpen.value = false
-}
-
-function togglePerPageMenu() {
-  perPageMenuOpen.value = !perPageMenuOpen.value
-  activeFilterMenu.value = null
-}
-
 function clearDraftFilters() {
   draftRoleFilter.value = ''
   draftActiveFilter.value = ''
@@ -95,7 +79,6 @@ async function resetFilters() {
   activeFilter.value = ''
   coopFilter.value = ''
   pagination.resetPage()
-  activeFilterMenu.value = null
   await loadUsers()
 }
 
@@ -104,7 +87,6 @@ async function applyFilters() {
   activeFilter.value = draftActiveFilter.value
   coopFilter.value = draftCoopFilter.value
   pagination.resetPage()
-  activeFilterMenu.value = null
   await loadUsers()
 }
 
@@ -161,7 +143,6 @@ async function onPageChange(nextPage: number) {
 
 async function onLimitChange(nextLimit: number) {
   pagination.setLimit(nextLimit)
-  perPageMenuOpen.value = false
   await loadUsers()
 }
 
@@ -187,121 +168,34 @@ watch(
     draftCoopFilter.value = nextCoop
   },
 )
-
-onClickOutside(sortMenuRef, () => {
-  if (activeFilterMenu.value === 'sort') {
-    activeFilterMenu.value = null
-  }
-})
-
-onClickOutside(filterMenuRef, () => {
-  if (activeFilterMenu.value === 'filter') {
-    activeFilterMenu.value = null
-  }
-})
-
-onClickOutside(perPageMenuRef, () => {
-  perPageMenuOpen.value = false
-})
 </script>
 
 <template>
   <div class="space-y-4">
-    <GlassCard>
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="flex items-start gap-3">
-          <div class="surface-outline rounded-2xl p-2.5 text-brand-700">
-            <UiIcon name="users" class="h-5 w-5" />
-          </div>
-          <div>
-            <h2 class="text-lg font-semibold text-ink-900">Daftar User</h2>
-            <p class="mt-1 text-sm text-ink-600">
-              Owner dan operator yang terhubung ke kandang.
-            </p>
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <UiButton variant="secondary" icon="refresh" @click="loadUsers">Refresh</UiButton>
-          <UiButton icon="addUser" @click="dialogOpen = true; editing = null">Tambah user</UiButton>
-        </div>
-      </div>
-    </GlassCard>
+    <ListHeaderCard
+      icon="users"
+      title="Daftar User"
+      description="Owner dan operator yang terhubung ke kandang."
+    >
+      <template #actions>
+        <UiButton variant="secondary" icon="refresh" @click="loadUsers">Refresh</UiButton>
+        <UiButton icon="addUser" @click="dialogOpen = true; editing = null">Tambah user</UiButton>
+      </template>
+    </ListHeaderCard>
 
-    <GlassCard :overflow-visible="true">
-      <div class="relative z-20 mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            title="Urutkan data"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'sort' }"
-            @click="toggleFilterMenu('sort')"
-          >
-            <UiIcon name="sort" class="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            title="Filter data"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeFilterMenu === 'filter' || Boolean(roleFilter) || Boolean(activeFilter) || Boolean(coopFilter) }"
-            @click="toggleFilterMenu('filter')"
-          >
-            <UiIcon name="filter" class="h-4 w-4" />
-          </button>
-        </div>
-
-        <div class="relative flex items-center gap-1.5">
-          <div class="h-6 w-px bg-slate-200" />
-          <button
-            type="button"
-            title="Ubah jumlah data per halaman"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-            :class="{ 'border-brand-300 bg-brand-50 text-brand-700': perPageMenuOpen }"
-            @click="togglePerPageMenu"
-          >
-            <UiIcon name="layers" class="h-4 w-4" />
-          </button>
-          <p class="text-sm text-ink-700">{{ pageRangeLabel }}</p>
-          <button
-            type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
-            :disabled="loading || !pagination.hasPrevPage.value"
-            @click="onPageChange(pagination.page.value - 1)"
-          >
-            <UiIcon name="chevronLeft" class="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
-            :disabled="loading || !pagination.hasNextPage.value"
-            @click="onPageChange(pagination.page.value + 1)"
-          >
-            <UiIcon name="chevronRight" class="h-4 w-4" />
-          </button>
-
-          <div
-            v-if="perPageMenuOpen"
-            ref="perPageMenuRef"
-            class="surface-outline absolute right-0 top-[calc(100%+0.55rem)] z-[120] w-36 rounded-2xl p-1.5 shadow-soft"
-          >
-            <button
-              v-for="size in pageSizeOptions"
-              :key="size"
-              type="button"
-              class="w-full rounded-xl px-3 py-2 text-left text-sm transition"
-              :class="pagination.limit.value === size ? 'bg-brand-100/70 text-brand-800' : 'text-ink-700 hover:bg-slate-100/80'"
-              @click="onLimitChange(size)"
-            >
-              {{ size }} Item
-            </button>
-          </div>
-        </div>
-
-        <div
-          v-if="activeFilterMenu === 'sort'"
-          ref="sortMenuRef"
-          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] w-[min(92vw,22rem)] rounded-2xl p-3 shadow-soft"
-        >
+    <ListTableShell
+      :filter-applied="Boolean(roleFilter) || Boolean(activeFilter) || Boolean(coopFilter)"
+      :page-range-label="pageRangeLabel"
+      :current-limit="pagination.limit.value"
+      :page-size-options="pageSizeOptions"
+      :loading="loading"
+      :has-prev-page="pagination.hasPrevPage.value"
+      :has-next-page="pagination.hasNextPage.value"
+      @previous-page="onPageChange(pagination.page.value - 1)"
+      @next-page="onPageChange(pagination.page.value + 1)"
+      @change-limit="onLimitChange"
+    >
+      <template #sort-menu>
           <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
             <select
@@ -323,13 +217,9 @@ onClickOutside(perPageMenuRef, () => {
               </option>
             </select>
           </div>
-        </div>
+      </template>
 
-        <div
-          v-if="activeFilterMenu === 'filter'"
-          ref="filterMenuRef"
-          class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] w-[min(92vw,24rem)] rounded-2xl p-3 shadow-soft"
-        >
+      <template #filter-menu>
           <div class="mb-3 flex items-center gap-2">
             <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
             <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
@@ -394,12 +284,9 @@ onClickOutside(perPageMenuRef, () => {
               Terapkan
             </UiButton>
           </div>
-        </div>
-      </div>
+      </template>
 
-      <div class="my-3 h-px bg-slate-200/80" />
-
-      <div class="relative z-10 h-[420px] overflow-auto rounded-2xl border border-slate-200/80 bg-white/55">
+      <template #default>
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
@@ -474,8 +361,8 @@ onClickOutside(perPageMenuRef, () => {
             </tr>
           </tbody>
         </table>
-      </div>
-    </GlassCard>
+      </template>
+    </ListTableShell>
 
     <UiDialog
       v-model:open="dialogOpen"

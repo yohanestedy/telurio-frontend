@@ -54,31 +54,22 @@ onMounted(loadCategories)
 
 <template>
   <div class="space-y-4">
-    <GlassCard>
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="flex items-start gap-3">
-          <div class="surface-outline rounded-2xl p-2.5 text-brand-700">
-            <UiIcon name="categories" class="h-5 w-5" />
-          </div>
-          <div>
-            <h2 class="text-lg font-semibold text-ink-900">Kategori Pengeluaran</h2>
-            <p class="mt-1 text-sm text-ink-600">
-              Owner dapat mengelola kategori pengeluaran miliknya sendiri.
-            </p>
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <UiButton variant="secondary" icon="refresh" @click="loadCategories">Refresh</UiButton>
-          <UiButton
-            v-if="auth.role === 'OWNER'"
-            icon="plus"
-            @click="dialogOpen = true; editing = null"
-          >
-            Tambah kategori
-          </UiButton>
-        </div>
-      </div>
-    </GlassCard>
+    <ListHeaderCard
+      icon="categories"
+      title="Kategori Pengeluaran"
+      description="Owner dapat mengelola kategori pengeluaran miliknya sendiri."
+    >
+      <template #actions>
+        <UiButton variant="secondary" icon="refresh" @click="loadCategories">Refresh</UiButton>
+        <UiButton
+          v-if="auth.role === 'OWNER'"
+          icon="plus"
+          @click="dialogOpen = true; editing = null"
+        >
+          Tambah kategori
+        </UiButton>
+      </template>
+    </ListHeaderCard>
 
     <GlassCard>
       <div class="relative z-20 flex items-center justify-between gap-3">
