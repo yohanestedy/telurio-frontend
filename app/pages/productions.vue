@@ -320,16 +320,13 @@ watch([sortBy, sortOrder], () => {
             row-key-prefix="productions-skeleton"
             :cells="skeletonCells"
           />
-          <tbody v-else-if="error">
-            <tr>
-              <td colspan="6" class="px-4 py-14 text-center">
-                <p class="text-sm text-rose-700">{{ error }}</p>
-                <div class="mt-3 flex justify-center">
-                  <UiButton size="sm" icon="refresh" @click="loadProductions">Coba lagi</UiButton>
-                </div>
-              </td>
-            </tr>
-          </tbody>
+          <ListTableStateBody
+            v-else-if="error"
+            mode="error"
+            :colspan="6"
+            :message="error"
+            @retry="loadProductions"
+          />
           <tbody v-else-if="productions.length">
             <tr v-for="item in productions" :key="item.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">{{ formatDate(item.date) }}</td>
@@ -361,13 +358,12 @@ watch([sortBy, sortOrder], () => {
               </td>
             </tr>
           </tbody>
-          <tbody v-else>
-            <tr>
-              <td colspan="6" class="px-4 py-14 text-center text-sm text-ink-500">
-                Belum ada data produksi untuk filter saat ini.
-              </td>
-            </tr>
-          </tbody>
+          <ListTableStateBody
+            v-else
+            mode="empty"
+            :colspan="6"
+            message="Belum ada data produksi untuk filter saat ini."
+          />
         </table>
       </template>
     </ListTableShell>

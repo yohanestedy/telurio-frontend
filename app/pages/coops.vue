@@ -213,16 +213,13 @@ watch([sortBy, sortOrder], () => {
             row-key-prefix="coops-skeleton"
             :cells="skeletonCells"
           />
-          <tbody v-else-if="error">
-            <tr>
-              <td colspan="5" class="px-4 py-14 text-center">
-                <p class="text-sm text-rose-700">{{ error }}</p>
-                <div class="mt-3 flex justify-center">
-                  <UiButton size="sm" icon="refresh" @click="loadCoops">Coba lagi</UiButton>
-                </div>
-              </td>
-            </tr>
-          </tbody>
+          <ListTableStateBody
+            v-else-if="error"
+            mode="error"
+            :colspan="5"
+            :message="error"
+            @retry="loadCoops"
+          />
           <tbody v-else-if="coops.length">
             <tr v-for="coop in coops" :key="coop.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">
@@ -248,13 +245,12 @@ watch([sortBy, sortOrder], () => {
               </td>
             </tr>
           </tbody>
-          <tbody v-else>
-            <tr>
-              <td colspan="5" class="px-4 py-14 text-center text-sm text-ink-500">
-                Belum ada kandang untuk filter saat ini.
-              </td>
-            </tr>
-          </tbody>
+          <ListTableStateBody
+            v-else
+            mode="empty"
+            :colspan="5"
+            message="Belum ada kandang untuk filter saat ini."
+          />
         </table>
       </template>
     </ListTableShell>

@@ -211,16 +211,13 @@ watch([sortBy, sortOrder], () => {
             row-key-prefix="customers-skeleton"
             :cells="skeletonCells"
           />
-          <tbody v-else-if="error">
-            <tr>
-              <td colspan="4" class="px-4 py-14 text-center">
-                <p class="text-sm text-rose-700">{{ error }}</p>
-                <div class="mt-3 flex justify-center">
-                  <UiButton size="sm" icon="refresh" @click="loadCustomers">Coba lagi</UiButton>
-                </div>
-              </td>
-            </tr>
-          </tbody>
+          <ListTableStateBody
+            v-else-if="error"
+            mode="error"
+            :colspan="4"
+            :message="error"
+            @retry="loadCustomers"
+          />
           <tbody v-else-if="customers.length">
             <tr v-for="customer in customers" :key="customer.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ customer.name }}</td>
@@ -233,13 +230,12 @@ watch([sortBy, sortOrder], () => {
               </td>
             </tr>
           </tbody>
-          <tbody v-else>
-            <tr>
-              <td colspan="4" class="px-4 py-14 text-center text-sm text-ink-500">
-                Belum ada pelanggan untuk filter saat ini.
-              </td>
-            </tr>
-          </tbody>
+          <ListTableStateBody
+            v-else
+            mode="empty"
+            :colspan="4"
+            message="Belum ada pelanggan untuk filter saat ini."
+          />
         </table>
       </template>
     </ListTableShell>
