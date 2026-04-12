@@ -53,57 +53,115 @@ onMounted(loadCategories)
 </script>
 
 <template>
-  <div class="space-y-6">
-    <FilterBar>
-      <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadCategories">Refresh</UiButton>
-        <UiButton v-if="auth.role === 'OWNER'" icon="plus" @click="dialogOpen = true; editing = null">Tambah kategori</UiButton>
-      </template>
-    </FilterBar>
+  <div class="space-y-4">
+    <GlassCard>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="surface-outline rounded-2xl p-2.5 text-brand-700">
+            <UiIcon name="categories" class="h-5 w-5" />
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-ink-900">Kategori Pengeluaran</h2>
+            <p class="mt-1 text-sm text-ink-600">
+              Owner dapat mengelola kategori pengeluaran miliknya sendiri.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <UiButton variant="secondary" icon="refresh" @click="loadCategories">Refresh</UiButton>
+          <UiButton
+            v-if="auth.role === 'OWNER'"
+            icon="plus"
+            @click="dialogOpen = true; editing = null"
+          >
+            Tambah kategori
+          </UiButton>
+        </div>
+      </div>
+    </GlassCard>
 
-    <LoadingSkeleton
-      v-if="loading"
-      variant="table"
-      :rows="6"
-      :columns="4"
-    />
-    <ErrorState v-else-if="error" :message="error">
-      <UiButton icon="refresh" @click="loadCategories">Coba lagi</UiButton>
-    </ErrorState>
-    <TableCard v-else title="Kategori Pengeluaran" description="Owner dapat mengelola kategori miliknya sendiri." icon="categories">
-      <table class="min-w-full text-left text-sm">
-        <thead class="text-ink-500">
-          <tr>
-            <th class="pb-3 pr-4">Nama</th>
-            <th class="pb-3 pr-4">Owner</th>
-            <th class="pb-3 pr-4">Status</th>
-            <th class="pb-3 pr-4 text-right">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="category in categories" :key="category.id" class="border-t border-white/40">
-            <td class="py-4 pr-4 font-medium text-ink-900">{{ category.name }}</td>
-            <td class="py-4 pr-4">{{ category.ownerName }}</td>
-            <td class="py-4 pr-4">
-              <UiBadge :tone="category.isActive ? 'success' : 'warning'">
-                {{ category.isActive ? 'Aktif' : 'Nonaktif' }}
-              </UiBadge>
-            </td>
-            <td class="py-4 text-right">
-              <UiButton
-                v-if="auth.role === 'OWNER'"
-                variant="ghost"
-                size="sm"
-                icon="edit"
-                @click="dialogOpen = true; editing = category"
-              >
-                Edit
-              </UiButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </TableCard>
+    <GlassCard>
+      <div class="relative z-20 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-sm text-ink-500">
+          <UiIcon name="categories" class="h-4 w-4 text-brand-700" />
+          <span>Daftar kategori aktif dan nonaktif.</span>
+        </div>
+      </div>
+
+      <div class="my-3 h-px bg-slate-200/80" />
+
+      <div class="relative z-10 h-[420px] overflow-auto rounded-2xl border border-slate-200/80 bg-white/55">
+        <table class="min-w-full text-left text-sm">
+          <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
+            <tr>
+              <th class="px-4 py-3 pr-4">Nama</th>
+              <th class="px-4 py-3 pr-4">Owner</th>
+              <th class="px-4 py-3 pr-4">Status</th>
+              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody v-if="loading">
+            <tr
+              v-for="row in 8"
+              :key="`expense-categories-skeleton-${row}`"
+              class="border-t border-slate-200/70"
+            >
+              <td class="px-4 py-4">
+                <div class="h-4 w-10/12 animate-pulse rounded-md bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="h-4 w-8/12 animate-pulse rounded-md bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="h-4 w-20 animate-pulse rounded-full bg-slate-200/70" />
+              </td>
+              <td class="px-4 py-4">
+                <div class="ml-auto h-4 w-20 animate-pulse rounded-xl bg-slate-200/70" />
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else-if="error">
+            <tr>
+              <td colspan="4" class="px-4 py-14 text-center">
+                <p class="text-sm text-rose-700">{{ error }}</p>
+                <div class="mt-3 flex justify-center">
+                  <UiButton size="sm" icon="refresh" @click="loadCategories">Coba lagi</UiButton>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else-if="categories.length">
+            <tr v-for="category in categories" :key="category.id" class="border-t border-slate-200/70">
+              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ category.name }}</td>
+              <td class="px-4 py-4 pr-4">{{ category.ownerName }}</td>
+              <td class="px-4 py-4 pr-4">
+                <UiBadge :tone="category.isActive ? 'success' : 'warning'">
+                  {{ category.isActive ? 'Aktif' : 'Nonaktif' }}
+                </UiBadge>
+              </td>
+              <td class="px-4 py-4 text-right">
+                <UiButton
+                  v-if="auth.role === 'OWNER'"
+                  variant="ghost"
+                  size="sm"
+                  icon="edit"
+                  @click="dialogOpen = true; editing = category"
+                >
+                  Edit
+                </UiButton>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else>
+            <tr>
+              <td colspan="4" class="px-4 py-14 text-center text-sm text-ink-500">
+                Belum ada kategori pengeluaran.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </GlassCard>
 
     <UiDialog
       v-model:open="dialogOpen"
