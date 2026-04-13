@@ -1,4 +1,5 @@
 import type { PriceItem } from '../types/domain'
+import { ApiClientError } from '../types/api'
 
 export function useTodayPriceStatus() {
   const api = useApi()
@@ -12,7 +13,7 @@ export function useTodayPriceStatus() {
     try {
       currentPrice.value = await api.get<PriceItem>('/prices/current')
     } catch (caught) {
-      const mapped = api.mapError(caught)
+      const mapped = caught instanceof ApiClientError ? caught : api.mapError(caught)
 
       if (mapped.status === 404) {
         currentPrice.value = null

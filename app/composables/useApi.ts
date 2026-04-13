@@ -16,8 +16,14 @@ function buildPath(path: string) {
 }
 
 function mapError(error: unknown): ApiClientError {
+  if (error instanceof ApiClientError) {
+    return error
+  }
+
   const fetchError = error as {
     statusCode?: number
+    status?: number
+    code?: string
     data?: ApiErrorPayload
     message?: string
     response?: { status?: number; _data?: ApiErrorPayload }
@@ -25,6 +31,7 @@ function mapError(error: unknown): ApiClientError {
 
   const status =
     fetchError.statusCode ??
+    fetchError.status ??
     fetchError.response?.status ??
     500
 
@@ -41,7 +48,7 @@ function mapError(error: unknown): ApiClientError {
 
   return new ApiClientError({
     status,
-    code: 'REQUEST_FAILED',
+    code: fetchError.code ?? 'REQUEST_FAILED',
     message: fetchError.message ?? 'Unable to complete request',
     details: fetchError,
   })
