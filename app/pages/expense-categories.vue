@@ -16,6 +16,10 @@ const categories = ref<ExpenseCategoryItem[]>([])
 const dialogOpen = ref(false)
 const editing = ref<ExpenseCategoryItem | null>(null)
 const submitting = ref(false)
+type ExpenseCategoryPayload = {
+  name: string
+  isActive?: boolean
+}
 const skeletonCells = [
   { lines: [{ class: 'w-10/12' }] },
   { lines: [{ class: 'w-8/12' }] },
@@ -35,14 +39,17 @@ async function loadCategories() {
   }
 }
 
-async function submitCategory(payload: Record<string, unknown>) {
+async function submitCategory(payload: ExpenseCategoryPayload) {
   submitting.value = true
   try {
     if (editing.value) {
-      await api.patch(`/expense-categories/${editing.value.id}`, payload)
+      await api.patch(`/expense-categories/${editing.value.id}`, {
+        name: payload.name,
+        isActive: payload.isActive,
+      })
       toast.success('Kategori berhasil diperbarui')
     } else {
-      await api.post('/expense-categories', payload)
+      await api.post('/expense-categories', { name: payload.name })
       toast.success('Kategori berhasil dibuat')
     }
     dialogOpen.value = false
