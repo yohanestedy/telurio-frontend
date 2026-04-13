@@ -43,6 +43,27 @@ const paymentStatus = computed({
   },
 })
 
+const deliveryDateFilter = computed({
+  get: () => ui.orderFilters.deliveryDate,
+  set: (value: string) => {
+    ui.orderFilters.deliveryDate = value
+  },
+})
+
+const startDateFilter = computed({
+  get: () => ui.orderFilters.startDate,
+  set: (value: string) => {
+    ui.orderFilters.startDate = value
+  },
+})
+
+const endDateFilter = computed({
+  get: () => ui.orderFilters.endDate,
+  set: (value: string) => {
+    ui.orderFilters.endDate = value
+  },
+})
+
 const sortBy = computed({
   get: () => ui.orderFilters.sortBy,
   set: (value: string) => {
@@ -90,10 +111,24 @@ const skeletonCells = [
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
-  deliveryStatus,
-  paymentStatus,
-})
+const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
+  {
+    deliveryStatus,
+    paymentStatus,
+    deliveryDate: deliveryDateFilter,
+    startDate: startDateFilter,
+    endDate: endDateFilter,
+  },
+  {
+    apply: (draftValues, activeFilters) => {
+      activeFilters.deliveryStatus.value = draftValues.deliveryStatus
+      activeFilters.paymentStatus.value = draftValues.paymentStatus
+      activeFilters.deliveryDate.value = draftValues.deliveryDate
+      activeFilters.startDate.value = draftValues.deliveryDate ? '' : draftValues.startDate
+      activeFilters.endDate.value = draftValues.deliveryDate ? '' : draftValues.endDate
+    },
+  },
+)
 
 async function resetFilters() {
   resetActive()
@@ -133,6 +168,9 @@ async function loadOrders() {
       order: sortOrder.value,
       deliveryStatus: deliveryStatus.value || undefined,
       paymentStatus: paymentStatus.value || undefined,
+      deliveryDate: deliveryDateFilter.value || undefined,
+      startDate: deliveryDateFilter.value ? undefined : startDateFilter.value || undefined,
+      endDate: deliveryDateFilter.value ? undefined : endDateFilter.value || undefined,
     })
     if (requestId !== latestOrderRequestId.value) {
       return
@@ -210,7 +248,7 @@ watch([sortBy, sortOrder], () => {
     </ListHeaderCard>
 
     <ListTableShell
-      :filter-applied="Boolean(deliveryStatus) || Boolean(paymentStatus)"
+      :filter-applied="Boolean(deliveryStatus) || Boolean(paymentStatus) || Boolean(deliveryDateFilter) || Boolean(startDateFilter) || Boolean(endDateFilter)"
       :page-range-label="pageRangeLabel"
       :current-limit="pagination.limit.value"
       :page-size-options="pageSizeOptions"
@@ -285,6 +323,48 @@ watch([sortBy, sortOrder], () => {
                   {{ item.label }}
                 </option>
               </select>
+            </div>
+
+            <div class="space-y-1.5">
+              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
+                <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
+                <span>Tanggal kirim spesifik</span>
+              </p>
+              <input
+                :value="draftFilters.deliveryDate"
+                type="date"
+                class="field-shell py-2.5"
+                @input="draftFilters.deliveryDate = ($event.target as HTMLInputElement).value"
+              >
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div class="space-y-1.5">
+                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
+                  <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
+                  <span>Dari tanggal</span>
+                </p>
+                <input
+                  :value="draftFilters.startDate"
+                  type="date"
+                  class="field-shell py-2.5"
+                  :disabled="Boolean(draftFilters.deliveryDate)"
+                  @input="draftFilters.startDate = ($event.target as HTMLInputElement).value"
+                >
+              </div>
+              <div class="space-y-1.5">
+                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
+                  <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
+                  <span>Sampai tanggal</span>
+                </p>
+                <input
+                  :value="draftFilters.endDate"
+                  type="date"
+                  class="field-shell py-2.5"
+                  :disabled="Boolean(draftFilters.deliveryDate)"
+                  @input="draftFilters.endDate = ($event.target as HTMLInputElement).value"
+                >
+              </div>
             </div>
           </div>
 

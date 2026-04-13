@@ -13,8 +13,14 @@ const createSchema = z
     deliveryDate: z.string().min(1, 'Tanggal wajib diisi'),
     deliverBefore: z.string().optional(),
     paymentStatus: z.enum(paymentStatuses),
-    paymentMethod: z.enum(paymentMethods).optional(),
-    dpAmount: z.coerce.number().min(0, 'DP tidak boleh negatif').optional(),
+    paymentMethod: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.enum(paymentMethods).optional(),
+    ),
+    dpAmount: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.coerce.number().min(0, 'DP tidak boleh negatif').optional(),
+    ),
     notes: z.string().optional(),
   })
   .superRefine((value, ctx) => {
