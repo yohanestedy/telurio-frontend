@@ -17,6 +17,7 @@ const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
 const ui = useUiStore()
+const route = useRoute()
 const { can } = useAuth()
 const pagination = usePagination()
 const { todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
@@ -226,6 +227,19 @@ async function refreshOrdersContext() {
   await Promise.all([loadTodayPriceStatus(), loadOrders()])
 }
 
+async function consumeCreateQuery(value: unknown) {
+  if (value !== 'new' || !can('orders.manage')) {
+    return
+  }
+
+  dialogOpen.value = true
+  editing.value = null
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.create
+  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
+}
+
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadTodayPriceStatus(), loadOrders()])
 })
@@ -236,6 +250,14 @@ watch([sortBy, sortOrder], () => {
     loadOrders()
   }
 })
+
+watch(
+  () => route.query.create,
+  (value) => {
+    consumeCreateQuery(value)
+  },
+  { immediate: true },
+)
 
 </script>
 

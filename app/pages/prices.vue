@@ -140,12 +140,19 @@ async function onLimitChange(nextLimit: number) {
   await loadPrices()
 }
 
-onMounted(async () => {
-  if (route.query.create === 'today') {
-    openTodayPriceDialog()
-    await navigateTo({ path: '/prices', query: {} }, { replace: true })
+async function consumeCreateQuery(value: unknown) {
+  if (value !== 'today') {
+    return
   }
 
+  openTodayPriceDialog()
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.create
+  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
+}
+
+onMounted(async () => {
   await loadPrices()
 })
 
@@ -162,6 +169,14 @@ watch(dialogOpen, (isOpen) => {
     prefillTodayPrice.value = false
   }
 })
+
+watch(
+  () => route.query.create,
+  (value) => {
+    consumeCreateQuery(value)
+  },
+  { immediate: true },
+)
 
 </script>
 

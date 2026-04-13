@@ -10,6 +10,7 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
+const route = useRoute()
 const pagination = usePagination()
 
 const loading = ref(true)
@@ -181,6 +182,19 @@ async function onLimitChange(nextLimit: number) {
   await loadExpenses()
 }
 
+async function consumeCreateQuery(value: unknown) {
+  if (value !== 'new') {
+    return
+  }
+
+  dialogOpen.value = true
+  editing.value = null
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.create
+  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
+}
+
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadExpenses()])
 })
@@ -191,6 +205,14 @@ watch([sortBy, sortOrder], () => {
     loadExpenses()
   }
 })
+
+watch(
+  () => route.query.create,
+  (value) => {
+    consumeCreateQuery(value)
+  },
+  { immediate: true },
+)
 
 </script>
 
