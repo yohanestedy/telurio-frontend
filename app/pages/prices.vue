@@ -10,14 +10,15 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const pagination = usePagination()
+const route = useRoute()
 
 const loading = ref(true)
 const error = ref('')
-const currentPrice = ref<PriceItem | null>(null)
 const prices = ref<PriceItem[]>([])
 const dialogOpen = ref(false)
 const editing = ref<PriceItem | null>(null)
 const submitting = ref(false)
+const prefillTodayPrice = ref(false)
 
 const startDateFilter = ref('')
 const endDateFilter = ref('')
@@ -39,10 +40,27 @@ const skeletonCells = [
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
+const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
 const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
   startDate: startDateFilter,
   endDate: endDateFilter,
 })
+
+const createInitialValue = computed(() =>
+  editing.value
+    ? {
+        effectiveDate: isoDate(editing.value.effectiveDate),
+        pricePerKg: editing.value.pricePerKg,
+        notes: editing.value.notes ?? '',
+      }
+    : prefillTodayPrice.value
+      ? {
+          effectiveDate: isoDate(new Date()),
+          pricePerKg: '',
+          notes: '',
+        }
+      : undefined,
+)
 
 async function resetFilters() {
   resetActive()
@@ -60,8 +78,8 @@ async function loadPrices() {
   loading.value = true
   error.value = ''
   try {
-    const [current, list] = await Promise.all([
-      api.get<PriceItem>('/prices/current'),
+    const [, list] = await Promise.all([
+      loadTodayPriceStatus(),
       api.getPage<PriceItem[]>('/prices', {
         ...pagination.query.value,
         sortBy: sortBy.value,
@@ -70,7 +88,6 @@ async function loadPrices() {
         endDate: endDateFilter.value || undefined,
       }),
     ])
-    currentPrice.value = current
     prices.value = list.data
     pagination.applyMeta(list.meta)
   } catch (caught) {
@@ -78,6 +95,18 @@ async function loadPrices() {
   } finally {
     loading.value = false
   }
+}
+
+function openCreatePriceDialog() {
+  editing.value = null
+  prefillTodayPrice.value = false
+  dialogOpen.value = true
+}
+
+function openTodayPriceDialog() {
+  editing.value = null
+  prefillTodayPrice.value = true
+  dialogOpen.value = true
 }
 
 async function submitPrice(payload: Record<string, unknown>) {
@@ -92,6 +121,7 @@ async function submitPrice(payload: Record<string, unknown>) {
     }
     dialogOpen.value = false
     editing.value = null
+    prefillTodayPrice.value = false
     await loadPrices()
   } catch (caught) {
     toast.error('Gagal menyimpan harga', api.mapError(caught).message)
@@ -110,12 +140,26 @@ async function onLimitChange(nextLimit: number) {
   await loadPrices()
 }
 
-onMounted(loadPrices)
+onMounted(async () => {
+  if (route.query.create === 'today') {
+    openTodayPriceDialog()
+    await navigateTo({ path: '/prices', query: {} }, { replace: true })
+  }
+
+  await loadPrices()
+})
 
 watch([sortBy, sortOrder], () => {
   pagination.resetPage()
   if (!loading.value) {
     loadPrices()
+  }
+})
+
+watch(dialogOpen, (isOpen) => {
+  if (!isOpen) {
+    editing.value = null
+    prefillTodayPrice.value = false
   }
 })
 
@@ -131,7 +175,7 @@ watch([sortBy, sortOrder], () => {
     >
       <template #actions>
         <UiButton variant="secondary" icon="refresh" @click="loadPrices">Refresh</UiButton>
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah harga</UiButton>
+        <UiButton icon="plus" @click="openCreatePriceDialog">Tambah harga</UiButton>
       </template>
 
       <MetricCard
@@ -141,6 +185,14 @@ watch([sortBy, sortOrder], () => {
         icon="prices"
       />
     </ListHeaderCard>
+
+    <TodayPriceNotice
+      v-if="todayPriceMissing"
+      title="Harga telur hari ini belum diinput"
+      message="Order kirim hari ini tidak bisa dibuat lunas atau diproses pengantarannya sampai harga untuk tanggal hari ini tersedia."
+      :show-action="true"
+      @action="openTodayPriceDialog"
+    />
 
     <ListTableShell
       :filter-applied="Boolean(startDateFilter) || Boolean(endDateFilter)"
@@ -274,11 +326,7 @@ watch([sortBy, sortOrder], () => {
       <FormsPriceForm
         :is-edit="Boolean(editing)"
         :submitting="submitting"
-        :initial-value="editing ? {
-          effectiveDate: isoDate(editing.effectiveDate),
-          pricePerKg: editing.pricePerKg,
-          notes: editing.notes ?? '',
-        } : undefined"
+        :initial-value="createInitialValue"
         @submit="submitPrice"
       />
     </UiDialog>

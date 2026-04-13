@@ -6,7 +6,6 @@ import type {
   GrossIncomeItem,
   MonthlySummaryResponse,
   OrderItem,
-  PriceItem,
   ProductionItem,
 } from '../types/domain'
 
@@ -18,10 +17,10 @@ definePageMeta({
 const api = useApi()
 const auth = useAuthStore()
 const toast = useToast()
+const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
 const error = ref('')
-const currentPrice = ref<PriceItem | null>(null)
 const todayOrders = ref<OrderItem[]>([])
 const todayCalendar = ref<CalendarDay | null>(null)
 const productions = ref<ProductionItem[]>([])
@@ -39,9 +38,7 @@ async function loadDashboard() {
   try {
     const today = isoDate(new Date())
     const tasks: Array<Promise<unknown>> = [
-      api.get<PriceItem>('/prices/current').then((value) => {
-        currentPrice.value = value
-      }),
+      loadTodayPriceStatus(),
       api.get<OrderItem[]>('/orders', {
         deliveryDate: today,
         page: 1,
@@ -103,7 +100,7 @@ const dashboardCards = computed(() => [
   {
     label: 'Harga Aktif',
     value: currentPrice.value ? formatRupiah(currentPrice.value.pricePerKg) : '-',
-    helper: currentPrice.value ? formatDate(currentPrice.value.effectiveDate) : 'Belum ada data harga',
+    helper: currentPrice.value ? formatDate(currentPrice.value.effectiveDate) : 'Harga hari ini belum diinput',
   },
   {
     label: 'Order Hari Ini',
@@ -148,6 +145,16 @@ async function createOrder(payload: Record<string, unknown>) {
       <UiButton icon="refresh" @click="loadDashboard">Coba lagi</UiButton>
     </ErrorState>
     <template v-else>
+      <TodayPriceNotice
+        v-if="todayPriceMissing"
+        title="Harga telur hari ini belum diinput"
+        :message="auth.role === 'ADMIN'
+          ? 'Tambahkan harga telur untuk hari ini agar order kirim hari ini bisa langsung lock harga dan proses pengantaran tidak terblok.'
+          : 'Order kirim hari ini dan proses pengantaran akan tertahan sampai admin menambahkan harga telur untuk hari ini.'"
+        :show-action="auth.role === 'ADMIN'"
+        @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
+      />
+
       <div class="grid gap-4 md:grid-cols-3">
         <MetricCard
           v-for="card in dashboardCards"

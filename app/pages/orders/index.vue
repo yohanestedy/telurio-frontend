@@ -19,6 +19,7 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const { can } = useAuth()
 const pagination = usePagination()
+const { todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
 const error = ref('')
@@ -221,8 +222,12 @@ async function onLimitChange(nextLimit: number) {
   await loadOrders()
 }
 
+async function refreshOrdersContext() {
+  await Promise.all([loadTodayPriceStatus(), loadOrders()])
+}
+
 onMounted(async () => {
-  await Promise.all([loadSupporting(), loadOrders()])
+  await Promise.all([loadSupporting(), loadTodayPriceStatus(), loadOrders()])
 })
 
 watch([sortBy, sortOrder], () => {
@@ -236,13 +241,23 @@ watch([sortBy, sortOrder], () => {
 
 <template>
   <div class="space-y-4">
+    <TodayPriceNotice
+      v-if="todayPriceMissing"
+      title="Harga telur hari ini belum tersedia"
+      :message="auth.role === 'ADMIN'
+        ? 'Order dengan tanggal kirim hari ini tidak bisa dibuat atau diantar sebelum harga telur hari ini ditambahkan.'
+        : 'Order dengan tanggal kirim hari ini tidak bisa dibuat lunas atau diproses pengantarannya sampai admin menambahkan harga telur hari ini.'"
+      :show-action="auth.role === 'ADMIN'"
+      @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
+    />
+
     <ListHeaderCard
       icon="orders"
       title="Daftar Order"
       description="Delivery status dan payment status dipisah sesuai flow bisnis."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadOrders">Refresh</UiButton>
+        <UiButton variant="secondary" icon="refresh" @click="refreshOrdersContext">Refresh</UiButton>
         <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah order</UiButton>
       </template>
     </ListHeaderCard>
