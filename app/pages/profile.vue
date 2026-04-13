@@ -7,7 +7,9 @@ definePageMeta({
 const api = useApi()
 const auth = useAuthStore()
 const toast = useToast()
+const { logout } = useAuth()
 const submitting = ref(false)
+const logoutDialogOpen = ref(false)
 
 async function changePassword(payload: { currentPassword: string; newPassword: string }) {
   submitting.value = true
@@ -19,6 +21,11 @@ async function changePassword(payload: { currentPassword: string; newPassword: s
   } finally {
     submitting.value = false
   }
+}
+
+async function confirmLogout() {
+  logoutDialogOpen.value = false
+  await logout()
 }
 </script>
 
@@ -44,8 +51,9 @@ async function changePassword(payload: { currentPassword: string; newPassword: s
     <TableCard title="Keamanan" description="Ubah password akun untuk menjaga akses tetap aman." icon="key">
       <FormsChangePasswordForm :submitting="submitting" @submit="changePassword" />
       <div class="mt-4 flex justify-end">
-        <UiButton variant="ghost" icon="logout" @click="useAuth().logout()">Logout</UiButton>
+        <UiButton variant="ghost" icon="logout" @click="logoutDialogOpen = true">Logout</UiButton>
       </div>
+      <LogoutConfirmDialog v-model:open="logoutDialogOpen" @confirm="confirmLogout" />
     </TableCard>
   </div>
 </template>

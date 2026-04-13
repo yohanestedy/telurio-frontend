@@ -1,6 +1,14 @@
 <script setup lang="ts">
 const auth = useAuthStore()
 const menu = useRoleMenu()
+const { logout } = useAuth()
+
+const logoutDialogOpen = ref(false)
+
+async function confirmLogout() {
+  logoutDialogOpen.value = false
+  await logout()
+}
 </script>
 
 <template>
@@ -48,9 +56,11 @@ const menu = useRoleMenu()
           Scope kandang: {{ auth.user.coopAccesses.length || 0 }}
         </p>
         <div class="mt-4 flex justify-end">
-          <UiButton variant="ghost" size="sm" icon="logout" @click="useAuth().logout()">Logout</UiButton>
+          <UiButton variant="ghost" size="sm" icon="logout" @click="logoutDialogOpen = true">Logout</UiButton>
         </div>
       </div>
+
+      <LogoutConfirmDialog v-model:open="logoutDialogOpen" @confirm="confirmLogout" />
     </div>
   </aside>
 </template>

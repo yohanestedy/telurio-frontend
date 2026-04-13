@@ -7,6 +7,7 @@ const { logout } = useAuth()
 
 const moreOpen = ref(false)
 const morePanelRef = ref<HTMLElement | null>(null)
+const logoutDialogOpen = ref(false)
 
 const primaryItems = computed(() =>
   menu.value.mobile.filter((item) => item.label !== 'More').slice(0, 3),
@@ -37,6 +38,12 @@ function closeMore() {
 
 function toggleMore() {
   moreOpen.value = !moreOpen.value
+}
+
+async function confirmLogout() {
+  logoutDialogOpen.value = false
+  closeMore()
+  await logout()
 }
 
 onClickOutside(morePanelRef, () => {
@@ -94,7 +101,7 @@ watch(
 
             <button
               class="rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-left transition hover:bg-slate-50"
-              @click="logout()"
+              @click="logoutDialogOpen = true"
             >
               <div class="flex items-start gap-3">
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-2 text-ink-700">
@@ -139,4 +146,6 @@ watch(
       </button>
     </div>
   </nav>
+
+  <LogoutConfirmDialog v-model:open="logoutDialogOpen" @confirm="confirmLogout" />
 </template>
