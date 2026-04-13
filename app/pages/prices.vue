@@ -181,7 +181,7 @@ watch(dialogOpen, (isOpen) => {
       <MetricCard
         label="Harga aktif"
         :value="currentPrice ? formatRupiah(currentPrice.pricePerKg) : '-'"
-        :helper="currentPrice ? formatDate(currentPrice.effectiveDate) : 'Belum ada harga aktif'"
+        :helper="currentPrice ? formatDate(currentPrice.effectiveDate) : 'Harga untuk hari ini belum tersedia'"
         icon="prices"
       />
     </ListHeaderCard>
@@ -189,7 +189,7 @@ watch(dialogOpen, (isOpen) => {
     <TodayPriceNotice
       v-if="todayPriceMissing"
       title="Harga telur hari ini belum diinput"
-      message="Order kirim hari ini tidak bisa dibuat lunas atau diproses pengantarannya sampai harga untuk tanggal hari ini tersedia."
+      message="Input harga untuk hari ini terlebih dahulu agar order dengan tanggal kirim hari ini bisa diproses tanpa kendala."
       :show-action="true"
       @action="openTodayPriceDialog"
     />

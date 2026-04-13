@@ -243,10 +243,10 @@ watch([sortBy, sortOrder], () => {
   <div class="space-y-4">
     <TodayPriceNotice
       v-if="todayPriceMissing"
-      title="Harga telur hari ini belum tersedia"
+      title="Harga telur hari ini belum diinput"
       :message="auth.role === 'ADMIN'
-        ? 'Order dengan tanggal kirim hari ini tidak bisa dibuat atau diantar sebelum harga telur hari ini ditambahkan.'
-        : 'Order dengan tanggal kirim hari ini tidak bisa dibuat lunas atau diproses pengantarannya sampai admin menambahkan harga telur hari ini.'"
+        ? 'Order dengan tanggal kirim hari ini belum bisa dibuat atau diproses pengantarannya sampai harga hari ini diinput.'
+        : 'Order dengan tanggal kirim hari ini belum bisa diproses sampai admin menginput harga telur untuk hari ini.'"
       :show-action="auth.role === 'ADMIN'"
       @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
     />

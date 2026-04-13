@@ -149,8 +149,8 @@ async function createOrder(payload: Record<string, unknown>) {
         v-if="todayPriceMissing"
         title="Harga telur hari ini belum diinput"
         :message="auth.role === 'ADMIN'
-          ? 'Tambahkan harga telur untuk hari ini agar order kirim hari ini bisa langsung lock harga dan proses pengantaran tidak terblok.'
-          : 'Order kirim hari ini dan proses pengantaran akan tertahan sampai admin menambahkan harga telur untuk hari ini.'"
+          ? 'Input harga untuk hari ini agar order dengan tanggal kirim hari ini bisa langsung mengunci harga dan siap diproses.'
+          : 'Order dengan tanggal kirim hari ini akan tertahan sampai admin menginput harga telur untuk hari ini.'"
         :show-action="auth.role === 'ADMIN'"
         @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
       />

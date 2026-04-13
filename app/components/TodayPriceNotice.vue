@@ -7,8 +7,8 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  title: 'Harga hari ini belum tersedia',
-  actionLabel: 'Tambah harga hari ini',
+  title: 'Harga telur hari ini belum diinput',
+  actionLabel: 'Input harga hari ini',
   showAction: false,
 })
 
