@@ -28,7 +28,7 @@ function confirm() {
     @update:open="emit('update:open', $event)"
   >
     <div class="space-y-5">
-      <div class="rounded-2xl border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
+      <div class="rounded-2xl border border-brand-200/80 bg-brand-50/85 px-4 py-3 text-sm text-[#8f4518]">
         Pastikan pekerjaan penting sudah tersimpan sebelum keluar dari aplikasi.
       </div>
 

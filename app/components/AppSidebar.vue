@@ -16,7 +16,7 @@ async function confirmLogout() {
     <div class="sticky top-4 space-y-6">
       <div class="glass-panel rounded-[28px] p-5">
         <div class="flex items-start gap-3">
-          <div class="rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 p-3 text-white shadow-[0_12px_24px_rgba(22,101,52,0.22)]">
+          <div class="rounded-2xl bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 p-3 text-white shadow-[0_12px_24px_rgba(243,95,16,0.22)]">
             <UiIcon name="productions" class="h-5 w-5" />
           </div>
           <div>
@@ -36,10 +36,10 @@ async function confirmLogout() {
           v-for="item in menu.desktop"
           :key="item.path"
           :to="item.path"
-          class="mb-1 flex items-center gap-3 rounded-2xl px-4 py-3 transition hover:bg-slate-50"
-          active-class="bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-soft"
+          class="mb-1 flex items-center gap-3 rounded-2xl px-4 py-3 transition hover:bg-orange-50/70"
+          active-class="bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-[0_16px_36px_rgba(243,95,16,0.18)]"
         >
-          <div class="rounded-xl bg-slate-100/80 p-2 text-brand-700 transition">
+          <div class="rounded-xl bg-orange-50/80 p-2 text-brand-700 transition">
             <UiIcon :name="item.icon" class="h-4 w-4" />
           </div>
           <div>
