@@ -128,7 +128,7 @@ onClickOutside(perPageMenuRef, () => {
         <div
           v-if="perPageMenuOpen"
           ref="perPageMenuRef"
-          class="surface-outline absolute right-0 top-[calc(100%+0.55rem)] z-[120] w-36 rounded-2xl p-1.5 shadow-soft"
+          class="glass-popover absolute right-0 top-[calc(100%+0.55rem)] z-[120] w-36 rounded-2xl p-1.5"
         >
           <button
             v-for="size in props.pageSizeOptions"
@@ -146,7 +146,7 @@ onClickOutside(perPageMenuRef, () => {
       <div
         v-if="activeMenu === 'sort'"
         ref="sortMenuRef"
-        class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] rounded-2xl p-3 shadow-soft"
+        class="glass-popover absolute left-0 top-[calc(100%+0.55rem)] z-[120] rounded-2xl p-3"
         :class="sortMenuWidthClass"
       >
         <slot name="sort-menu" :close-menus="closeMenus" />
@@ -155,7 +155,7 @@ onClickOutside(perPageMenuRef, () => {
       <div
         v-if="activeMenu === 'filter'"
         ref="filterMenuRef"
-        class="surface-outline absolute left-0 top-[calc(100%+0.55rem)] z-[120] rounded-2xl p-3 shadow-soft"
+        class="glass-popover absolute left-0 top-[calc(100%+0.55rem)] z-[120] rounded-2xl p-3"
         :class="filterMenuWidthClass"
       >
         <slot name="filter-menu" :close-menus="closeMenus" />

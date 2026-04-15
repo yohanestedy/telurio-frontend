@@ -98,7 +98,7 @@ onClickOutside(rootRef, () => {
 
       <div
         v-if="open"
-        class="surface-outline absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl shadow-lg"
+        class="glass-popover absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl"
       >
         <div class="border-b border-slate-200 p-2">
           <div class="relative">
