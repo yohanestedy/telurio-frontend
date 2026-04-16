@@ -48,8 +48,13 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       const api = useApi();
       user.value = await api.get<UserProfile>("/auth/me");
-    } catch {
-      clearSession();
+    } catch (caught) {
+      const api = useApi();
+      const mapped = api.mapError(caught);
+
+      if (mapped.status !== 401) {
+        clearSession();
+      }
     } finally {
       loading.value = false;
       initialized.value = true;

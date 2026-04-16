@@ -56,6 +56,7 @@ function mapError(error: unknown): ApiClientError {
 
 export function useApi() {
   const auth = useAuthStore()
+  const ui = useUiStore()
 
   async function requestEnvelope<TResponse, TBody = unknown>(
     path: string,
@@ -81,8 +82,8 @@ export function useApi() {
     } catch (error) {
       const mapped = mapError(error)
 
-      if (mapped.status === 401) {
-        auth.clearSession()
+      if (mapped.status === 401 && options.auth !== false) {
+        ui.requireUnauthorizedLogout(mapped.message)
       }
 
       throw mapped

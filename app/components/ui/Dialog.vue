@@ -6,12 +6,14 @@ interface Props {
   title?: string
   description?: string
   size?: 'md' | 'lg' | 'xl'
+  closable?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: '',
   description: '',
   size: 'lg',
+  closable: true,
 })
 
 const emit = defineEmits<{
@@ -28,7 +30,7 @@ function close() {
     <div
       v-if="props.open"
       class="fixed inset-0 z-50 overflow-y-auto bg-ink-900/25 p-3 backdrop-blur-sm sm:p-4"
-      @click.self="close"
+      @click.self="props.closable ? close() : null"
     >
       <div class="flex min-h-full items-center justify-center">
         <div
@@ -48,7 +50,7 @@ function close() {
               <h3 class="text-lg font-semibold text-ink-900">{{ title }}</h3>
               <p v-if="description" class="mt-1 text-sm text-ink-600">{{ description }}</p>
             </div>
-            <UiButton variant="ghost" size="sm" icon="close" @click="close">Tutup</UiButton>
+            <UiButton v-if="props.closable" variant="ghost" size="sm" icon="close" @click="close">Tutup</UiButton>
           </div>
           <slot />
         </div>
