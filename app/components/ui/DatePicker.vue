@@ -173,6 +173,7 @@ function selectTomorrow() {
       <DatePickerContent
         align="start"
         :side-offset="10"
+        data-ui-date-picker-content="true"
         class="z-[80] w-[min(94vw,20rem)] rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-[0_20px_45px_rgba(15,23,42,0.14)] backdrop-blur-md"
       >
         <DatePickerCalendar

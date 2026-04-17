@@ -271,46 +271,25 @@ watch(
               </select>
             </div>
 
-            <div class="space-y-1.5">
-              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
-                <span>Tanggal spesifik</span>
-              </p>
-              <input
-                :value="draftFilters.date"
-                type="date"
-                class="field-shell py-2.5"
-                @input="draftFilters.date = ($event.target as HTMLInputElement).value"
-              >
-            </div>
+            <UiDatePicker
+              v-model="draftFilters.date"
+              label="Tanggal spesifik"
+              placeholder="Pilih tanggal"
+            />
 
             <div class="grid gap-3 sm:grid-cols-2">
-              <div class="space-y-1.5">
-                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                  <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
-                  <span>Dari tanggal</span>
-                </p>
-                <input
-                  :value="draftFilters.startDate"
-                  type="date"
-                  class="field-shell py-2.5"
-                  :disabled="Boolean(draftFilters.date)"
-                  @input="draftFilters.startDate = ($event.target as HTMLInputElement).value"
-                >
-              </div>
-              <div class="space-y-1.5">
-                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                  <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
-                  <span>Sampai tanggal</span>
-                </p>
-                <input
-                  :value="draftFilters.endDate"
-                  type="date"
-                  class="field-shell py-2.5"
-                  :disabled="Boolean(draftFilters.date)"
-                  @input="draftFilters.endDate = ($event.target as HTMLInputElement).value"
-                >
-              </div>
+              <UiDatePicker
+                v-model="draftFilters.startDate"
+                label="Dari tanggal"
+                placeholder="Pilih tanggal awal"
+                :disabled="Boolean(draftFilters.date)"
+              />
+              <UiDatePicker
+                v-model="draftFilters.endDate"
+                label="Sampai tanggal"
+                placeholder="Pilih tanggal akhir"
+                :disabled="Boolean(draftFilters.date)"
+              />
             </div>
           </div>
 

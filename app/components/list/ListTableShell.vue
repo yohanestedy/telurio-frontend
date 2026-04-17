@@ -61,11 +61,17 @@ onClickOutside(sortMenuRef, () => {
   }
 })
 
-onClickOutside(filterMenuRef, () => {
-  if (activeMenu.value === 'filter') {
-    activeMenu.value = null
-  }
-})
+onClickOutside(
+  filterMenuRef,
+  () => {
+    if (activeMenu.value === 'filter') {
+      activeMenu.value = null
+    }
+  },
+  {
+    ignore: ['[data-ui-date-picker-content="true"]'],
+  },
+)
 
 onClickOutside(perPageMenuRef, () => {
   perPageMenuOpen.value = false

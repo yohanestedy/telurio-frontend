@@ -97,7 +97,7 @@ const orderByOptions = [
   { label: 'Status delivery', value: 'deliveryStatus', kind: 'text' as const },
   { label: 'Status payment', value: 'paymentStatus', kind: 'text' as const },
 ]
-const pageSizeOptions = defaultPageSizeOptions
+const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 
 const customerOptions = computed(() =>
   customers.value.map((item) => ({ label: item.name, value: item.id })),
@@ -288,7 +288,7 @@ watch(
       :filter-applied="Boolean(deliveryStatus) || Boolean(paymentStatus) || Boolean(deliveryDateFilter) || Boolean(startDateFilter) || Boolean(endDateFilter)"
       :page-range-label="pageRangeLabel"
       :current-limit="pagination.limit.value"
-      :page-size-options="pageSizeOptions"
+      :page-size-options="[...pageSizeOptions]"
       :loading="loading"
       :has-prev-page="pagination.hasPrevPage.value"
       :has-next-page="pagination.hasNextPage.value"
@@ -362,46 +362,25 @@ watch(
               </select>
             </div>
 
-            <div class="space-y-1.5">
-              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
-                <span>Tanggal kirim spesifik</span>
-              </p>
-              <input
-                :value="draftFilters.deliveryDate"
-                type="date"
-                class="field-shell py-2.5"
-                @input="draftFilters.deliveryDate = ($event.target as HTMLInputElement).value"
-              >
-            </div>
+            <UiDatePicker
+              v-model="draftFilters.deliveryDate"
+              label="Tanggal kirim spesifik"
+              placeholder="Pilih tanggal kirim"
+            />
 
             <div class="grid gap-3 sm:grid-cols-2">
-              <div class="space-y-1.5">
-                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                  <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
-                  <span>Dari tanggal</span>
-                </p>
-                <input
-                  :value="draftFilters.startDate"
-                  type="date"
-                  class="field-shell py-2.5"
-                  :disabled="Boolean(draftFilters.deliveryDate)"
-                  @input="draftFilters.startDate = ($event.target as HTMLInputElement).value"
-                >
-              </div>
-              <div class="space-y-1.5">
-                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                  <UiIcon name="calendar" class="h-3.5 w-3.5 text-ink-500" />
-                  <span>Sampai tanggal</span>
-                </p>
-                <input
-                  :value="draftFilters.endDate"
-                  type="date"
-                  class="field-shell py-2.5"
-                  :disabled="Boolean(draftFilters.deliveryDate)"
-                  @input="draftFilters.endDate = ($event.target as HTMLInputElement).value"
-                >
-              </div>
+              <UiDatePicker
+                v-model="draftFilters.startDate"
+                label="Dari tanggal"
+                placeholder="Pilih tanggal awal"
+                :disabled="Boolean(draftFilters.deliveryDate)"
+              />
+              <UiDatePicker
+                v-model="draftFilters.endDate"
+                label="Sampai tanggal"
+                placeholder="Pilih tanggal akhir"
+                :disabled="Boolean(draftFilters.deliveryDate)"
+              />
             </div>
           </div>
 
