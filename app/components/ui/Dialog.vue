@@ -29,7 +29,7 @@ function close() {
   <Teleport to="body">
     <div
       v-if="props.open"
-      class="fixed inset-0 z-50 overflow-y-auto bg-ink-900/25 p-3 backdrop-blur-sm sm:p-4"
+      class="fixed inset-0 z-[70] overflow-y-auto bg-ink-900/25 p-3 backdrop-blur-sm sm:p-4"
       @click.self="props.closable ? close() : null"
     >
       <div class="flex min-h-full items-center justify-center">
