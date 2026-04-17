@@ -151,8 +151,9 @@ export interface ExpenseItem {
   date: string;
   coopId: string;
   coopName: string;
-  categoryLabel: string;
+  // categoryLabel removed
   expenseCategoryId: string | null;
+  expenseCategoryName?: string | null;
   description: string | null;
   amount: string;
   notes: string | null;

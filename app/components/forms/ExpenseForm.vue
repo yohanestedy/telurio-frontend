@@ -7,7 +7,7 @@ const schema = z.object({
   date: z.string().min(1, 'Tanggal wajib diisi'),
   coopId: z.string().min(1, 'Kandang wajib dipilih'),
   expenseCategoryId: z.string().optional(),
-  categoryLabel: z.string().min(2, 'Label kategori minimal 2 karakter'),
+  // categoryLabel removed
   description: z.string().optional(),
   amount: z.coerce.number().min(0, 'Jumlah tidak boleh negatif'),
   notes: z.string().optional(),
@@ -17,7 +17,7 @@ type FormValues = {
   date: string
   coopId: string
   expenseCategoryId: string
-  categoryLabel: string
+  // categoryLabel removed
   description: string
   amount: string
   notes: string
@@ -37,7 +37,7 @@ const emit = defineEmits<{
       date?: string
       coopId?: string
       expenseCategoryId?: string | null
-      categoryLabel: string
+      // categoryLabel removed
       description?: string
       amount: number
       notes?: string
@@ -50,7 +50,7 @@ const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<Form
     date: '',
     coopId: '',
     expenseCategoryId: '',
-    categoryLabel: '',
+    // categoryLabel removed
     description: '',
     amount: '',
     notes: '',
@@ -60,7 +60,7 @@ const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<Form
 const [date] = defineField('date')
 const [coopId] = defineField('coopId')
 const [expenseCategoryId] = defineField('expenseCategoryId')
-const [categoryLabel] = defineField('categoryLabel')
+// categoryLabel removed
 const [description] = defineField('description')
 const [amount] = defineField('amount')
 const [notes] = defineField('notes')
@@ -74,7 +74,7 @@ watch(
         date: value?.date ?? '',
         coopId: value?.coopId ?? '',
         expenseCategoryId: value?.expenseCategoryId ?? '',
-        categoryLabel: value?.categoryLabel ?? '',
+        // categoryLabel removed
         description: value?.description ?? '',
         amount: value?.amount ?? '',
         notes: value?.notes ?? '',
@@ -89,9 +89,7 @@ watch(expenseCategoryId, (value) => {
     return
   }
   const selected = props.categoryOptions.find((item) => item.value === value)
-  if (selected) {
-    categoryLabel.value = selected.label
-  }
+  // categoryLabel removed
 })
 
 const onSubmit = handleSubmit((values) => {
@@ -102,12 +100,12 @@ const onSubmit = handleSubmit((values) => {
   }
 
   emit('submit', {
+    date: parsed.data.date,
     ...(props.isEdit ? {} : {
-      date: parsed.data.date,
       coopId: parsed.data.coopId,
     }),
     expenseCategoryId: parsed.data.expenseCategoryId || null,
-    categoryLabel: parsed.data.categoryLabel,
+    // categoryLabel removed
     description: parsed.data.description || undefined,
     amount: parsed.data.amount,
     notes: parsed.data.notes || undefined,
@@ -117,7 +115,7 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiInput v-if="!isEdit" v-model="date" type="date" label="Tanggal" :error="errors.date" />
+    <UiInput v-model="date" type="date" label="Tanggal" :error="errors.date" />
     <UiSelect
       v-if="!isEdit"
       v-model="coopId"
@@ -133,7 +131,7 @@ const onSubmit = handleSubmit((values) => {
       placeholder="Opsional"
       :error="errors.expenseCategoryId"
     />
-    <UiInput v-model="categoryLabel" label="Label kategori" :error="errors.categoryLabel" />
+    <!-- categoryLabel removed -->
     <UiInput v-model="amount" type="number" label="Jumlah" :error="errors.amount" />
     <UiInput v-model="description" label="Deskripsi" :error="errors.description" />
     <div class="md:col-span-2">

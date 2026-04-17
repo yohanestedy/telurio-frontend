@@ -37,9 +37,9 @@ const orderByOptions = [
   { label: 'Tanggal expense', value: 'date', kind: 'date' as const },
   { label: 'Dibuat', value: 'createdAt', kind: 'date' as const },
   { label: 'Jumlah', value: 'amount', kind: 'number' as const },
-  { label: 'Label kategori', value: 'categoryLabel', kind: 'text' as const },
+  // categoryLabel removed
 ]
-const pageSizeOptions = defaultPageSizeOptions
+const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
   { lines: [{ class: 'w-10/12' }] },
@@ -133,7 +133,7 @@ async function submitExpense(payload: Record<string, unknown>) {
     if (editing.value) {
       await api.patch(`/expenses/${editing.value.id}`, {
         date: payload.date,
-        categoryLabel: payload.categoryLabel,
+        expenseCategoryId: payload.expenseCategoryId,
         description: payload.description,
         amount: payload.amount,
         notes: payload.notes,
@@ -390,7 +390,7 @@ watch(
             <tr v-for="item in expenses" :key="item.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">{{ formatDate(item.date) }}</td>
               <td class="px-4 py-4 pr-4">{{ item.coopName }}</td>
-              <td class="px-4 py-4 pr-4">{{ item.categoryLabel }}</td>
+              <td class="px-4 py-4 pr-4">{{ item.expenseCategoryName || '-' }}</td>
               <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.amount) }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
@@ -429,7 +429,6 @@ watch(
           date: isoDate(editing.date),
           coopId: editing.coopId,
           expenseCategoryId: editing.expenseCategoryId ?? '',
-          categoryLabel: editing.categoryLabel,
           description: editing.description ?? '',
           amount: editing.amount,
           notes: editing.notes ?? '',

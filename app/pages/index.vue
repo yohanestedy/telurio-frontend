@@ -290,7 +290,7 @@ async function createOrder(payload: Record<string, unknown>) {
                 :key="item.id"
                 class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
               >
-                {{ item.coopName }} • {{ item.categoryLabel }} • {{ formatRupiah(item.amount) }}
+                {{ item.coopName }} • {{ formatRupiah(item.amount) }}
               </div>
               <p v-if="!expenses.length" class="text-ink-500">Belum ada pengeluaran terbaru.</p>
             </template>
