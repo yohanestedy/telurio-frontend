@@ -115,7 +115,12 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiInput v-model="date" type="date" label="Tanggal" :error="errors.date" />
+    <UiDatePicker
+      v-model="date"
+      label="Tanggal"
+      placeholder="Pilih tanggal"
+      :error="errors.date"
+    />
     <UiSelect
       v-if="!isEdit"
       v-model="coopId"

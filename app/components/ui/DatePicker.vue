@@ -4,6 +4,7 @@ import {
   DateFormatter,
   getLocalTimeZone,
   parseDate,
+  today,
 } from '@internationalized/date'
 import {
   DatePickerCalendar,
@@ -98,6 +99,49 @@ const displayValue = computed(() => {
 
   return formatter.format(value.value.toDate(getLocalTimeZone()))
 })
+
+const todayValue = computed(() => today(getLocalTimeZone()))
+const tomorrowValue = computed(() => todayValue.value.add({ days: 1 }))
+
+function isWithinSelectableRange(target: DateValue) {
+  if (props.disabled) {
+    return false
+  }
+
+  if (minValue.value && target.compare(minValue.value) < 0) {
+    return false
+  }
+
+  if (maxValue.value && target.compare(maxValue.value) > 0) {
+    return false
+  }
+
+  return true
+}
+
+const canSelectToday = computed(() => {
+  return isWithinSelectableRange(todayValue.value)
+})
+
+const canSelectTomorrow = computed(() => {
+  return isWithinSelectableRange(tomorrowValue.value)
+})
+
+function selectToday() {
+  if (!canSelectToday.value) {
+    return
+  }
+
+  value.value = todayValue.value
+}
+
+function selectTomorrow() {
+  if (!canSelectTomorrow.value) {
+    return
+  }
+
+  value.value = tomorrowValue.value
+}
 </script>
 
 <template>
@@ -131,7 +175,11 @@ const displayValue = computed(() => {
         :side-offset="10"
         class="z-[80] w-[min(94vw,20rem)] rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-[0_20px_45px_rgba(15,23,42,0.14)] backdrop-blur-md"
       >
-        <DatePickerCalendar v-slot="{ weekDays, grid }" class="space-y-3">
+        <DatePickerCalendar
+          v-slot="{ weekDays, grid }"
+          :week-starts-on="1"
+          class="space-y-3"
+        >
           <DatePickerHeader class="flex items-center justify-between gap-2">
             <DatePickerPrev v-slot="{ disabled: prevDisabled }" as-child>
               <button
@@ -188,12 +236,31 @@ const displayValue = computed(() => {
                     <DatePickerCellTrigger
                       :day="dateObj"
                       :month="month.value"
-                      class="flex h-9 w-9 items-center justify-center rounded-xl text-sm text-ink-700 outline-none transition hover:bg-brand-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-35 data-[outside-view]:text-ink-300 data-[selected]:bg-brand-600 data-[selected]:font-semibold data-[selected]:text-white data-[selected]:shadow-sm data-[today]:font-semibold focus-visible:ring-2 focus-visible:ring-brand-300"
+                      class="flex h-9 w-9 items-center justify-center rounded-xl text-sm text-ink-700 outline-none transition hover:bg-brand-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-35 data-[outside-view]:text-ink-300 data-[selected]:bg-brand-600 data-[selected]:font-semibold data-[selected]:text-white data-[selected]:shadow-sm data-[today]:bg-brand-100 data-[today]:font-bold data-[today]:text-brand-800 data-[today]:ring-2 data-[today]:ring-brand-300 focus-visible:ring-2 focus-visible:ring-brand-300"
                     />
                   </DatePickerCell>
                 </DatePickerGridRow>
               </DatePickerGridBody>
             </DatePickerGrid>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
+            <button
+              type="button"
+              class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+              :disabled="!canSelectTomorrow"
+              @click="selectTomorrow"
+            >
+              Besok
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+              :disabled="!canSelectToday"
+              @click="selectToday"
+            >
+              Hari ini
+            </button>
           </div>
         </DatePickerCalendar>
       </DatePickerContent>
