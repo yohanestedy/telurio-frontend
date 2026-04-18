@@ -2,10 +2,15 @@ import type { Role } from '../types/domain'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore()
+  const isPublic = Boolean(to.meta.public)
+
+  // Public pages should not depend on auth bootstrap/API calls.
+  if (isPublic && to.path !== '/login') {
+    return
+  }
 
   await auth.bootstrap()
 
-  const isPublic = Boolean(to.meta.public)
   const roles = (to.meta.roles as Role[] | undefined) ?? []
 
   if (!auth.isAuthenticated && !isPublic) {

@@ -203,7 +203,9 @@ async function downloadShareImage() {
   }
 
   try {
-    const response = await fetch(shareImageUrl.value)
+    const response = await fetch(shareImageUrl.value, {
+      credentials: 'omit',
+    })
     if (!response.ok) {
       throw new Error('Unable to download image')
     }
