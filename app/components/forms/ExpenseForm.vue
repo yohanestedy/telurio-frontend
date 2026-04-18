@@ -65,6 +65,18 @@ const [description] = defineField('description')
 const [amount] = defineField('amount')
 const [notes] = defineField('notes')
 
+function getAutoSelectedCoopId() {
+  if (props.isEdit) {
+    return ''
+  }
+
+  if (props.coopOptions.length !== 1) {
+    return ''
+  }
+
+  return props.coopOptions[0]?.value ?? ''
+}
+
 watch(
   () => JSON.stringify(props.initialValue ?? null),
   () => {
@@ -72,7 +84,7 @@ watch(
     resetForm({
       values: {
         date: value?.date ?? '',
-        coopId: value?.coopId ?? '',
+        coopId: value?.coopId ?? getAutoSelectedCoopId(),
         expenseCategoryId: value?.expenseCategoryId ?? '',
         // categoryLabel removed
         description: value?.description ?? '',
@@ -82,6 +94,17 @@ watch(
     })
   },
   { immediate: true },
+)
+
+watch(
+  () => props.coopOptions,
+  (nextOptions) => {
+    if (props.isEdit || coopId.value || nextOptions.length !== 1) {
+      return
+    }
+
+    coopId.value = nextOptions[0]?.value ?? ''
+  },
 )
 
 watch(expenseCategoryId, (value) => {
