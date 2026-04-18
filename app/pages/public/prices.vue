@@ -197,6 +197,74 @@ async function copyPageLink() {
   }
 }
 
+function extractSvgSize(svgContent: string) {
+  const widthMatch = svgContent.match(/width="([\d.]+)(px)?"/i)
+  const heightMatch = svgContent.match(/height="([\d.]+)(px)?"/i)
+
+  if (widthMatch && heightMatch) {
+    return {
+      width: Math.max(1, Math.round(Number(widthMatch[1]))),
+      height: Math.max(1, Math.round(Number(heightMatch[1]))),
+    }
+  }
+
+  const viewBoxMatch = svgContent.match(/viewBox="[\d.\-]+\s+[\d.\-]+\s+([\d.\-]+)\s+([\d.\-]+)"/i)
+  if (viewBoxMatch) {
+    return {
+      width: Math.max(1, Math.round(Number(viewBoxMatch[1]))),
+      height: Math.max(1, Math.round(Number(viewBoxMatch[2]))),
+    }
+  }
+
+  return {
+    width: 1080,
+    height: 1080,
+  }
+}
+
+function loadImageFromObjectUrl(objectUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.decoding = 'sync'
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('Unable to load SVG image for conversion'))
+    image.src = objectUrl
+  })
+}
+
+async function convertSvgBlobToPngBlob(svgBlob: Blob): Promise<Blob> {
+  const svgContent = await svgBlob.text()
+  const { width, height } = extractSvgSize(svgContent)
+  const svgObjectUrl = window.URL.createObjectURL(new Blob([svgContent], { type: 'image/svg+xml' }))
+
+  try {
+    const image = await loadImageFromObjectUrl(svgObjectUrl)
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const context = canvas.getContext('2d')
+    if (!context) {
+      throw new Error('Canvas context is unavailable')
+    }
+
+    context.drawImage(image, 0, 0, width, height)
+
+    const pngBlob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/png')
+    })
+
+    if (!pngBlob) {
+      throw new Error('Unable to create PNG blob')
+    }
+
+    return pngBlob
+  }
+  finally {
+    window.URL.revokeObjectURL(svgObjectUrl)
+  }
+}
+
 async function downloadShareImage() {
   if (!import.meta.client) {
     return
@@ -211,17 +279,30 @@ async function downloadShareImage() {
     }
 
     const imageBlob = await response.blob()
-    const extension = imageBlob.type === 'image/svg+xml' ? 'svg' : 'png'
-    const objectUrl = window.URL.createObjectURL(imageBlob)
+    const filenameBase = `harga-telur-${currentPrice.value ? isoDate(currentPrice.value.effectiveDate) : isoDate(new Date())}`
+    let downloadBlob = imageBlob
+    let extension: 'png' | 'svg' = 'png'
+
+    if (imageBlob.type === 'image/svg+xml') {
+      try {
+        downloadBlob = await convertSvgBlobToPngBlob(imageBlob)
+      }
+      catch {
+        downloadBlob = imageBlob
+        extension = 'svg'
+      }
+    }
+
+    const objectUrl = window.URL.createObjectURL(downloadBlob)
     const anchor = document.createElement('a')
     anchor.href = objectUrl
-    anchor.download = `harga-telur-${currentPrice.value ? isoDate(currentPrice.value.effectiveDate) : isoDate(new Date())}.${extension}`
+    anchor.download = `${filenameBase}.${extension}`
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
     window.URL.revokeObjectURL(objectUrl)
 
-    toast.success('Gambar berhasil diunduh')
+    toast.success(`Gambar ${extension.toUpperCase()} berhasil diunduh`)
     shareMenuOpen.value = false
   }
   catch {
