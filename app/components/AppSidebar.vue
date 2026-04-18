@@ -14,7 +14,7 @@ async function confirmLogout() {
 <template>
   <aside class="hidden border-r border-slate-200/70 bg-white/64 p-4 backdrop-blur-xl lg:block">
     <div class="sticky top-4 space-y-6">
-      <div class="glass-panel rounded-[28px] p-5">
+      <!-- <div class="glass-panel rounded-[28px] p-5">
         <div class="flex items-start gap-3">
           <div class="rounded-2xl bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 p-3 text-white shadow-[0_12px_24px_rgba(243,95,16,0.22)]">
             <UiIcon name="productions" class="h-5 w-5" />
@@ -29,7 +29,7 @@ async function confirmLogout() {
             </p>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <nav class="glass-panel rounded-[28px] p-3">
         <NuxtLink
