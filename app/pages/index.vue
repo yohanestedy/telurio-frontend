@@ -30,6 +30,7 @@ const monthlySummary = ref<MonthlySummaryResponse | null>(null)
 const customers = ref<CustomerItem[]>([])
 const createOrderOpen = ref(false)
 const creatingOrder = ref(false)
+const shareImageVersion = ref(Date.now())
 
 async function loadDashboard() {
   loading.value = true
@@ -87,6 +88,7 @@ async function loadDashboard() {
     }
 
     await Promise.all(tasks)
+    shareImageVersion.value = Date.now()
   } catch (caught) {
     error.value = useApi().mapError(caught).message
   } finally {
@@ -155,7 +157,7 @@ async function createOrder(payload: Record<string, unknown>) {
         @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
       />
 
-      <div class="grid gap-4 md:grid-cols-3">
+      <div class="relative z-20 grid gap-4 md:grid-cols-3">
         <MetricCard
           v-for="card in dashboardCards"
           :key="card.label"
@@ -163,7 +165,15 @@ async function createOrder(payload: Record<string, unknown>) {
           :value="card.value"
           :helper="card.helper"
           :icon="card.label === 'Harga Aktif' ? 'prices' : card.label === 'Order Hari Ini' ? 'orders' : 'reports'"
-        />
+        >
+          <template v-if="card.label === 'Harga Aktif'" #action>
+            <PublicPriceShareMenu
+              icon-only
+              :effective-date="currentPrice?.effectiveDate ?? null"
+              :image-version="shareImageVersion"
+            />
+          </template>
+        </MetricCard>
       </div>
 
       <div class="grid gap-6 xl:grid-cols-[1.3fr_1fr]">

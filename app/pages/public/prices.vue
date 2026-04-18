@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { onClickOutside } from '@vueuse/core'
-
 interface PublicCurrentPrice {
   effectiveDate: string
   pricePerKg: string | number
@@ -29,9 +27,6 @@ useSeoMeta({
 
 const api = useApi()
 const toast = useToast()
-const route = useRoute()
-const runtimeConfig = useRuntimeConfig()
-const requestUrl = useRequestURL()
 
 const loading = ref(true)
 const refreshing = ref(false)
@@ -39,22 +34,6 @@ const error = ref('')
 const currentPrice = ref<PublicCurrentPrice | null>(null)
 const shareText = ref('')
 const shareImageVersion = ref(Date.now())
-const shareMenuOpen = ref(false)
-const shareMenuRef = ref<HTMLElement | null>(null)
-
-const pageUrl = computed(() => {
-  const origin = import.meta.client ? window.location.origin : requestUrl.origin
-  return `${origin}${route.path}`
-})
-
-const shareImageUrl = computed(() =>
-  `${runtimeConfig.public.apiBaseUrl}${runtimeConfig.public.apiPrefix}/public/prices/share-image?v=${shareImageVersion.value}`,
-)
-
-const waShareUrl = computed(() => {
-  const combined = `${shareText.value}\n${pageUrl.value}`.trim()
-  return `https://wa.me/?text=${encodeURIComponent(combined)}`
-})
 
 const formattedPrice = computed(() =>
   currentPrice.value ? formatRupiah(currentPrice.value.pricePerKg) : '-',
@@ -160,163 +139,11 @@ async function refreshPublication() {
   await loadPublicationData()
   shareImageVersion.value = Date.now()
   refreshing.value = false
-  shareMenuOpen.value = false
 
   if (!error.value) {
     toast.success('Data diperbarui', 'Informasi harga terbaru berhasil dimuat ulang.')
   }
 }
-
-async function copyShareText() {
-  if (!import.meta.client || !shareText.value) {
-    return
-  }
-
-  try {
-    await navigator.clipboard.writeText(shareText.value)
-    toast.success('Teks berhasil disalin')
-    shareMenuOpen.value = false
-  }
-  catch {
-    toast.error('Gagal menyalin teks', 'Clipboard tidak tersedia di perangkat ini.')
-  }
-}
-
-async function copyPageLink() {
-  if (!import.meta.client) {
-    return
-  }
-
-  try {
-    await navigator.clipboard.writeText(pageUrl.value)
-    toast.success('Link berhasil disalin')
-    shareMenuOpen.value = false
-  }
-  catch {
-    toast.error('Gagal menyalin link', 'Clipboard tidak tersedia di perangkat ini.')
-  }
-}
-
-function extractSvgSize(svgContent: string) {
-  const widthMatch = svgContent.match(/width="([\d.]+)(px)?"/i)
-  const heightMatch = svgContent.match(/height="([\d.]+)(px)?"/i)
-
-  if (widthMatch && heightMatch) {
-    return {
-      width: Math.max(1, Math.round(Number(widthMatch[1]))),
-      height: Math.max(1, Math.round(Number(heightMatch[1]))),
-    }
-  }
-
-  const viewBoxMatch = svgContent.match(/viewBox="[\d.\-]+\s+[\d.\-]+\s+([\d.\-]+)\s+([\d.\-]+)"/i)
-  if (viewBoxMatch) {
-    return {
-      width: Math.max(1, Math.round(Number(viewBoxMatch[1]))),
-      height: Math.max(1, Math.round(Number(viewBoxMatch[2]))),
-    }
-  }
-
-  return {
-    width: 1080,
-    height: 1080,
-  }
-}
-
-function loadImageFromObjectUrl(objectUrl: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    image.decoding = 'sync'
-    image.onload = () => resolve(image)
-    image.onerror = () => reject(new Error('Unable to load SVG image for conversion'))
-    image.src = objectUrl
-  })
-}
-
-async function convertSvgBlobToPngBlob(svgBlob: Blob): Promise<Blob> {
-  const svgContent = await svgBlob.text()
-  const { width, height } = extractSvgSize(svgContent)
-  const svgObjectUrl = window.URL.createObjectURL(new Blob([svgContent], { type: 'image/svg+xml' }))
-
-  try {
-    const image = await loadImageFromObjectUrl(svgObjectUrl)
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-
-    const context = canvas.getContext('2d')
-    if (!context) {
-      throw new Error('Canvas context is unavailable')
-    }
-
-    context.drawImage(image, 0, 0, width, height)
-
-    const pngBlob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/png')
-    })
-
-    if (!pngBlob) {
-      throw new Error('Unable to create PNG blob')
-    }
-
-    return pngBlob
-  }
-  finally {
-    window.URL.revokeObjectURL(svgObjectUrl)
-  }
-}
-
-async function downloadShareImage() {
-  if (!import.meta.client) {
-    return
-  }
-
-  try {
-    const response = await fetch(shareImageUrl.value, {
-      credentials: 'omit',
-    })
-    if (!response.ok) {
-      throw new Error('Unable to download image')
-    }
-
-    const imageBlob = await response.blob()
-    const filenameBase = `harga-telur-${currentPrice.value ? isoDate(currentPrice.value.effectiveDate) : isoDate(new Date())}`
-    let downloadBlob = imageBlob
-    let extension: 'png' | 'svg' = 'png'
-
-    if (imageBlob.type === 'image/svg+xml') {
-      try {
-        downloadBlob = await convertSvgBlobToPngBlob(imageBlob)
-      }
-      catch {
-        downloadBlob = imageBlob
-        extension = 'svg'
-      }
-    }
-
-    const objectUrl = window.URL.createObjectURL(downloadBlob)
-    const anchor = document.createElement('a')
-    anchor.href = objectUrl
-    anchor.download = `${filenameBase}.${extension}`
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-    window.URL.revokeObjectURL(objectUrl)
-
-    toast.success(`Gambar ${extension.toUpperCase()} berhasil diunduh`)
-    shareMenuOpen.value = false
-  }
-  catch {
-    toast.error('Gagal mengunduh gambar', 'Coba muat ulang halaman lalu ulangi lagi.')
-  }
-}
-
-function toggleShareMenu() {
-  shareMenuOpen.value = !shareMenuOpen.value
-}
-
-onClickOutside(shareMenuRef, () => {
-  shareMenuOpen.value = false
-})
 
 onMounted(loadPublicationData)
 </script>
@@ -364,52 +191,11 @@ onMounted(loadPublicationData)
                 Update Terbaru
               </div>
 
-              <div ref="shareMenuRef" class="relative">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-orange-100/80 bg-white/82 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-brand-700 transition hover:bg-orange-50/70"
-                  @click="toggleShareMenu"
-                >
-                  <UiIcon name="share" class="h-4 w-4" />
-                  Share
-                </button>
-
-                <div
-                  v-if="shareMenuOpen"
-                  class="absolute right-0 top-[calc(100%+0.45rem)] z-[90] w-52 rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_16px_34px_rgba(15,23,42,0.16)] backdrop-blur"
-                >
-                  <button
-                    type="button"
-                    class="w-full rounded-xl px-3 py-2 text-left text-sm text-ink-700 transition hover:bg-slate-100/80"
-                    @click="copyShareText"
-                  >
-                    Copy teks
-                  </button>
-                  <button
-                    type="button"
-                    class="w-full rounded-xl px-3 py-2 text-left text-sm text-ink-700 transition hover:bg-slate-100/80"
-                    @click="copyPageLink"
-                  >
-                    Copy link
-                  </button>
-                  <button
-                    type="button"
-                    class="w-full rounded-xl px-3 py-2 text-left text-sm text-ink-700 transition hover:bg-slate-100/80"
-                    @click="downloadShareImage"
-                  >
-                    Unduh gambar
-                  </button>
-                  <a
-                    :href="waShareUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="block w-full rounded-xl px-3 py-2 text-left text-sm text-ink-700 transition hover:bg-slate-100/80"
-                    @click="shareMenuOpen = false"
-                  >
-                    Share ke WhatsApp
-                  </a>
-                </div>
-              </div>
+              <PublicPriceShareMenu
+                :share-text="shareText"
+                :effective-date="currentPrice?.effectiveDate ?? null"
+                :image-version="shareImageVersion"
+              />
             </div>
 
             <div>
