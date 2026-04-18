@@ -314,6 +314,7 @@ export type Permission =
   | "prices.view"
   | "prices.manage"
   | "stocks.view"
+  | "stocks.manage"
   | "reports.view"
   | "profile.view";
 import type { AppIconName } from "../utils/icons";

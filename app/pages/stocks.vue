@@ -18,12 +18,18 @@ definePageMeta({
 })
 
 const api = useApi()
+const toast = useToast()
+const { can } = useAuth()
 const pagination = usePagination()
 
 const loading = ref(true)
 const error = ref('')
 const movements = ref<StockMovementItem[]>([])
 const coops = ref<CoopItem[]>([])
+const manualAdjustOpen = ref(false)
+const movementDetailOpen = ref(false)
+const selectedMovement = ref<StockMovementItem | null>(null)
+const submittingManualAdjust = ref(false)
 
 const coopFilter = ref('')
 const directionFilter = ref('')
@@ -48,6 +54,7 @@ const skeletonCells = [
   { lines: [{ class: 'w-16' }] },
   { lines: [{ class: 'w-24' }] },
   { lines: [{ class: 'w-32' }] },
+  { lines: [{ class: 'w-20 rounded-xl' }] },
 ]
 
 const directionOptions = stockMovementDirections.map((item) => ({
@@ -120,6 +127,31 @@ async function refreshData() {
   await Promise.all([loadSupporting(), loadMovements()])
 }
 
+async function submitManualAdjustment(payload: {
+  coopId: string
+  direction: 'IN' | 'OUT'
+  quantityKg: number
+  notes?: string
+}) {
+  submittingManualAdjust.value = true
+
+  try {
+    await api.post('/stocks/manual-adjustments', payload)
+    toast.success('Penyesuaian stok berhasil disimpan')
+    manualAdjustOpen.value = false
+    await refreshData()
+  } catch (caught) {
+    toast.error('Gagal menyimpan penyesuaian stok', api.mapError(caught).message)
+  } finally {
+    submittingManualAdjust.value = false
+  }
+}
+
+function openMovementDetail(item: StockMovementItem) {
+  selectedMovement.value = item
+  movementDetailOpen.value = true
+}
+
 async function onPageChange(nextPage: number) {
   pagination.setPage(nextPage)
   await loadMovements()
@@ -178,6 +210,13 @@ watch([sortBy, sortOrder], () => {
       description="Riwayat pergerakan stok masuk dan keluar per kandang."
     >
       <template #actions>
+        <UiButton
+          v-if="can('stocks.manage')"
+          icon="plus"
+          @click="manualAdjustOpen = true"
+        >
+          Tambah
+        </UiButton>
         <UiButton
           variant="secondary"
           icon="refresh"
@@ -313,6 +352,7 @@ watch([sortBy, sortOrder], () => {
               <th class="px-4 py-3 pr-4">Kg</th>
               <th class="px-4 py-3 pr-4">Sumber</th>
               <th class="px-4 py-3 pr-4">Dicatat</th>
+              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -324,7 +364,7 @@ watch([sortBy, sortOrder], () => {
           <ListTableStateBody
             v-else-if="error"
             mode="error"
-            :colspan="7"
+            :colspan="8"
             :message="error"
             @retry="loadMovements"
           />
@@ -347,16 +387,68 @@ watch([sortBy, sortOrder], () => {
                 <p>{{ formatDateTime(item.createdAt) }}</p>
                 <p>{{ item.createdByName || '-' }}</p>
               </td>
+              <td class="px-4 py-4 pr-4 text-right">
+                <UiButton
+                  variant="ghost"
+                  size="sm"
+                  icon="search"
+                  @click="openMovementDetail(item)"
+                >
+                  Detail
+                </UiButton>
+              </td>
             </tr>
           </tbody>
           <ListTableStateBody
             v-else
             mode="empty"
-            :colspan="7"
+            :colspan="8"
             message="Belum ada data movement stok untuk filter saat ini."
           />
         </table>
       </template>
     </ListTableShell>
+
+    <UiDialog
+      v-model:open="manualAdjustOpen"
+      title="Penyesuaian Manual Stok"
+      description="Koreksi stok langsung untuk kondisi khusus operasional."
+    >
+      <FormsStockManualAdjustmentForm
+        :coop-options="coopOptions"
+        :submitting="submittingManualAdjust"
+        @submit="submitManualAdjustment"
+      />
+    </UiDialog>
+
+    <UiDialog
+      v-model:open="movementDetailOpen"
+      title="Detail Movement"
+      description="Rincian lengkap transaksi pergerakan stok."
+      size="md"
+    >
+      <div v-if="selectedMovement" class="space-y-3 text-sm text-ink-700">
+        <div class="grid gap-2 sm:grid-cols-2">
+          <p><span class="font-medium text-ink-900">Kandang:</span> {{ selectedMovement.coopName }}</p>
+          <p><span class="font-medium text-ink-900">Tanggal:</span> {{ formatDate(selectedMovement.movementDate) }}</p>
+          <p><span class="font-medium text-ink-900">Arah:</span> {{ directionLabel(selectedMovement.direction) }}</p>
+          <p><span class="font-medium text-ink-900">Jenis:</span> {{ movementTypeLabel(selectedMovement.movementType) }}</p>
+          <p><span class="font-medium text-ink-900">Jumlah:</span> {{ selectedMovement.quantityKg }} kg</p>
+          <p><span class="font-medium text-ink-900">Sumber:</span> {{ sourceLabel(selectedMovement.sourceType) }}</p>
+          <p><span class="font-medium text-ink-900">Order ID:</span> {{ selectedMovement.orderId || '-' }}</p>
+          <p><span class="font-medium text-ink-900">Source ID:</span> {{ selectedMovement.sourceId }}</p>
+        </div>
+
+        <div class="rounded-2xl border border-white/40 bg-white/60 p-3">
+          <p class="font-medium text-ink-900">Catatan</p>
+          <p class="mt-1 text-ink-700">{{ selectedMovement.notes || '-' }}</p>
+        </div>
+
+        <div class="rounded-2xl border border-white/40 bg-white/60 p-3 text-xs text-ink-600">
+          <p>Dicatat: {{ formatDateTime(selectedMovement.createdAt) }}</p>
+          <p>Oleh: {{ selectedMovement.createdByName || '-' }}</p>
+        </div>
+      </div>
+    </UiDialog>
   </div>
 </template>
