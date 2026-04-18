@@ -80,7 +80,10 @@ onClickOutside(perPageMenuRef, () => {
 
 <template>
   <GlassCard :overflow-visible="true">
-    <div class="relative z-20 mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div
+      class="relative mb-3 flex flex-wrap items-center justify-between gap-3"
+      :class="activeMenu || perPageMenuOpen ? 'z-[55]' : 'z-20'"
+    >
       <div class="flex items-center gap-2">
         <button
           type="button"
@@ -161,7 +164,7 @@ onClickOutside(perPageMenuRef, () => {
       <div
         v-if="activeMenu === 'filter'"
         ref="filterMenuRef"
-        class="glass-popover absolute left-0 top-[calc(100%+0.55rem)] z-[120] rounded-2xl p-3"
+        class="glass-popover absolute left-0 top-[calc(100%+0.55rem)] z-[120] max-h-[calc(100dvh-12rem)] overflow-y-auto rounded-2xl p-3 sm:max-h-none sm:overflow-visible"
         :class="filterMenuWidthClass"
       >
         <slot name="filter-menu" :close-menus="closeMenus" />
