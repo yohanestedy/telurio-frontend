@@ -19,12 +19,12 @@ interface PublicShareText {
 definePageMeta({
   layout: 'public',
   public: true,
-  title: 'Harga Telur Hari Ini',
+  title: 'Referensi Harga Telur Ras Lampung',
 })
 
 useSeoMeta({
   title: 'Harga Telur Hari Ini | Telurio',
-  description: 'Informasi harga telur terbaru hari ini. Mudah dibagikan ke WhatsApp dan channel customer lainnya.',
+  description: 'Acuan harga telur ras yang berlaku di masyarakat Lampung. Diperbarui berkala dan mudah dibagikan.',
 })
 
 const api = useApi()
@@ -251,7 +251,7 @@ onMounted(loadPublicationData)
         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Telurio</p>
         <h1 class="mt-2 text-3xl font-semibold text-ink-900 sm:text-4xl">Harga Telur Hari Ini</h1>
         <p class="mt-3 text-sm text-ink-600 sm:text-base">
-          Pantau harga telur hari ini untuk kebutuhan belanja dan perencanaan Anda.
+          Harga telur hari ini mengacu harga standar yang ada di Provinsi Lampung.
         </p>
 
         <div class="mt-4 flex justify-center">
@@ -330,7 +330,7 @@ onMounted(loadPublicationData)
             </div>
 
             <div>
-              <p class="text-sm text-ink-500">Harga Telur Hari Ini</p>
+              <p class="text-sm text-ink-500">Harga Referensi Hari Ini</p>
               <p class="mt-1 text-4xl font-semibold leading-tight text-ink-900 sm:text-5xl">{{ formattedPrice }}<span class="ml-2 text-xl text-ink-500">/kg</span></p>
               <div class="mt-4 flex w-full items-center justify-between rounded-2xl border border-brand-200/70 bg-brand-50/80 px-4 py-3">
                 <p class="text-sm font-medium text-ink-900">{{ dateDisplay.fullLabel }}</p>
@@ -342,23 +342,44 @@ onMounted(loadPublicationData)
                   <span>{{ priceTrend.label }}</span>
                 </div>
               </div>
+              <p class="mt-2 text-xs text-ink-600">
+                *Harga dapat berbeda tergantung negosiasi tiap transaksi.
+              </p>
             </div>
           </div>
         </GlassCard>
       </div>
 
       <div class="mx-auto mt-5 grid w-full max-w-2xl gap-3 sm:grid-cols-3">
-        <div class="rounded-2xl border border-slate-200/80 bg-white/70 px-4 py-3">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Update</p>
-          <p class="mt-1 text-sm font-medium text-ink-900">Diperbarui harian</p>
+        <div class="rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-3">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+              <UiIcon name="calendar" class="h-4 w-4" />
+            </span>
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Update</p>
+          </div>
+          <p class="mt-2 text-sm font-regular text-ink-900">Diperbarui harian</p>
         </div>
-        <div class="rounded-2xl border border-slate-200/80 bg-white/70 px-4 py-3">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Share</p>
-          <p class="mt-1 text-sm font-medium text-ink-900">Siap kirim ke customer</p>
+
+        <div class="rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-3">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-orange-50 text-orange-700">
+              <UiIcon name="delivery" class="h-4 w-4" />
+            </span>
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Delivery</p>
+          </div>
+          <p class="mt-2 text-sm font-regular text-ink-900">Siap kirim ke pelanggan</p>
         </div>
-        <div class="rounded-2xl border border-slate-200/80 bg-white/70 px-4 py-3">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Sumber</p>
-          <p class="mt-1 text-sm font-medium text-ink-900">Data resmi Telurio</p>
+
+        <div class="rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-3">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+              <UiIcon name="prices" class="h-4 w-4" />
+            </span>
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Sumber</p>
+          </div>
+          <p class="mt-2 text-sm font-regular text-ink-900">Referensi pasar Lampung</p>
+
         </div>
       </div>
     </main>
