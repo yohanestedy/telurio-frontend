@@ -40,29 +40,15 @@ async function loadOrder() {
   loading.value = true
   error.value = ''
   try {
-    const deliveryDate = typeof route.query.deliveryDate === 'string'
-      ? route.query.deliveryDate
-      : undefined
-
-    const list = await api.getPage<OrderItem[]>('/orders', {
-      page: 1,
-      limit: 20,
-      deliveryDate,
-    })
-
-    order.value = list.data.find((item) => item.id === route.params.id) ?? null
-
-    if (!order.value) {
-      throw new Error('Order tidak ditemukan pada scope data saat ini')
-    }
-
-    const [allocationList, paymentList, coopList, stock] = await Promise.all([
+    const [orderDetail, allocationList, paymentList, coopList, stock] = await Promise.all([
+      api.get<OrderItem>(`/orders/${route.params.id}`),
       api.get<AllocationItem[]>(`/orders/${route.params.id}/allocations`),
       api.get<PaymentHistoryItem[]>(`/orders/${route.params.id}/payment-history`),
       api.getPage<CoopItem[]>('/coops', { all: true }),
       api.get<LiveStockResponse>('/stocks/live'),
     ])
 
+    order.value = orderDetail
     allocations.value = allocationList
     paymentHistory.value = paymentList
     coops.value = coopList.data

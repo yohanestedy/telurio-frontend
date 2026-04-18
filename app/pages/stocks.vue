@@ -152,6 +152,16 @@ function openMovementDetail(item: StockMovementItem) {
   movementDetailOpen.value = true
 }
 
+async function openLinkedOrder() {
+  const orderId = selectedMovement.value?.orderId
+  if (!orderId) {
+    return
+  }
+
+  movementDetailOpen.value = false
+  await navigateTo(`/orders/${orderId}`)
+}
+
 async function onPageChange(nextPage: number) {
   pagination.setPage(nextPage)
   await loadMovements()
@@ -447,6 +457,17 @@ watch([sortBy, sortOrder], () => {
         <div class="rounded-2xl border border-white/40 bg-white/60 p-3 text-xs text-ink-600">
           <p>Dicatat: {{ formatDateTime(selectedMovement.createdAt) }}</p>
           <p>Oleh: {{ selectedMovement.createdByName || '-' }}</p>
+        </div>
+
+        <div class="flex justify-end">
+          <UiButton
+            v-if="selectedMovement.orderId"
+            variant="secondary"
+            icon="orders"
+            @click="openLinkedOrder"
+          >
+            Buka Order
+          </UiButton>
         </div>
       </div>
     </UiDialog>
