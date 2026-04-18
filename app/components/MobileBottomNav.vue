@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onClickOutside } from '@vueuse/core'
 import type { AppIconName } from '../utils/icons'
+import type { MenuItem } from '../types/domain'
 
 type QuickAction = {
   key: string
@@ -29,7 +30,7 @@ const primaryItems = computed(() =>
 const leftItems = computed(() => primaryItems.value.slice(0, 2))
 const rightItems = computed(() => primaryItems.value.slice(2))
 
-const moreItem = computed(() =>
+const moreItem = computed<MenuItem>(() =>
   menu.value.mobile.find((item) => item.label === 'More') ?? {
     label: 'More',
     path: '/profile',
@@ -59,7 +60,7 @@ const quickActions = computed<QuickAction[]>(() => {
             key: 'today-price',
             label: 'Input harga hari ini',
             description: 'Lengkapi harga harian agar order hari ini bisa diproses.',
-            icon: 'prices',
+            icon: 'prices' as AppIconName,
             to: { path: '/prices', query: { create: 'today' } },
             badge: 'Hari ini',
           }]
@@ -255,26 +256,26 @@ watch(
     </div>
   </Teleport>
 
-  <nav class="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.95rem,env(safe-area-inset-bottom))] pt-3 lg:hidden">
+  <nav class="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.65rem,env(safe-area-inset-bottom))] pt-2 max-[380px]:px-2 max-[380px]:pb-[max(0.45rem,env(safe-area-inset-bottom))] max-[380px]:pt-1.5 lg:hidden">
     <div class="relative mx-auto max-w-xl">
       <div
-        class="pointer-events-none absolute inset-x-12 top-2 h-16 rounded-[28px] bg-[linear-gradient(180deg,rgba(255,163,94,0.72)_0%,rgba(249,115,22,0.16)_100%)] blur-xl"
+        class="pointer-events-none absolute inset-x-14 top-1.5 h-14 rounded-[24px] bg-[linear-gradient(180deg,rgba(255,163,94,0.72)_0%,rgba(249,115,22,0.16)_100%)] blur-xl max-[380px]:inset-x-16 max-[380px]:top-1 max-[380px]:h-12 max-[380px]:rounded-[20px]"
         :class="activePanel === 'quick' ? 'opacity-0' : 'opacity-100'"
       />
 
-      <div class="relative pt-3">
+      <div class="relative pt-2 max-[380px]:pt-1">
         <div
-          class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[34px] border border-white/90 bg-white/96 px-2 pb-3 pt-2 shadow-[0_20px_46px_rgba(15,23,42,0.14)] backdrop-blur-xl"
+          class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[30px] border border-white/90 bg-white/96 px-2 pb-2 pt-1.5 shadow-[0_16px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl max-[380px]:gap-0.5 max-[380px]:rounded-[26px] max-[380px]:px-1.5 max-[380px]:pb-1.5 max-[380px]:pt-1"
         >
           <NuxtLink
             v-for="item in leftItems"
             :key="item.path"
             :to="item.path"
-            class="px-2.5 py-2 text-center text-[11px] font-medium transition-colors"
+            class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
             :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
           >
-            <div class="flex flex-col items-center gap-1">
-              <UiIcon :name="item.icon" class="h-4 w-4 transition-colors" />
+            <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+              <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
               <span>{{ item.label }}</span>
             </div>
           </NuxtLink>
@@ -285,10 +286,10 @@ watch(
             @click="togglePanel('quick')"
           >
             <span
-              class="flex h-[4.25rem] w-[4.25rem] -translate-y-[2.05rem] items-center justify-center rounded-full border-[6px] border-white bg-[linear-gradient(180deg,#ff8a2d_0%,#f97316_100%)] text-white shadow-[0_18px_34px_rgba(249,115,22,0.36)] transition"
+              class="flex h-[3.9rem] w-[3.9rem] -translate-y-[1.75rem] items-center justify-center rounded-full border-[5px] border-white bg-[linear-gradient(180deg,#ff8a2d_0%,#f97316_100%)] text-white shadow-[0_14px_28px_rgba(249,115,22,0.34)] transition max-[380px]:h-[3.45rem] max-[380px]:w-[3.45rem] max-[380px]:-translate-y-[1.45rem] max-[380px]:border-[4px]"
               :class="activePanel === 'quick' ? 'scale-[1.04]' : ''"
             >
-              <UiIcon name="plus" class="h-6 w-6" />
+              <UiIcon name="plus" class="h-7 w-7 max-[380px]:h-6 max-[380px]:w-6" />
             </span>
             <span class="sr-only">Quick action</span>
           </button>
@@ -297,22 +298,22 @@ watch(
             v-for="item in rightItems"
             :key="item.path"
             :to="item.path"
-            class="px-2.5 py-2 text-center text-[11px] font-medium transition-colors"
+            class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
             :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
           >
-            <div class="flex flex-col items-center gap-1">
-              <UiIcon :name="item.icon" class="h-4 w-4 transition-colors" />
+            <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+              <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
               <span>{{ item.label }}</span>
             </div>
           </NuxtLink>
 
           <button
-            class="px-2.5 py-2 text-center text-[11px] font-medium transition-colors"
+            class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
             :class="activePanel === 'more' || isMoreActive ? 'text-[#ef5e17]' : 'text-ink-500'"
             @click="togglePanel('more')"
           >
-            <div class="flex flex-col items-center gap-1">
-              <UiIcon :name="moreItem.icon" class="h-4 w-4 transition-colors" />
+            <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+              <UiIcon :name="moreItem.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
               <span>{{ moreItem.label }}</span>
             </div>
           </button>
