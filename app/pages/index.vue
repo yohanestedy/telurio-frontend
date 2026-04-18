@@ -4,6 +4,7 @@ import type {
   CustomerItem,
   ExpenseItem,
   GrossIncomeItem,
+  LiveStockResponse,
   MonthlySummaryResponse,
   OrderItem,
   ProductionItem,
@@ -26,6 +27,7 @@ const todayCalendar = ref<CalendarDay | null>(null)
 const productions = ref<ProductionItem[]>([])
 const expenses = ref<ExpenseItem[]>([])
 const grossIncome = ref<GrossIncomeItem[]>([])
+const liveStock = ref<LiveStockResponse | null>(null)
 const monthlySummary = ref<MonthlySummaryResponse | null>(null)
 const customers = ref<CustomerItem[]>([])
 const createOrderOpen = ref(false)
@@ -52,6 +54,9 @@ async function loadDashboard() {
       }),
       api.get<GrossIncomeItem[]>('/reports/gross-income').then((value) => {
         grossIncome.value = value
+      }),
+      api.get<LiveStockResponse>('/stocks/live').then((value) => {
+        liveStock.value = value
       }),
     ]
 
@@ -99,6 +104,11 @@ async function loadDashboard() {
 onMounted(loadDashboard)
 
 const dashboardCards = computed(() => [
+  {
+    label: 'Stok Live Gabungan',
+    value: `${liveStock.value?.combinedAvailableKg ?? '0.000'} kg`,
+    helper: `Masuk ${liveStock.value?.combinedTodayInKg ?? '0.000'} kg • Keluar ${liveStock.value?.combinedTodayOutKg ?? '0.000'} kg`,
+  },
   {
     label: 'Harga Aktif',
     value: currentPrice.value ? formatRupiah(currentPrice.value.pricePerKg) : '-',
@@ -157,14 +167,20 @@ async function createOrder(payload: Record<string, unknown>) {
         @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
       />
 
-      <div class="relative z-20 grid gap-4 md:grid-cols-3">
+      <div class="relative z-20 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           v-for="card in dashboardCards"
           :key="card.label"
           :label="card.label"
           :value="card.value"
           :helper="card.helper"
-          :icon="card.label === 'Harga Aktif' ? 'prices' : card.label === 'Order Hari Ini' ? 'orders' : 'reports'"
+          :icon="card.label === 'Stok Live Gabungan'
+            ? 'layers'
+            : card.label === 'Harga Aktif'
+              ? 'prices'
+              : card.label === 'Order Hari Ini'
+                ? 'orders'
+                : 'reports'"
         >
           <template v-if="card.label === 'Harga Aktif'" #action>
             <PublicPriceShareMenu
@@ -175,6 +191,32 @@ async function createOrder(payload: Record<string, unknown>) {
           </template>
         </MetricCard>
       </div>
+
+      <TableCard
+        title="Live Stock Per Kandang"
+        description="Stok aktif saat ini berdasarkan akses kandang user."
+        icon="layers"
+      >
+        <div v-if="liveStock?.coops?.length" class="space-y-3">
+          <div
+            v-for="item in liveStock.coops"
+            :key="item.coopId"
+            class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3 text-sm"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-3 text-ink-900">
+              <p class="font-semibold">{{ item.coopName }}</p>
+              <p>{{ item.availableKg }} kg</p>
+            </div>
+            <p class="mt-2 text-xs text-ink-600">
+              Masuk hari ini {{ item.todayInKg }} kg • Keluar hari ini {{ item.todayOutKg }} kg
+            </p>
+            <p class="mt-1 text-[11px] text-ink-500">
+              Update terakhir {{ formatDateTime(item.updatedAt) }}
+            </p>
+          </div>
+        </div>
+        <p v-else class="text-sm text-ink-500">Belum ada stok kandang dalam scope akses Anda.</p>
+      </TableCard>
 
       <div class="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
         <TableCard

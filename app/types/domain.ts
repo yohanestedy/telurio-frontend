@@ -179,6 +179,23 @@ export interface GrossIncomeItem {
   year: number;
 }
 
+export interface LiveStockCoopItem {
+  coopId: string;
+  coopName: string;
+  availableKg: string;
+  todayInKg: string;
+  todayOutKg: string;
+  updatedAt: string | null;
+}
+
+export interface LiveStockResponse {
+  asOfDate: string;
+  combinedAvailableKg: string;
+  combinedTodayInKg: string;
+  combinedTodayOutKg: string;
+  coops: LiveStockCoopItem[];
+}
+
 export interface NetIncomeItem {
   coopId: string;
   coopName: string;

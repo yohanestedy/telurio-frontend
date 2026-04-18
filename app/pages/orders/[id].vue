@@ -2,6 +2,7 @@
 import type {
   AllocationItem,
   CoopItem,
+  LiveStockResponse,
   OrderItem,
   PaymentHistoryItem,
 } from '../../types/domain'
@@ -28,6 +29,7 @@ const startDeliveryOpen = ref(false)
 const paymentOpen = ref(false)
 const cancelOpen = ref(false)
 const coops = ref<CoopItem[]>([])
+const liveStock = ref<LiveStockResponse | null>(null)
 const submitting = ref(false)
 
 const coopOptions = computed(() =>
@@ -54,15 +56,17 @@ async function loadOrder() {
       throw new Error('Order tidak ditemukan pada scope data saat ini')
     }
 
-    const [allocationList, paymentList, coopList] = await Promise.all([
+    const [allocationList, paymentList, coopList, stock] = await Promise.all([
       api.get<AllocationItem[]>(`/orders/${route.params.id}/allocations`),
       api.get<PaymentHistoryItem[]>(`/orders/${route.params.id}/payment-history`),
       api.getPage<CoopItem[]>('/coops', { all: true }),
+      api.get<LiveStockResponse>('/stocks/live'),
     ])
 
     allocations.value = allocationList
     paymentHistory.value = paymentList
     coops.value = coopList.data
+    liveStock.value = stock
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : api.mapError(caught).message
   } finally {
@@ -252,6 +256,8 @@ onMounted(loadOrder)
         <FormsDeliveryAllocationForm
           :coop-options="coopOptions"
           :order-quantity-kg="order.quantityKg"
+          :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
+          :coop-stocks="liveStock?.coops ?? []"
           :submitting="submitting"
           @submit="startDelivery"
         />
