@@ -98,7 +98,12 @@ const onSubmit = handleSubmit((values) => {
     <UiInput v-model="name" label="Nama kandang" :error="errors.name" />
     <UiInput v-model="population" label="Populasi aktif" type="number" :error="errors.population" />
     <UiInput v-model="chickenStrain" label="Strain ayam" :error="errors.chickenStrain" />
-    <UiInput v-model="chickBirthDate" label="Tanggal menetas" type="date" :error="errors.chickBirthDate" />
+    <UiDatePicker
+      v-model="chickBirthDate"
+      label="Tanggal menetas"
+      placeholder="Pilih tanggal menetas"
+      :error="errors.chickBirthDate"
+    />
     <UiInput
       v-model="depreciationPercent"
       label="Persentase penyusutan"

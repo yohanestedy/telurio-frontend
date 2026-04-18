@@ -69,11 +69,11 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiInput
+    <UiDatePicker
       v-if="!isEdit"
       v-model="effectiveDate"
       label="Tanggal efektif"
-      type="date"
+      placeholder="Pilih tanggal efektif"
       :error="errors.effectiveDate"
     />
     <UiInput v-model="pricePerKg" label="Harga per kg" type="number" :error="errors.pricePerKg" />
