@@ -279,8 +279,14 @@ watch(
       description="Delivery status dan payment status dipisah sesuai flow bisnis."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="refreshOrdersContext">Refresh</UiButton>
-        <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah order</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="refreshOrdersContext"
+        />
+        <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
       </template>
     </ListHeaderCard>
 

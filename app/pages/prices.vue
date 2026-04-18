@@ -189,9 +189,21 @@ watch(
       :align-actions-end="true"
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadPrices">Refresh</UiButton>
-        <UiButton variant="ghost" icon="prices" @click="navigateTo('/public/prices')">Publikasi customer</UiButton>
-        <UiButton icon="plus" @click="openCreatePriceDialog">Tambah harga</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="loadPrices"
+        />
+        <UiButton
+          variant="ghost"
+          icon="prices"
+          title="Publikasi customer"
+          aria-label="Publikasi customer"
+          @click="navigateTo('/public/prices')"
+        />
+        <UiButton icon="plus" @click="openCreatePriceDialog">Tambah</UiButton>
       </template>
 
       <MetricCard

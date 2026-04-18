@@ -125,8 +125,14 @@ watch([sortBy, sortOrder], () => {
       description="Data customer yang dipakai saat membuat order."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadCustomers">Refresh</UiButton>
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah pelanggan</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="loadCustomers"
+        />
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
       </template>
     </ListHeaderCard>
 

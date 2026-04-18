@@ -200,13 +200,19 @@ watch(
       description="Mendukung lebih dari satu pengambilan per hari per kandang."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadProductions">Refresh</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="loadProductions"
+        />
         <UiButton
           v-if="can('productions.manage')"
           icon="plus"
           @click="dialogOpen = true; editing = null"
         >
-          Tambah produksi
+          Tambah
         </UiButton>
       </template>
     </ListHeaderCard>

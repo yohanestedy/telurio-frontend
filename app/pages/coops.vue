@@ -122,8 +122,14 @@ watch([sortBy, sortOrder], () => {
       description="Master kandang dan parameter penyusutan aktif."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadCoops">Refresh</UiButton>
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah kandang</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="loadCoops"
+        />
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
       </template>
     </ListHeaderCard>
 

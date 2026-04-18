@@ -73,13 +73,19 @@ onMounted(loadCategories)
       description="Owner dapat mengelola kategori pengeluaran miliknya sendiri."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadCategories">Refresh</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="loadCategories"
+        />
         <UiButton
           v-if="auth.role === 'OWNER'"
           icon="plus"
           @click="dialogOpen = true; editing = null"
         >
-          Tambah kategori
+          Tambah
         </UiButton>
       </template>
     </ListHeaderCard>

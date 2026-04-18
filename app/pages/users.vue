@@ -140,8 +140,14 @@ watch([sortBy, sortOrder], () => {
       description="Owner dan operator yang terhubung ke kandang."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadUsers">Refresh</UiButton>
-        <UiButton icon="addUser" @click="dialogOpen = true; editing = null">Tambah user</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="loadUsers"
+        />
+        <UiButton icon="addUser" @click="dialogOpen = true; editing = null">Tambah</UiButton>
       </template>
     </ListHeaderCard>
 

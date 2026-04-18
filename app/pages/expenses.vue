@@ -224,8 +224,14 @@ watch(
       description="Pengeluaran tersambung ke kandang dan kategori owner."
     >
       <template #actions>
-        <UiButton variant="secondary" icon="refresh" @click="loadExpenses">Refresh</UiButton>
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah expense</UiButton>
+        <UiButton
+          variant="secondary"
+          icon="refresh"
+          title="Refresh"
+          aria-label="Refresh"
+          @click="loadExpenses"
+        />
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
       </template>
     </ListHeaderCard>
 
