@@ -1,4 +1,6 @@
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
   BarChart3,
   CalendarDays,
@@ -17,12 +19,14 @@ import {
   Layers3,
   LogOut,
   MoreHorizontal,
+  Minus,
   Package,
   Pencil,
   Plus,
   Receipt,
   RefreshCw,
   Search,
+  Share2,
   ShieldCheck,
   ShoppingCart,
   Truck,
@@ -34,7 +38,7 @@ import {
   Warehouse,
   X,
   type LucideIcon,
-} from 'lucide-vue-next'
+} from "lucide-vue-next";
 
 export const appIcons = {
   home: Home,
@@ -61,6 +65,10 @@ export const appIcons = {
   delete: Trash2,
   alert: TriangleAlert,
   search: Search,
+  share: Share2,
+  arrowUp: ArrowUp,
+  arrowDown: ArrowDown,
+  minus: Minus,
   filter: Filter,
   sort: ArrowUpDown,
   delivery: Truck,
@@ -72,66 +80,66 @@ export const appIcons = {
   chevronRight: ChevronRight,
   chevronLeft: ChevronLeft,
   chevronDown: ChevronDown,
-} satisfies Record<string, LucideIcon>
+} satisfies Record<string, LucideIcon>;
 
-export type AppIconName = keyof typeof appIcons
+export type AppIconName = keyof typeof appIcons;
 
 export function resolveAppIcon(name?: AppIconName) {
   if (!name) {
-    return null
+    return null;
   }
 
-  return appIcons[name]
+  return appIcons[name];
 }
 
 export function getPageIcon(path: string): AppIconName {
-  if (path === '/') {
-    return 'dashboard'
+  if (path === "/") {
+    return "dashboard";
   }
 
-  if (path.startsWith('/calendar')) {
-    return 'calendar'
+  if (path.startsWith("/calendar")) {
+    return "calendar";
   }
 
-  if (path.startsWith('/orders')) {
-    return 'orders'
+  if (path.startsWith("/orders")) {
+    return "orders";
   }
 
-  if (path.startsWith('/coops')) {
-    return 'coops'
+  if (path.startsWith("/coops")) {
+    return "coops";
   }
 
-  if (path.startsWith('/users')) {
-    return 'users'
+  if (path.startsWith("/users")) {
+    return "users";
   }
 
-  if (path.startsWith('/customers')) {
-    return 'customers'
+  if (path.startsWith("/customers")) {
+    return "customers";
   }
 
-  if (path.startsWith('/prices')) {
-    return 'prices'
+  if (path.startsWith("/prices")) {
+    return "prices";
   }
 
-  if (path.startsWith('/reports')) {
-    return 'reports'
+  if (path.startsWith("/reports")) {
+    return "reports";
   }
 
-  if (path.startsWith('/expenses')) {
-    return 'expenses'
+  if (path.startsWith("/expenses")) {
+    return "expenses";
   }
 
-  if (path.startsWith('/expense-categories')) {
-    return 'categories'
+  if (path.startsWith("/expense-categories")) {
+    return "categories";
   }
 
-  if (path.startsWith('/productions')) {
-    return 'productions'
+  if (path.startsWith("/productions")) {
+    return "productions";
   }
 
-  if (path.startsWith('/profile')) {
-    return 'profile'
+  if (path.startsWith("/profile")) {
+    return "profile";
   }
 
-  return 'home'
+  return "home";
 }

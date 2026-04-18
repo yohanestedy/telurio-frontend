@@ -190,6 +190,7 @@ watch(
     >
       <template #actions>
         <UiButton variant="secondary" icon="refresh" @click="loadPrices">Refresh</UiButton>
+        <UiButton variant="ghost" icon="prices" @click="navigateTo('/public/prices')">Publikasi customer</UiButton>
         <UiButton icon="plus" @click="openCreatePriceDialog">Tambah harga</UiButton>
       </template>
 
