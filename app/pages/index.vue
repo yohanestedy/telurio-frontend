@@ -275,6 +275,12 @@ async function createOrder(payload: Record<string, unknown>) {
               Buka daftar order aktif
             </NuxtLink>
             <NuxtLink
+              to="/stocks"
+              class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
+            >
+              Pantau ledger live stock
+            </NuxtLink>
+            <NuxtLink
               v-if="auth.role === 'OPERATOR'"
               to="/productions"
               class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
@@ -359,6 +365,7 @@ async function createOrder(payload: Record<string, unknown>) {
     >
       <FormsOrderForm
         :customer-options="customerOptions"
+        :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
         :submitting="creatingOrder"
         @submit="createOrder"
       />

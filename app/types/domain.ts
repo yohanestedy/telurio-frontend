@@ -196,6 +196,36 @@ export interface LiveStockResponse {
   coops: LiveStockCoopItem[];
 }
 
+export const stockMovementDirections = ["IN", "OUT"] as const;
+export type StockMovementDirection = (typeof stockMovementDirections)[number];
+
+export const stockMovementTypes = [
+  "PRODUCTION_IN",
+  "PRODUCTION_CORRECTION_IN",
+  "PRODUCTION_CORRECTION_OUT",
+  "ALLOCATION_OUT",
+  "ALLOCATION_RELEASE",
+  "MANUAL_ADJUST_IN",
+  "MANUAL_ADJUST_OUT",
+] as const;
+export type StockMovementType = (typeof stockMovementTypes)[number];
+
+export interface StockMovementItem {
+  id: string;
+  coopId: string;
+  coopName: string;
+  movementDate: string;
+  movementType: StockMovementType;
+  direction: StockMovementDirection;
+  sourceType: "PRODUCTION_RECORD" | "ORDER_ALLOCATION" | "MANUAL_ADJUSTMENT";
+  sourceId: string;
+  orderId: string | null;
+  quantityKg: string;
+  notes: string | null;
+  createdAt: string;
+  createdByName: string | null;
+}
+
 export interface NetIncomeItem {
   coopId: string;
   coopName: string;
@@ -283,6 +313,7 @@ export type Permission =
   | "customers.manage"
   | "prices.view"
   | "prices.manage"
+  | "stocks.view"
   | "reports.view"
   | "profile.view";
 import type { AppIconName } from "../utils/icons";

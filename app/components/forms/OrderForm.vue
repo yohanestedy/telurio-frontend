@@ -77,12 +77,15 @@ type FormValues = {
   notes: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   customerOptions: Array<{ label: string; value: string }>
   initialValue?: Partial<FormValues>
   submitting?: boolean
   isEdit?: boolean
-}>()
+  combinedAvailableKg?: string | null
+}>(), {
+  combinedAvailableKg: null,
+})
 
 const emit = defineEmits<{
   submit: [Record<string, string | number | undefined>]
@@ -109,6 +112,42 @@ const [paymentStatus] = defineField('paymentStatus')
 const [paymentMethod] = defineField('paymentMethod')
 const [dpAmount] = defineField('dpAmount')
 const [notes] = defineField('notes')
+
+const combinedAvailableKgValue = computed(() => {
+  if (props.combinedAvailableKg === null || props.combinedAvailableKg === undefined || props.combinedAvailableKg === '') {
+    return null
+  }
+
+  return Number(props.combinedAvailableKg)
+})
+
+const enteredQuantityKg = computed(() => {
+  if (!quantityKg.value) {
+    return 0
+  }
+
+  return Number(quantityKg.value) || 0
+})
+
+const stockShortageKg = computed(() => {
+  if (combinedAvailableKgValue.value === null) {
+    return 0
+  }
+
+  return Number((enteredQuantityKg.value - combinedAvailableKgValue.value).toFixed(3))
+})
+
+const showCombinedStockWarning = computed(() =>
+  !props.isEdit && stockShortageKg.value > 0,
+)
+
+function formatKg(value: number | null) {
+  if (value === null) {
+    return '-'
+  }
+
+  return Number(value).toFixed(3)
+}
 
 const isFutureDelivery = computed(() => {
   if (!deliveryDate.value) {
@@ -245,6 +284,16 @@ const onSubmit = handleSubmit((values) => {
           :error="errors.deliverBefore"
         />
       </div>
+    </div>
+
+    <div
+      v-if="showCombinedStockWarning"
+      class="rounded-2xl border border-amber-300 bg-amber-50/80 px-4 py-3 text-sm text-amber-800"
+    >
+      Order tetap bisa dibuat, tapi alokasi tidak bisa dilakukan sebelum stok cukup.
+      Stok gabungan saat ini {{ formatKg(combinedAvailableKgValue) }} kg,
+      permintaan {{ formatKg(enteredQuantityKg) }} kg
+      (kekurangan {{ formatKg(stockShortageKg) }} kg).
     </div>
 
     <div v-if="!isEdit" class="space-y-3">

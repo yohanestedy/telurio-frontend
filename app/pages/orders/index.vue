@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useListFilterDrafts } from '../../composables/useListFilterDrafts'
-import type { CustomerItem, OrderItem } from '../../types/domain'
+import type { CustomerItem, LiveStockResponse, OrderItem } from '../../types/domain'
 import { defaultPageSizeOptions } from '../../utils/list'
 import {
   deliveryStatuses,
@@ -26,6 +26,7 @@ const loading = ref(true)
 const error = ref('')
 const orders = ref<OrderItem[]>([])
 const customers = ref<CustomerItem[]>([])
+const liveStock = ref<LiveStockResponse | null>(null)
 const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
@@ -148,8 +149,14 @@ async function loadSupporting() {
   if (auth.role !== 'ADMIN') {
     return
   }
-  const response = await api.getPage<CustomerItem[]>('/customers', { all: true })
-  customers.value = response.data
+
+  const [customerResponse, stockResponse] = await Promise.all([
+    api.getPage<CustomerItem[]>('/customers', { all: true }),
+    api.get<LiveStockResponse>('/stocks/live'),
+  ])
+
+  customers.value = customerResponse.data
+  liveStock.value = stockResponse
 }
 
 async function loadOrders() {
@@ -224,7 +231,11 @@ async function onLimitChange(nextLimit: number) {
 }
 
 async function refreshOrdersContext() {
-  await Promise.all([loadTodayPriceStatus(), loadOrders()])
+  await Promise.all([
+    loadTodayPriceStatus(),
+    loadOrders(),
+    auth.role === 'ADMIN' ? loadSupporting() : Promise.resolve(),
+  ])
 }
 
 async function consumeCreateQuery(value: unknown) {
@@ -477,6 +488,7 @@ watch(
       <FormsOrderForm
         :is-edit="Boolean(editing)"
         :customer-options="customerOptions"
+        :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
         :submitting="submitting"
         :initial-value="editing ? {
           customerId: editing.customer.id,

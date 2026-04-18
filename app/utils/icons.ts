@@ -125,6 +125,10 @@ export function getPageIcon(path: string): AppIconName {
     return "reports";
   }
 
+  if (path.startsWith("/stocks")) {
+    return "layers";
+  }
+
   if (path.startsWith("/expenses")) {
     return "expenses";
   }
