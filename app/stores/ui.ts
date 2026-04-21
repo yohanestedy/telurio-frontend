@@ -6,11 +6,12 @@ export const useUiStore = defineStore("ui", {
     unauthorizedDialog: {
       open: false,
       title: "Sesi tidak valid",
-      message: "Sesi Anda sudah tidak berlaku. Untuk melanjutkan, silakan logout lalu masuk kembali.",
+      message:
+        "Sesi Anda sudah tidak berlaku. Untuk melanjutkan, silakan logout lalu masuk kembali.",
     },
     orderFilters: {
       sortBy: "deliveryDate",
-      order: "asc" as "asc" | "desc",
+      order: "desc" as "asc" | "desc",
       lifecycleStatus: "",
       deliveryStatus: "",
       paymentStatus: "",
