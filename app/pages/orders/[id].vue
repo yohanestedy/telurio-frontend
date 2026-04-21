@@ -186,8 +186,17 @@ onMounted(loadOrder)
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Delivery" :value="deliveryStatusLabel(order.deliveryStatus)" icon="package" />
           <MetricCard label="Payment" :value="paymentStatusLabel(order.paymentStatus)" icon="money" />
-          <MetricCard label="Harga/kg" :value="formatRupiah(order.pricePerKg)" icon="prices" />
-          <MetricCard label="Total invoice" :value="formatRupiah(order.totalInvoice)" icon="wallet" />
+          <MetricCard
+            label="Harga/kg"
+            :value="formatRupiah(order.pricePerKg)"
+            :helper="order.priceSource === 'CUSTOM' ? 'Custom Price' : ''"
+            icon="prices"
+          />
+          <MetricCard
+            label="Total invoice"
+            :value="formatRupiah(order.totalInvoice)"
+            icon="money"
+          />
         </div>
         <div class="mt-6 rounded-2xl border border-white/40 bg-white/60 p-4 text-sm text-ink-700">
           <p><span class="font-medium text-ink-900">Deliver before:</span> {{ order.deliverBefore || '-' }}</p>

@@ -14,6 +14,9 @@ export type PaymentStatus = (typeof paymentStatuses)[number];
 export const paymentMethods = ["CASH", "TRANSFER"] as const;
 export type PaymentMethod = (typeof paymentMethods)[number];
 
+export const orderPriceSources = ["STANDARD", "CUSTOM"] as const;
+export type OrderPriceSource = (typeof orderPriceSources)[number];
+
 export const orderLifecycleStatuses = ["ACTIVE", "CANCELLED"] as const;
 export type OrderLifecycleStatus = (typeof orderLifecycleStatuses)[number];
 
@@ -92,6 +95,7 @@ export interface OrderItem {
   };
   quantityKg: string;
   pricePerKg: string | null;
+  priceSource: OrderPriceSource | null;
   totalInvoice: string | null;
   deliveryDate: string;
   deliverBefore: string | null;
