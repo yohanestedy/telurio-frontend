@@ -20,7 +20,7 @@ const ui = useUiStore()
 const route = useRoute()
 const { can } = useAuth()
 const pagination = usePagination()
-const { todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
+const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
 const error = ref('')
@@ -511,6 +511,7 @@ watch(
       <FormsOrderForm
         :is-edit="Boolean(editing)"
         :customer-options="customerOptions"
+        :today-price-per-kg="currentPrice?.pricePerKg ?? null"
         :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
         :submitting="submitting"
         :initial-value="editing ? {

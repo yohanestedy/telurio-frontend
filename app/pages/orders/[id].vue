@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type {
   AllocationItem,
   CoopItem,
@@ -18,6 +19,7 @@ const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
 const { can } = useAuth()
+const { currentPrice, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
 const error = ref('')
@@ -36,6 +38,14 @@ const coopOptions = computed(() =>
   coops.value.map((item) => ({ label: item.name, value: item.id })),
 )
 
+const isTodayDelivery = computed(() => {
+  if (!order.value) {
+    return false
+  }
+
+  return dayjs(order.value.deliveryDate).startOf('day').isSame(dayjs().startOf('day'))
+})
+
 async function loadOrder() {
   loading.value = true
   error.value = ''
@@ -46,6 +56,7 @@ async function loadOrder() {
       api.get<PaymentHistoryItem[]>(`/orders/${route.params.id}/payment-history`),
       api.getPage<CoopItem[]>('/coops', { all: true }),
       api.get<LiveStockResponse>('/stocks/live'),
+      loadTodayPriceStatus(),
     ])
 
     order.value = orderDetail
@@ -60,7 +71,7 @@ async function loadOrder() {
   }
 }
 
-async function startDelivery(payload: { allocations: Array<{ coopId: string; quantityKg: number }> }) {
+async function startDelivery(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
   submitting.value = true
   try {
     await api.post(`/orders/${route.params.id}/start-delivery`, payload)
@@ -242,6 +253,9 @@ onMounted(loadOrder)
         <FormsDeliveryAllocationForm
           :coop-options="coopOptions"
           :order-quantity-kg="order.quantityKg"
+          :order-price-per-kg="order.pricePerKg"
+          :today-price-per-kg="currentPrice?.pricePerKg ?? null"
+          :can-set-price-now="isTodayDelivery"
           :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
           :coop-stocks="liveStock?.coops ?? []"
           :submitting="submitting"

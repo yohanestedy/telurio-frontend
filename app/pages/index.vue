@@ -365,6 +365,7 @@ async function createOrder(payload: Record<string, unknown>) {
     >
       <FormsOrderForm
         :customer-options="customerOptions"
+        :today-price-per-kg="currentPrice?.pricePerKg ?? null"
         :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
         :submitting="creatingOrder"
         @submit="createOrder"

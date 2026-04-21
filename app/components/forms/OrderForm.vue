@@ -84,8 +84,10 @@ const props = withDefaults(defineProps<{
   submitting?: boolean
   isEdit?: boolean
   combinedAvailableKg?: string | null
+  todayPricePerKg?: string | null
 }>(), {
   combinedAvailableKg: null,
+  todayPricePerKg: null,
 })
 
 const emit = defineEmits<{
@@ -113,6 +115,9 @@ const [paymentStatus] = defineField('paymentStatus')
 const [paymentMethod] = defineField('paymentMethod')
 const [dpAmount] = defineField('dpAmount')
 const [notes] = defineField('notes')
+const priceMode = ref<'today' | 'custom'>('today')
+const customPricePerKg = ref('')
+const customPriceError = ref('')
 
 const combinedAvailableKgValue = computed(() => {
   if (props.combinedAvailableKg === null || props.combinedAvailableKg === undefined || props.combinedAvailableKg === '') {
@@ -159,6 +164,54 @@ const isFutureDelivery = computed(() => {
   return pickedDate.isAfter(dayjs().startOf('day'))
 })
 
+const isTodayDelivery = computed(() => {
+  if (!deliveryDate.value) {
+    return false
+  }
+
+  const pickedDate = dayjs(deliveryDate.value).startOf('day')
+  if (!pickedDate.isValid()) {
+    return false
+  }
+
+  return pickedDate.isSame(dayjs().startOf('day'))
+})
+
+const todayPricePerKgValue = computed(() => {
+  if (props.todayPricePerKg === null || props.todayPricePerKg === undefined || props.todayPricePerKg === '') {
+    return null
+  }
+
+  const normalized = Number(props.todayPricePerKg)
+  return Number.isNaN(normalized) ? null : normalized
+})
+
+const effectivePricePerKg = computed(() => {
+  if (!isTodayDelivery.value) {
+    return null
+  }
+
+  if (priceMode.value === 'today') {
+    return todayPricePerKgValue.value
+  }
+
+  const normalized = Number(customPricePerKg.value)
+  return Number.isNaN(normalized) ? null : normalized
+})
+
+const previewTotalInvoice = computed(() => {
+  if (effectivePricePerKg.value === null) {
+    return null
+  }
+
+  const qty = enteredQuantityKg.value
+  if (qty <= 0) {
+    return 0
+  }
+
+  return Math.round(qty * effectivePricePerKg.value)
+})
+
 const paymentStatusOptions = computed(() =>
   paymentStatuses
     .filter((status) => status !== 'LUNAS' || !isFutureDelivery.value)
@@ -200,14 +253,33 @@ watch(
         notes: value?.notes ?? '',
       },
     })
+
+    priceMode.value = 'today'
+    customPricePerKg.value = ''
+    customPriceError.value = ''
   },
   { immediate: true },
 )
 
 watch(deliveryDate, () => {
+  customPriceError.value = ''
+
   if (isFutureDelivery.value && paymentStatus.value === 'LUNAS') {
     paymentStatus.value = 'BELUM_BAYAR'
   }
+
+  if (!isTodayDelivery.value) {
+    priceMode.value = 'today'
+    customPricePerKg.value = ''
+  }
+})
+
+watch(priceMode, () => {
+  customPriceError.value = ''
+})
+
+watch(customPricePerKg, () => {
+  customPriceError.value = ''
 })
 
 watch(paymentStatus, (value) => {
@@ -222,10 +294,33 @@ watch(paymentStatus, (value) => {
 })
 
 const onSubmit = handleSubmit((values) => {
+  customPriceError.value = ''
+
   const parsed = (props.isEdit ? updateSchema : createSchema).safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
     return
+  }
+
+  if (!props.isEdit && isTodayDelivery.value && todayPricePerKgValue.value === null) {
+    customPriceError.value = 'Harga harian hari ini belum tersedia. Hubungi admin untuk input harga hari ini.'
+    return
+  }
+
+  let customPricePayload: number | undefined
+  if (!props.isEdit && isTodayDelivery.value && priceMode.value === 'custom') {
+    if (!customPricePerKg.value) {
+      customPriceError.value = 'Harga custom wajib diisi'
+      return
+    }
+
+    const parsedCustom = Number(customPricePerKg.value)
+    if (Number.isNaN(parsedCustom) || !Number.isFinite(parsedCustom) || !Number.isInteger(parsedCustom) || parsedCustom < 0) {
+      customPriceError.value = 'Harga custom harus angka bulat minimal 0'
+      return
+    }
+
+    customPricePayload = parsedCustom
   }
 
   emit('submit', props.isEdit
@@ -246,6 +341,9 @@ const onSubmit = handleSubmit((values) => {
           : { paymentMethod: parsed.data.paymentMethod || undefined }),
         ...(parsed.data.paymentStatus === 'DP'
           ? { dpAmount: parsed.data.dpAmount }
+          : {}),
+        ...(customPricePayload !== undefined
+          ? { customPricePerKg: customPricePayload }
           : {}),
         notes: parsed.data.notes || undefined,
       })
@@ -291,6 +389,61 @@ const onSubmit = handleSubmit((values) => {
       Stok gabungan saat ini {{ formatKg(combinedAvailableKgValue) }} kg,
       permintaan {{ formatKg(enteredQuantityKg) }} kg
       (kekurangan {{ formatKg(stockShortageKg) }} kg).
+    </div>
+
+    <div
+      v-if="!isEdit && isTodayDelivery"
+      class="space-y-3 rounded-2xl border border-brand-200/70 bg-brand-50/40 px-4 py-4"
+    >
+      <p class="text-sm font-semibold text-ink-900">Penguncian harga order hari ini</p>
+      <p v-if="todayPricePerKgValue !== null" class="text-xs text-ink-600">
+        Harga standar hari ini: <span class="font-semibold text-ink-900">{{ formatRupiah(todayPricePerKgValue) }}/kg</span>
+      </p>
+      <p v-else class="text-xs text-rose-700">
+        Harga harian hari ini belum tersedia.
+      </p>
+
+      <div v-if="todayPricePerKgValue !== null" class="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          class="rounded-2xl border px-3 py-2 text-left text-sm transition"
+          :class="priceMode === 'today'
+            ? 'border-brand-300 bg-white text-ink-900 shadow-[0_6px_20px_rgba(37,99,235,0.12)]'
+            : 'border-white/70 bg-white/70 text-ink-700 hover:bg-white'"
+          @click="priceMode = 'today'"
+        >
+          Gunakan harga hari ini
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl border px-3 py-2 text-left text-sm transition"
+          :class="priceMode === 'custom'
+            ? 'border-brand-300 bg-white text-ink-900 shadow-[0_6px_20px_rgba(37,99,235,0.12)]'
+            : 'border-white/70 bg-white/70 text-ink-700 hover:bg-white'"
+          @click="priceMode = 'custom'"
+        >
+          Gunakan harga custom
+        </button>
+      </div>
+
+      <UiInput
+        v-if="todayPricePerKgValue !== null && priceMode === 'custom'"
+        v-model="customPricePerKg"
+        label="Harga custom per kg"
+        type="number"
+        min="0"
+        step="1"
+        placeholder="25000"
+      />
+
+      <p v-if="todayPricePerKgValue !== null" class="text-xs text-ink-600">
+        Preview total invoice:
+        <span class="font-semibold text-ink-900">{{ previewTotalInvoice === null ? '-' : formatRupiah(previewTotalInvoice) }}</span>
+      </p>
+
+      <p v-if="customPriceError" class="text-xs font-medium text-rose-600">
+        {{ customPriceError }}
+      </p>
     </div>
 
     <div v-if="!isEdit" class="space-y-3">
