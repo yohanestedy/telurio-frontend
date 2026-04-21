@@ -44,6 +44,7 @@ const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
   { lines: [{ class: 'w-10/12' }] },
   { lines: [{ class: 'w-8/12' }] },
+  { lines: [{ class: 'w-11/12' }] },
   { lines: [{ class: 'w-20' }] },
   { lines: [{ class: 'ml-auto w-24 rounded-xl' }] },
 ]
@@ -361,6 +362,7 @@ watch(
               <th class="px-4 py-3 pr-4">Tanggal</th>
               <th class="px-4 py-3 pr-4">Kandang</th>
               <th class="px-4 py-3 pr-4">Kategori</th>
+              <th class="px-4 py-3 pr-4">Deskripsi</th>
               <th class="px-4 py-3 pr-4">Jumlah</th>
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
             </tr>
@@ -374,7 +376,7 @@ watch(
           <ListTableStateBody
             v-else-if="error"
             mode="error"
-            :colspan="5"
+            :colspan="6"
             :message="error"
             @retry="loadExpenses"
           />
@@ -383,6 +385,7 @@ watch(
               <td class="px-4 py-4 pr-4">{{ formatDate(item.date) }}</td>
               <td class="px-4 py-4 pr-4">{{ item.coopName }}</td>
               <td class="px-4 py-4 pr-4">{{ item.expenseCategoryName || '-' }}</td>
+              <td class="px-4 py-4 pr-4 text-ink-700">{{ item.description || '-' }}</td>
               <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.amount) }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
@@ -399,7 +402,7 @@ watch(
           <ListTableStateBody
             v-else
             mode="empty"
-            :colspan="5"
+            :colspan="6"
             message="Belum ada data pengeluaran untuk filter saat ini."
           />
         </table>
