@@ -468,24 +468,26 @@ watch(
               <td class="whitespace-nowrap px-4 py-4 pr-4"><StatusChip compact kind="delivery" :value="order.deliveryStatus" /></td>
               <td class="whitespace-nowrap px-4 py-4 pr-4"><StatusChip compact kind="payment" :value="order.paymentStatus" /></td>
               <td class="px-4 py-4 text-right">
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-1">
                   <UiButton
                     variant="ghost"
                     size="sm"
                     icon="search"
+                    title="Detail order"
+                    aria-label="Detail order"
+                    class="h-15 w-15 justify-center p-0"
                     @click="navigateTo({ path: `/orders/${order.id}`, query: { deliveryDate: order.deliveryDate } })"
-                  >
-                    Detail
-                  </UiButton>
+                  />
                   <UiButton
                     v-if="can('orders.manage') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
                     variant="ghost"
                     size="sm"
                     icon="edit"
+                    title="Edit order"
+                    aria-label="Edit order"
+                    class="h-15 w-15 justify-center p-0"
                     @click="dialogOpen = true; editing = order"
-                  >
-                    Edit
-                  </UiButton>
+                  />
                 </div>
               </td>
             </tr>
