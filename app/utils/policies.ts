@@ -23,7 +23,7 @@ export const permissionMap: Record<Permission, Role[]> = {
   "prices.view": ["ADMIN", "OWNER", "OPERATOR"],
   "prices.manage": ["ADMIN"],
   "stocks.view": ["ADMIN", "OWNER", "OPERATOR"],
-  "stocks.manage": ["ADMIN"],
+  "stocks.manage": ["ADMIN", "OWNER", "OPERATOR"],
   "reports.view": ["ADMIN", "OWNER", "OPERATOR"],
   "profile.view": ["ADMIN", "OWNER", "OPERATOR"],
 };
