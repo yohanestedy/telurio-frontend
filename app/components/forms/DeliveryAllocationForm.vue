@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
+import { formatKg as formatKgValue } from '../../utils/formatters'
 
 const allocationSchema = z.array(
   z.object({
@@ -70,10 +71,11 @@ const hasStockShortage = computed(() =>
 
 function formatKg(value: number | string | null | undefined) {
   if (value === null || value === undefined || value === '') {
-    return '0.000'
+    return '0'
   }
 
-  return Number(value).toFixed(3)
+  const formatted = formatKgValue(value)
+  return formatted === '-' ? '0' : formatted
 }
 
 function onSubmit() {
@@ -112,9 +114,9 @@ function onSubmit() {
 <template>
   <div class="space-y-4">
     <div class="rounded-2xl border border-white/50 bg-white/65 p-4 text-sm text-ink-700">
-      Total order: <span class="font-semibold">{{ orderQuantityKg }} kg</span>
+      Total order: <span class="font-semibold">{{ formatKg(orderQuantityKg) }} kg</span>
       <span class="mx-2">•</span>
-      Total alokasi: <span class="font-semibold">{{ total.toFixed(3) }} kg</span>
+      Total alokasi: <span class="font-semibold">{{ formatKg(total) }} kg</span>
       <span class="mx-2">•</span>
       Stok gabungan tersedia: <span class="font-semibold">{{ formatKg(combinedAvailableKg) }} kg</span>
     </div>
@@ -143,7 +145,7 @@ function onSubmit() {
             step="0.001"
             min="0"
             class="field-shell max-w-[160px]"
-            placeholder="0.000"
+            placeholder="0.00"
           >
         </div>
       </label>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useApi } from '../composables/useApi'
 import { useListFilterDrafts } from '../composables/useListFilterDrafts'
 import type {
   CoopItem,
@@ -391,7 +392,7 @@ watch([sortBy, sortOrder], () => {
                   {{ directionLabel(item.direction) }}
                 </span>
               </td>
-              <td class="px-4 py-4 pr-4">{{ item.quantityKg }}</td>
+              <td class="px-4 py-4 pr-4">{{ formatKg(item.quantityKg) }}</td>
               <td class="px-4 py-4 pr-4">{{ sourceLabel(item.sourceType) }}</td>
               <td class="px-4 py-4 pr-4 text-xs text-ink-600">
                 <p>{{ formatDateTime(item.createdAt) }}</p>
@@ -443,7 +444,7 @@ watch([sortBy, sortOrder], () => {
           <p><span class="font-medium text-ink-900">Tanggal:</span> {{ formatDate(selectedMovement.movementDate) }}</p>
           <p><span class="font-medium text-ink-900">Arah:</span> {{ directionLabel(selectedMovement.direction) }}</p>
           <p><span class="font-medium text-ink-900">Jenis:</span> {{ movementTypeLabel(selectedMovement.movementType) }}</p>
-          <p><span class="font-medium text-ink-900">Jumlah:</span> {{ selectedMovement.quantityKg }} kg</p>
+          <p><span class="font-medium text-ink-900">Jumlah:</span> {{ formatKg(selectedMovement.quantityKg) }} kg</p>
           <p><span class="font-medium text-ink-900">Sumber:</span> {{ sourceLabel(selectedMovement.sourceType) }}</p>
           <p><span class="font-medium text-ink-900">Order ID:</span> {{ selectedMovement.orderId || '-' }}</p>
           <p><span class="font-medium text-ink-900">Source ID:</span> {{ selectedMovement.sourceId }}</p>

@@ -339,7 +339,7 @@ watch(
               <td class="px-4 py-4 pr-4">{{ formatDate(item.date) }}</td>
               <td class="px-4 py-4 pr-4">{{ item.coopName }}</td>
               <td class="px-4 py-4 pr-4">{{ item.collectionTime }}</td>
-              <td class="px-4 py-4 pr-4">{{ item.goodKg }}</td>
+              <td class="px-4 py-4 pr-4">{{ formatKg(item.goodKg) }}</td>
               <td class="px-4 py-4 pr-4">{{ item.goodCount }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">

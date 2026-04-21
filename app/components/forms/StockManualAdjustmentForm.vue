@@ -134,7 +134,7 @@ function onReset() {
       min="0"
       step="0.001"
       label="Jumlah (kg)"
-      placeholder="0.000"
+      placeholder="0.00"
       :error="errors.quantityKg"
     />
 

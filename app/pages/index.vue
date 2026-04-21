@@ -106,8 +106,8 @@ onMounted(loadDashboard)
 const dashboardCards = computed(() => [
   {
     label: 'Stok Live Gabungan',
-    value: `${liveStock.value?.combinedAvailableKg ?? '0.000'} kg`,
-    helper: `Masuk ${liveStock.value?.combinedTodayInKg ?? '0.000'} kg • Keluar ${liveStock.value?.combinedTodayOutKg ?? '0.000'} kg`,
+    value: `${formatKg(liveStock.value?.combinedAvailableKg ?? 0)} kg`,
+    helper: `Masuk ${formatKg(liveStock.value?.combinedTodayInKg ?? 0)} kg • Keluar ${formatKg(liveStock.value?.combinedTodayOutKg ?? 0)} kg`,
   },
   {
     label: 'Harga Aktif',
@@ -205,10 +205,10 @@ async function createOrder(payload: Record<string, unknown>) {
           >
             <div class="flex flex-wrap items-center justify-between gap-3 text-ink-900">
               <p class="font-semibold">{{ item.coopName }}</p>
-              <p>{{ item.availableKg }} kg</p>
+              <p>{{ formatKg(item.availableKg) }} kg</p>
             </div>
             <p class="mt-2 text-xs text-ink-600">
-              Masuk hari ini {{ item.todayInKg }} kg • Keluar hari ini {{ item.todayOutKg }} kg
+              Masuk hari ini {{ formatKg(item.todayInKg) }} kg • Keluar hari ini {{ formatKg(item.todayOutKg) }} kg
             </p>
             <p class="mt-1 text-[11px] text-ink-500">
               Update terakhir {{ formatDateTime(item.updatedAt) }}
@@ -234,7 +234,7 @@ async function createOrder(payload: Record<string, unknown>) {
                   class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
                 >
                   <div class="flex items-center justify-between gap-3">
-                    <span>{{ order.customerName }} • {{ order.quantityKg }} kg</span>
+                    <span>{{ order.customerName }} • {{ formatKg(order.quantityKg) }} kg</span>
                     <StatusChip kind="payment" :value="order.paymentStatus" />
                   </div>
                 </div>
@@ -250,7 +250,7 @@ async function createOrder(payload: Record<string, unknown>) {
                   :key="item.coopId"
                   class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
                 >
-                  {{ item.coopName }} • {{ item.totalGoodKg }} kg • {{ item.collectionCount }} pengambilan
+                  {{ item.coopName }} • {{ formatKg(item.totalGoodKg) }} kg • {{ item.collectionCount }} pengambilan
                 </div>
               </div>
               <p v-else class="mt-2 text-ink-500">Belum ada produksi tercatat.</p>
@@ -338,7 +338,7 @@ async function createOrder(payload: Record<string, unknown>) {
                 :key="item.id"
                 class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
               >
-                {{ item.coopName }} • {{ formatDate(item.date) }} • {{ item.goodKg }} kg
+                {{ item.coopName }} • {{ formatDate(item.date) }} • {{ formatKg(item.goodKg) }} kg
               </div>
               <p v-if="!productions.length" class="text-ink-500">Belum ada data produksi terbaru.</p>
             </template>

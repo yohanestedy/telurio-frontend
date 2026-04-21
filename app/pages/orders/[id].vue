@@ -131,7 +131,7 @@ onMounted(loadOrder)
             <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Order</p>
             <h2 class="mt-2 text-2xl font-semibold text-ink-900">{{ order.customer.name }}</h2>
             <p class="mt-2 text-sm text-ink-600">
-              {{ order.quantityKg }} kg • {{ formatDate(order.deliveryDate) }} • dibuat oleh {{ order.createdByName || '-' }}
+              {{ formatKg(order.quantityKg) }} kg • {{ formatDate(order.deliveryDate) }} • dibuat oleh {{ order.createdByName || '-' }}
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -198,7 +198,7 @@ onMounted(loadOrder)
           >
             <div class="flex items-center justify-between gap-3">
               <span class="font-medium text-ink-900">{{ item.coopName }}</span>
-              <span>{{ item.quantityKg }} kg</span>
+              <span>{{ formatKg(item.quantityKg) }} kg</span>
             </div>
             <p class="mt-2 text-xs text-ink-500">
               Diinput oleh {{ item.assignedByName || '-' }} pada {{ formatDateTime(item.createdAt) }}

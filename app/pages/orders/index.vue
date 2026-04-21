@@ -443,7 +443,7 @@ watch(
                 <p class="text-xs text-ink-500">{{ order.customer.phone || '-' }}</p>
               </td>
               <td class="px-4 py-4 pr-4">{{ formatDate(order.deliveryDate) }}</td>
-              <td class="px-4 py-4 pr-4">{{ order.quantityKg }}</td>
+              <td class="px-4 py-4 pr-4">{{ formatKg(order.quantityKg) }}</td>
               <td class="px-4 py-4 pr-4"><StatusChip kind="delivery" :value="order.deliveryStatus" /></td>
               <td class="px-4 py-4 pr-4"><StatusChip kind="payment" :value="order.paymentStatus" /></td>
               <td class="px-4 py-4 text-right">

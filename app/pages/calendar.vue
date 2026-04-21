@@ -83,7 +83,7 @@ onMounted(loadCalendar)
                 class="rounded-2xl border border-white/40 bg-white/60 p-4"
               >
                 <div class="font-medium">{{ order.customerName }}</div>
-                <div class="mt-1 text-ink-600">{{ order.quantityKg }} kg</div>
+                <div class="mt-1 text-ink-600">{{ formatKg(order.quantityKg) }} kg</div>
               </div>
             </div>
             <p v-else class="mt-2 text-ink-500">Tidak ada order.</p>
@@ -97,7 +97,7 @@ onMounted(loadCalendar)
                 :key="production.coopId"
                 class="rounded-2xl border border-white/40 bg-white/60 p-4"
               >
-                {{ production.coopName }} • {{ production.totalGoodKg }} kg
+                {{ production.coopName }} • {{ formatKg(production.totalGoodKg) }} kg
               </div>
             </div>
             <p v-else class="mt-2 text-ink-500">Tidak ada produksi.</p>

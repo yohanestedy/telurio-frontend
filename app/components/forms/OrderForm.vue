@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { paymentMethods, paymentStatuses } from '../../types/domain'
 import { mapZodErrors } from '../../utils/form'
 import type { AppIconName } from '../../utils/icons'
+import { formatKg as formatKgValue } from '../../utils/formatters'
 
 const createSchema = z
   .object({
@@ -142,11 +143,7 @@ const showCombinedStockWarning = computed(() =>
 )
 
 function formatKg(value: number | null) {
-  if (value === null) {
-    return '-'
-  }
-
-  return Number(value).toFixed(3)
+  return formatKgValue(value)
 }
 
 const isFutureDelivery = computed(() => {

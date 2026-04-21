@@ -139,7 +139,7 @@ onMounted(async () => {
           <tbody>
             <tr v-for="item in grossIncome" :key="item.coopId" class="border-t border-white/40">
               <td class="py-4 pr-4">{{ item.coopName }}</td>
-              <td class="py-4 pr-4">{{ item.totalDeliveredKg }}</td>
+              <td class="py-4 pr-4">{{ formatKg(item.totalDeliveredKg) }}</td>
               <td class="py-4 pr-4">{{ formatRupiah(item.avgPricePerKg) }}</td>
               <td class="py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.grossIncome) }}</td>
             </tr>
