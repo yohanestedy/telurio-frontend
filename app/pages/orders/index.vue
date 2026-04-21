@@ -231,6 +231,19 @@ async function onLimitChange(nextLimit: number) {
   await loadOrders()
 }
 
+function formatMoneyNumber(value?: string | number | null) {
+  if (value === undefined || value === null || value === '') {
+    return '-'
+  }
+
+  const normalized = Number(String(value).replace(/,/g, ''))
+  if (Number.isNaN(normalized)) {
+    return '-'
+  }
+
+  return normalized.toLocaleString('id-ID')
+}
+
 async function refreshOrdersContext() {
   await Promise.all([
     loadTodayPriceStatus(),
@@ -419,7 +432,7 @@ watch(
               <th class="px-4 py-3 pr-4">Customer</th>
               <th class="px-4 py-3 pr-4">Tanggal kirim</th>
               <th class="px-4 py-3 pr-4">Kg</th>
-              <th class="px-4 py-3 pr-4">Total Invoice</th>
+              <th class="px-4 py-3 pr-4">Total Rp</th>
               <th class="px-4 py-3 pr-4">Delivery</th>
               <th class="px-4 py-3 pr-4">Payment</th>
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
@@ -447,9 +460,9 @@ watch(
               <td class="px-4 py-4 pr-4">{{ formatDate(order.deliveryDate) }}</td>
               <td class="whitespace-nowrap px-4 py-4 pr-4">{{ formatKg(order.quantityKg) }}</td>
               <td class="px-4 py-4 pr-4">
-                <p class="font-medium text-ink-900">{{ order.totalInvoice ? formatRupiah(order.totalInvoice) : '-' }}</p>
+                <p class="font-medium text-ink-900">{{ formatMoneyNumber(order.totalInvoice) }}</p>
                 <p class="text-[11px] leading-tight text-ink-500">
-                  {{ order.pricePerKg ? `@ ${formatRupiah(order.pricePerKg)} /kg` : 'Harga belum terkunci' }}
+                  {{ order.pricePerKg ? `@ ${formatMoneyNumber(order.pricePerKg)} /kg` : 'Harga belum terkunci' }}
                 </p>
               </td>
               <td class="whitespace-nowrap px-4 py-4 pr-4"><StatusChip compact kind="delivery" :value="order.deliveryStatus" /></td>
