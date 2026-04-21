@@ -4,9 +4,12 @@ import type { DeliveryStatus, PaymentStatus } from '../types/domain'
 interface Props {
   kind: 'delivery' | 'payment'
   value: DeliveryStatus | PaymentStatus
+  compact?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+})
 
 const tone = computed(() => {
   if (props.kind === 'delivery') {
@@ -32,7 +35,7 @@ const label = computed(() =>
 </script>
 
 <template>
-  <UiBadge :tone="tone">
+  <UiBadge :tone="tone" :class="props.compact ? 'px-2 py-0.5 text-[11px]' : ''">
     {{ label }}
   </UiBadge>
 </template>

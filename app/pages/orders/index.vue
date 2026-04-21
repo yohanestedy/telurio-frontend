@@ -106,9 +106,10 @@ const customerOptions = computed(() =>
 const skeletonCells = [
   { lines: [{ class: 'w-11/12' }, { class: 'mt-2 w-7/12' }] },
   { lines: [{ class: 'w-9/12' }] },
-  { lines: [{ class: 'w-7/12' }] },
-  { lines: [{ class: 'w-24 rounded-full' }] },
-  { lines: [{ class: 'w-24 rounded-full' }] },
+  { lines: [{ class: 'w-14' }] },
+  { lines: [{ class: 'w-24' }, { class: 'mt-2 w-20' }] },
+  { lines: [{ class: 'w-20 rounded-full' }] },
+  { lines: [{ class: 'w-20 rounded-full' }] },
   { lines: [{ class: 'ml-auto w-32 rounded-xl' }] },
 ]
 
@@ -418,6 +419,7 @@ watch(
               <th class="px-4 py-3 pr-4">Customer</th>
               <th class="px-4 py-3 pr-4">Tanggal kirim</th>
               <th class="px-4 py-3 pr-4">Kg</th>
+              <th class="px-4 py-3 pr-4">Total Invoice</th>
               <th class="px-4 py-3 pr-4">Delivery</th>
               <th class="px-4 py-3 pr-4">Payment</th>
               <th class="px-4 py-3 pr-4 text-right">Aksi</th>
@@ -432,7 +434,7 @@ watch(
           <ListTableStateBody
             v-else-if="error"
             mode="error"
-            :colspan="6"
+            :colspan="7"
             :message="error"
             @retry="loadOrders"
           />
@@ -440,12 +442,18 @@ watch(
             <tr v-for="order in orders" :key="order.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">
                 <p class="font-medium text-ink-900">{{ order.customer.name }}</p>
-                <p class="text-xs text-ink-500">{{ order.customer.phone || '-' }}</p>
+                <p class="text-[11px] text-ink-500">{{ order.customer.phone || '-' }}</p>
               </td>
               <td class="px-4 py-4 pr-4">{{ formatDate(order.deliveryDate) }}</td>
-              <td class="px-4 py-4 pr-4">{{ formatKg(order.quantityKg) }}</td>
-              <td class="px-4 py-4 pr-4"><StatusChip kind="delivery" :value="order.deliveryStatus" /></td>
-              <td class="px-4 py-4 pr-4"><StatusChip kind="payment" :value="order.paymentStatus" /></td>
+              <td class="whitespace-nowrap px-4 py-4 pr-4">{{ formatKg(order.quantityKg) }}</td>
+              <td class="px-4 py-4 pr-4">
+                <p class="font-medium text-ink-900">{{ order.totalInvoice ? formatRupiah(order.totalInvoice) : '-' }}</p>
+                <p class="text-[11px] leading-tight text-ink-500">
+                  {{ order.pricePerKg ? `@ ${formatRupiah(order.pricePerKg)} /kg` : 'Harga belum terkunci' }}
+                </p>
+              </td>
+              <td class="whitespace-nowrap px-4 py-4 pr-4"><StatusChip compact kind="delivery" :value="order.deliveryStatus" /></td>
+              <td class="whitespace-nowrap px-4 py-4 pr-4"><StatusChip compact kind="payment" :value="order.paymentStatus" /></td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-2">
                   <UiButton
@@ -472,7 +480,7 @@ watch(
           <ListTableStateBody
             v-else
             mode="empty"
-            :colspan="6"
+            :colspan="7"
             message="Belum ada order untuk filter saat ini."
           />
         </table>
