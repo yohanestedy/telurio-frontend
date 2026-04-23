@@ -22,12 +22,6 @@ const focusDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'))
 const selectedDay = ref<CalendarDay>(emptyCalendarDay(selectedDate.value))
 const actionSubmittingOrderId = ref('')
 
-const viewOptions = [
-  { label: 'Daily', value: 'day' as const },
-  { label: 'Weekly', value: 'week' as const },
-  { label: 'Monthly', value: 'month' as const },
-]
-
 const boardTransitionKey = computed(
   () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
 )
@@ -51,12 +45,6 @@ function emptyCalendarDay(date: string): CalendarDay {
     },
   }
 }
-
-const markerLegend = [
-  { label: 'Order', className: 'bg-brand-500' },
-  { label: 'Produksi', className: 'bg-emerald-500' },
-  { label: 'Pengeluaran', className: 'bg-slate-500' },
-]
 
 async function loadCalendar() {
   loading.value = true
@@ -236,37 +224,6 @@ onMounted(loadCalendar)
     </ErrorState>
     <div v-else class="grid gap-4 xl:grid-cols-[1.25fr_1fr] xl:gap-6">
       <div class="space-y-4">
-        <GlassCard class="p-4 sm:p-5">
-          <div class="flex w-full items-center rounded-2xl border border-white/80 bg-white/80 p-1">
-            <button
-              v-for="option in viewOptions"
-              :key="option.value"
-              type="button"
-              :class="[
-                'flex-1 rounded-xl px-3 py-2 text-sm font-medium transition',
-                ui.calendarView === option.value
-                  ? 'bg-brand-500 text-white shadow-[0_8px_18px_rgba(243,95,16,0.26)]'
-                  : 'text-ink-600 hover:bg-white',
-              ]"
-              @click="ui.calendarView = option.value"
-            >
-              {{ option.label }}
-            </button>
-          </div>
-
-          <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-ink-600">
-            <!-- <span class="font-semibold uppercase tracking-wide text-ink-500">Marker</span> -->
-            <span
-              v-for="item in markerLegend"
-              :key="item.label"
-              class="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-2.5 py-1"
-            >
-              <span :class="['h-2 w-2 rounded-full', item.className]" />
-              {{ item.label }}
-            </span>
-          </div>
-        </GlassCard>
-
         <Transition name="calendar-swap" mode="out-in">
           <CalendarBoard
             :key="boardTransitionKey"
@@ -276,6 +233,7 @@ onMounted(loadCalendar)
             :selected-date="selectedDate"
             @select="selectDate"
             @period-change="changeMonth"
+            @mode-change="ui.calendarView = $event"
           />
         </Transition>
       </div>
@@ -292,11 +250,17 @@ onMounted(loadCalendar)
             </span>
           </div>
 
-          <div v-if="selectedDay.events.orders.length" class="space-y-3">
+          <TransitionGroup
+            v-if="selectedDay.events.orders.length"
+            name="order-stagger"
+            tag="div"
+            class="space-y-3"
+          >
             <article
-              v-for="order in selectedDay.events.orders"
+              v-for="(order, index) in selectedDay.events.orders"
               :key="order.orderId"
-              class="rounded-3xl border border-white/80 bg-white/90 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08)]"
+              class="order-action-card rounded-3xl border border-white/80 bg-white/90 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08)]"
+              :style="{ '--order-delay': `${index * 45}ms` }"
             >
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -317,6 +281,7 @@ onMounted(loadCalendar)
                   :variant="action.variant"
                   size="sm"
                   :icon="action.icon"
+                  class="transition-transform duration-150 active:scale-[0.97]"
                   :disabled="actionSubmittingOrderId === order.orderId"
                   @click="handleOrderAction(order, action)"
                 >
@@ -324,7 +289,7 @@ onMounted(loadCalendar)
                 </UiButton>
               </div>
             </article>
-          </div>
+          </TransitionGroup>
           <p v-else class="text-sm text-ink-500">Tidak ada order di tanggal ini.</p>
         </GlassCard>
 
@@ -378,5 +343,28 @@ onMounted(loadCalendar)
 .calendar-swap-leave-to {
   opacity: 0;
   transform: translateY(6px) scale(0.995);
+}
+
+.order-action-card {
+  transform: translateZ(0);
+  transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.order-action-card:active {
+  transform: scale(0.988);
+}
+
+.order-stagger-enter-active,
+.order-stagger-leave-active {
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+  transition-delay: var(--order-delay, 0ms);
+}
+
+.order-stagger-enter-from,
+.order-stagger-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
 }
 </style>

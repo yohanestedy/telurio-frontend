@@ -12,9 +12,20 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: [date: string]
   periodChange: [focusDate: string]
+  modeChange: [mode: 'month' | 'week' | 'day']
 }>()
 
 const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+const viewOptions = [
+  { label: 'Daily', value: 'day' as const },
+  { label: 'Weekly', value: 'week' as const },
+  { label: 'Monthly', value: 'month' as const },
+]
+const markerLegend = [
+  { label: 'Order', className: 'bg-brand-500' },
+  { label: 'Produksi', className: 'bg-emerald-500' },
+  { label: 'Pengeluaran', className: 'bg-slate-500' },
+]
 
 const dayMap = computed(() => new Map(props.days.map((day) => [day.date, day])))
 const focus = computed(() => dayjs(props.focusDate))
@@ -194,6 +205,10 @@ function goToCurrentPeriod() {
 
   emit('periodChange', focusDate.format('YYYY-MM-DD'))
 }
+
+function changeMode(mode: 'month' | 'week' | 'day') {
+  emit('modeChange', mode)
+}
 </script>
 
 <template>
@@ -219,8 +234,25 @@ function goToCurrentPeriod() {
             :aria-label="nextAriaLabel"
             @click="goToNextPeriod"
           />
-          <!-- <UiButton variant="secondary" size="sm" @click="goToCurrentPeriod">Today</UiButton> -->
+          <UiButton variant="secondary" size="sm" @click="goToCurrentPeriod">Today</UiButton>
         </div>
+      </div>
+
+      <div class="flex w-full items-center rounded-2xl border border-white/80 bg-white/80 p-1">
+        <button
+          v-for="option in viewOptions"
+          :key="option.value"
+          type="button"
+          :class="[
+            'flex-1 rounded-xl px-3 py-2 text-sm font-medium transition',
+            props.mode === option.value
+              ? 'bg-brand-500 text-white shadow-[0_8px_18px_rgba(243,95,16,0.26)]'
+              : 'text-ink-600 hover:bg-white',
+          ]"
+          @click="changeMode(option.value)"
+        >
+          {{ option.label }}
+        </button>
       </div>
 
       <div v-if="showWeekHeader" class="grid grid-cols-7 gap-2">
@@ -288,6 +320,19 @@ function goToCurrentPeriod() {
             </span>
           </div>
         </button>
+      </div>
+
+      <div class="border-t border-white/70 pt-3">
+        <div class="flex flex-wrap items-center gap-3 text-xs text-ink-600">
+          <span
+            v-for="item in markerLegend"
+            :key="item.label"
+            class="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-2.5 py-1"
+          >
+            <span :class="['h-2 w-2 rounded-full', item.className]" />
+            {{ item.label }}
+          </span>
+        </div>
       </div>
     </div>
   </GlassCard>
