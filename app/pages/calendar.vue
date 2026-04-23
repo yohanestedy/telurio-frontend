@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import type { CalendarDay } from '../types/domain'
+import type { CalendarDay, CoopItem, LiveStockResponse, OrderItem } from '../types/domain'
 
 definePageMeta({
   title: 'Calendar',
@@ -13,6 +13,7 @@ const toast = useToast()
 const auth = useAuthStore()
 const ui = useUiStore()
 const { can } = useAuth()
+const { currentPrice, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
 const error = ref('')
@@ -21,6 +22,14 @@ const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 const focusDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'))
 const selectedDay = ref<CalendarDay>(emptyCalendarDay(selectedDate.value))
 const actionSubmittingOrderId = ref('')
+const modalSubmitting = ref(false)
+const startDeliveryOpen = ref(false)
+const paymentOpen = ref(false)
+const startModalLoading = ref(false)
+const paymentModalLoading = ref(false)
+const activeOrder = ref<OrderItem | null>(null)
+const activeCoops = ref<CoopItem[]>([])
+const activeLiveStock = ref<LiveStockResponse | null>(null)
 
 const boardTransitionKey = computed(
   () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
@@ -45,6 +54,18 @@ function emptyCalendarDay(date: string): CalendarDay {
     },
   }
 }
+
+const activeCoopOptions = computed(() =>
+  activeCoops.value.map((item) => ({ label: item.name, value: item.id })),
+)
+
+const activeOrderIsTodayDelivery = computed(() => {
+  if (!activeOrder.value) {
+    return false
+  }
+
+  return dayjs(activeOrder.value.deliveryDate).startOf('day').isSame(dayjs().startOf('day'))
+})
 
 async function loadCalendar() {
   loading.value = true
@@ -125,6 +146,91 @@ async function changeMonth(month: string) {
   await loadCalendar()
 }
 
+async function loadOrderForAction(orderId: string) {
+  return await api.get<OrderItem>(`/orders/${orderId}`)
+}
+
+async function openStartDeliveryModal(orderId: string) {
+  startModalLoading.value = true
+
+  try {
+    const [orderDetail, coopList, stock] = await Promise.all([
+      loadOrderForAction(orderId),
+      api.getPage<CoopItem[]>('/coops', { all: true }),
+      api.get<LiveStockResponse>('/stocks/live'),
+      loadTodayPriceStatus(),
+    ])
+
+    activeOrder.value = orderDetail
+    activeCoops.value = coopList.data
+    activeLiveStock.value = stock
+    startDeliveryOpen.value = true
+  } catch (caught) {
+    toast.error('Gagal menyiapkan modal pengantaran', api.mapError(caught).message)
+  } finally {
+    startModalLoading.value = false
+  }
+}
+
+async function openPaymentModal(orderId: string) {
+  paymentModalLoading.value = true
+
+  try {
+    activeOrder.value = await loadOrderForAction(orderId)
+    paymentOpen.value = true
+  } catch (caught) {
+    toast.error('Gagal menyiapkan modal pembayaran', api.mapError(caught).message)
+  } finally {
+    paymentModalLoading.value = false
+  }
+}
+
+async function refreshCalendarDetailAfterAction() {
+  await loadCalendar()
+
+  try {
+    selectedDay.value = await api.get<CalendarDay>(`/calendar/${selectedDate.value}`)
+  } catch {
+    selectedDay.value = days.value.find((item) => item.date === selectedDate.value) ?? emptyCalendarDay(selectedDate.value)
+  }
+}
+
+async function submitStartDelivery(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
+  if (!activeOrder.value) {
+    return
+  }
+
+  modalSubmitting.value = true
+  try {
+    await api.post(`/orders/${activeOrder.value.id}/start-delivery`, payload)
+    toast.success('Pengantaran berhasil dimulai')
+    startDeliveryOpen.value = false
+    await refreshCalendarDetailAfterAction()
+  } catch (caught) {
+    toast.error('Gagal memulai pengantaran', api.mapError(caught).message)
+  } finally {
+    modalSubmitting.value = false
+  }
+}
+
+async function submitPaymentUpdate(payload: Record<string, unknown>) {
+  if (!activeOrder.value) {
+    return
+  }
+
+  modalSubmitting.value = true
+  try {
+    await api.post(`/orders/${activeOrder.value.id}/payment-updates`, payload)
+    toast.success('Pembayaran berhasil diperbarui')
+    paymentOpen.value = false
+    await refreshCalendarDetailAfterAction()
+  } catch (caught) {
+    toast.error('Gagal update pembayaran', api.mapError(caught).message)
+  } finally {
+    modalSubmitting.value = false
+  }
+}
+
 watch(
   () => ui.calendarView,
   async (mode) => {
@@ -193,18 +299,12 @@ async function handleOrderAction(order: CalendarOrder, action: OrderAction) {
   }
 
   if (action.id === 'start-delivery') {
-    await navigateTo({
-      path: `/orders/${order.orderId}`,
-      query: { open: 'start-delivery' },
-    })
+    await openStartDeliveryModal(order.orderId)
     return
   }
 
   if (action.id === 'payment-update') {
-    await navigateTo({
-      path: `/orders/${order.orderId}`,
-      query: { open: 'payment-update' },
-    })
+    await openPaymentModal(order.orderId)
     return
   }
 
@@ -330,6 +430,43 @@ onMounted(loadCalendar)
         </GlassCard>
       </div>
     </div>
+
+    <UiDialog
+      v-model:open="startDeliveryOpen"
+      title="Start Delivery"
+      description="Masukkan alokasi kandang hingga totalnya sama dengan quantity order."
+      size="xl"
+    >
+      <LoadingSkeleton v-if="startModalLoading" :lines="6" />
+      <FormsDeliveryAllocationForm
+        v-else-if="activeOrder"
+        :coop-options="activeCoopOptions"
+        :order-quantity-kg="activeOrder.quantityKg"
+        :order-price-per-kg="activeOrder.pricePerKg"
+        :today-price-per-kg="currentPrice?.pricePerKg ?? null"
+        :can-set-price-now="activeOrderIsTodayDelivery"
+        :combined-available-kg="activeLiveStock?.combinedAvailableKg ?? null"
+        :coop-stocks="activeLiveStock?.coops ?? []"
+        :submitting="modalSubmitting"
+        @submit="submitStartDelivery"
+      />
+    </UiDialog>
+
+    <UiDialog
+      v-model:open="paymentOpen"
+      title="Payment Update"
+      description="Semua update pembayaran akan masuk ke payment history."
+    >
+      <LoadingSkeleton v-if="paymentModalLoading" :lines="5" />
+      <FormsPaymentUpdateForm
+        v-else-if="activeOrder"
+        :submitting="modalSubmitting"
+        :current-payment-status="activeOrder.paymentStatus"
+        :total-invoice="activeOrder.totalInvoice"
+        :dp-amount="activeOrder.dpAmount"
+        @submit="submitPaymentUpdate"
+      />
+    </UiDialog>
   </div>
 </template>
 

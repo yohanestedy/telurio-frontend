@@ -29,6 +29,8 @@ const markerLegend = [
 
 const dayMap = computed(() => new Map(props.days.map((day) => [day.date, day])))
 const focus = computed(() => dayjs(props.focusDate))
+const flashedDate = ref('')
+let flashTimer: ReturnType<typeof setTimeout> | null = null
 
 const titleLabel = computed(() => {
   if (props.mode === 'week') {
@@ -173,6 +175,16 @@ const nextAriaLabel = computed(() =>
 )
 
 function selectDay(date: string) {
+  flashedDate.value = date
+  if (flashTimer) {
+    clearTimeout(flashTimer)
+  }
+
+  flashTimer = setTimeout(() => {
+    flashedDate.value = ''
+    flashTimer = null
+  }, 240)
+
   emit('select', date)
 }
 
@@ -209,6 +221,12 @@ function goToCurrentPeriod() {
 function changeMode(mode: 'month' | 'week' | 'day') {
   emit('modeChange', mode)
 }
+
+onBeforeUnmount(() => {
+  if (flashTimer) {
+    clearTimeout(flashTimer)
+  }
+})
 </script>
 
 <template>
@@ -277,6 +295,7 @@ function changeMode(mode: 'month' | 'week' | 'day') {
               : 'h-16 flex-col items-center justify-center sm:h-20',
             cell.inMonth ? 'border-white/75 bg-white/92 text-ink-900 hover:border-brand-300' : 'border-white/50 bg-white/45 text-ink-400',
             cell.isSelected ? 'ring-2 ring-brand-400/80 ring-offset-2 ring-offset-white/20' : '',
+            flashedDate === cell.date ? 'calendar-cell-flash' : '',
           ]"
           @click="selectDay(cell.date)"
         >
@@ -337,3 +356,26 @@ function changeMode(mode: 'month' | 'week' | 'day') {
     </div>
   </GlassCard>
 </template>
+
+<style scoped>
+.calendar-cell-flash {
+  animation: calendarCellFlash 0.24s ease;
+}
+
+@keyframes calendarCellFlash {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(243, 95, 16, 0.25);
+  }
+
+  55% {
+    transform: scale(0.985);
+    box-shadow: 0 0 0 8px rgba(243, 95, 16, 0.1);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(243, 95, 16, 0);
+  }
+}
+</style>
