@@ -1,12 +1,24 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import type { CalendarDay } from '../types/domain'
+import type { CalendarDay, PriceItem } from '../types/domain'
+import {
+  endOfWeekMonday,
+  formatDayMonthId,
+  formatDayMonthYearId,
+  formatMonthYearId,
+  startOfWeekMonday,
+  weekdayLongLabelId,
+} from '../utils/calendar'
+import { formatRupiah } from '../utils/formatters'
 
 const props = defineProps<{
   days: CalendarDay[]
   mode: 'month' | 'week' | 'day'
   focusDate: string
   selectedDate: string
+  selectedPrice: PriceItem | null
+  selectedPriceLoading?: boolean
+  selectedPriceError?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -15,11 +27,11 @@ const emit = defineEmits<{
   modeChange: [mode: 'month' | 'week' | 'day']
 }>()
 
-const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+const weekDays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
 const viewOptions = [
-  { label: 'Daily', value: 'day' as const },
-  { label: 'Weekly', value: 'week' as const },
-  { label: 'Monthly', value: 'month' as const },
+  { label: 'Harian', value: 'day' as const },
+  { label: 'Mingguan', value: 'week' as const },
+  { label: 'Bulanan', value: 'month' as const },
 ]
 const markerLegend = [
   { label: 'Order', className: 'bg-brand-500' },
@@ -34,28 +46,28 @@ let flashTimer: ReturnType<typeof setTimeout> | null = null
 
 const titleLabel = computed(() => {
   if (props.mode === 'week') {
-    const start = focus.value.startOf('week')
-    const end = focus.value.endOf('week')
-    return `${start.format('DD MMM')} - ${end.format('DD MMM YYYY')}`
+    const start = startOfWeekMonday(props.focusDate)
+    const end = endOfWeekMonday(props.focusDate)
+    return `${formatDayMonthId(start.toDate())} - ${formatDayMonthYearId(end.toDate())}`
   }
 
   if (props.mode === 'day') {
-    return focus.value.format('dddd, DD MMM YYYY')
+    return `${weekdayLongLabelId(props.focusDate)}, ${formatDayMonthYearId(props.focusDate)}`
   }
 
-  return focus.value.startOf('month').format('MMMM YYYY')
+  return formatMonthYearId(focus.value.startOf('month').toDate())
 })
 
 const subtitleLabel = computed(() => {
   if (props.mode === 'week') {
-    return 'Weekly Focus'
+    return 'Fokus Mingguan'
   }
 
   if (props.mode === 'day') {
-    return 'Daily Focus'
+    return 'Fokus Harian'
   }
 
-  return 'Monthly View'
+  return 'Tampilan Bulanan'
 })
 
 type CalendarMarker = {
@@ -70,9 +82,7 @@ type CalendarCell = {
   dayOfMonth: number
   inMonth: boolean
   isSelected: boolean
-  totalEvents: number
   markers: CalendarMarker[]
-  weekdayLabel: string
 }
 
 function buildMarkers(date: string): CalendarMarker[] {
@@ -114,7 +124,6 @@ function buildMarkers(date: string): CalendarMarker[] {
 
 function buildCell(date: string, inMonth: boolean): CalendarCell {
   const markers = buildMarkers(date)
-  const totalEvents = markers.reduce((acc, item) => acc + item.count, 0)
   const cursor = dayjs(date)
 
   return {
@@ -122,9 +131,7 @@ function buildCell(date: string, inMonth: boolean): CalendarCell {
     dayOfMonth: cursor.date(),
     inMonth,
     isSelected: date === props.selectedDate,
-    totalEvents,
     markers,
-    weekdayLabel: cursor.format('ddd'),
   }
 }
 
@@ -134,15 +141,15 @@ const cells = computed(() => {
   }
 
   if (props.mode === 'week') {
-    const start = focus.value.startOf('week')
+    const start = startOfWeekMonday(props.focusDate)
     return Array.from({ length: 7 }, (_, index) => {
       const cursor = start.add(index, 'day')
       return buildCell(cursor.format('YYYY-MM-DD'), true)
     })
   }
 
-  const start = focus.value.startOf('month').startOf('week')
-  const end = focus.value.endOf('month').endOf('week')
+  const start = startOfWeekMonday(focus.value.startOf('month').format('YYYY-MM-DD'))
+  const end = endOfWeekMonday(focus.value.endOf('month').format('YYYY-MM-DD'))
   const result: CalendarCell[] = []
   let cursor = start
 
@@ -252,7 +259,7 @@ onBeforeUnmount(() => {
             :aria-label="nextAriaLabel"
             @click="goToNextPeriod"
           />
-          <UiButton variant="secondary" size="sm" @click="goToCurrentPeriod">Today</UiButton>
+          <UiButton variant="secondary" size="sm" @click="goToCurrentPeriod">Hari Ini</UiButton>
         </div>
       </div>
 
@@ -301,17 +308,11 @@ onBeforeUnmount(() => {
         >
           <span class="text-sm font-semibold">
             <template v-if="props.mode === 'day'">
-              {{ cell.weekdayLabel }}, {{ dayjs(cell.date).format('DD MMM YYYY') }}
+              {{ weekdayLongLabelId(cell.date) }}, {{ formatDayMonthYearId(cell.date) }}
             </template>
             <template v-else>
               {{ cell.dayOfMonth }}
             </template>
-          </span>
-          <span
-            v-if="cell.totalEvents > 0"
-            class="absolute right-1.5 top-1.5 rounded-full bg-ink-900 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white"
-          >
-            {{ cell.totalEvents }}
           </span>
 
           <div
@@ -339,6 +340,31 @@ onBeforeUnmount(() => {
             </span>
           </div>
         </button>
+      </div>
+
+      <div class="rounded-2xl border border-white/75 bg-white/88 p-3.5">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-500">Harga Aktif</p>
+
+        <div v-if="props.selectedPriceLoading" class="mt-3 animate-pulse space-y-2">
+          <div class="h-6 w-32 rounded-md bg-slate-200/70" />
+          <div class="h-3 w-48 rounded-md bg-slate-200/60" />
+        </div>
+
+        <template v-else-if="props.selectedPrice">
+          <p class="mt-2 text-lg font-semibold text-ink-900">
+            {{ formatRupiah(props.selectedPrice.pricePerKg) }}/kg
+          </p>
+          <p class="mt-1 text-xs text-ink-500">
+            Berlaku pada {{ formatDayMonthYearId(props.selectedPrice.effectiveDate) }}
+          </p>
+        </template>
+
+        <template v-else>
+          <p class="mt-2 text-lg font-semibold text-ink-900">-</p>
+          <p class="mt-1 text-xs text-ink-500">
+            {{ props.selectedPriceError ? 'Harga aktif belum bisa dimuat.' : 'Harga telur belum diinput untuk tanggal ini.' }}
+          </p>
+        </template>
       </div>
 
       <div class="border-t border-white/70 pt-3">

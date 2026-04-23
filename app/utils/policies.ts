@@ -5,7 +5,7 @@ export const permissionMap: Record<Permission, Role[]> = {
   "calendar.view": ["ADMIN", "OWNER", "OPERATOR"],
   "orders.view": ["ADMIN", "OWNER", "OPERATOR"],
   "orders.manage": ["ADMIN"],
-  "orders.deliver": ["ADMIN", "OPERATOR"],
+  "orders.deliver": ["OPERATOR"],
   "orders.pay": ["ADMIN", "OWNER", "OPERATOR"],
   "orders.cancel": ["ADMIN"],
   "productions.view": ["ADMIN", "OPERATOR"],

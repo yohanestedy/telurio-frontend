@@ -19,7 +19,7 @@ export const useUiStore = defineStore("ui", {
       startDate: "",
       endDate: "",
     },
-    calendarView: "month" as "month" | "week" | "day",
+    calendarView: "week" as "month" | "week" | "day",
   }),
   actions: {
     requireUnauthorizedLogout(message?: string) {

@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import type { CalendarDay, CoopItem, LiveStockResponse, OrderItem } from '../types/domain'
+import type {
+  CalendarDay,
+  CoopItem,
+  LiveStockResponse,
+  OrderItem,
+  PriceItem,
+} from '../types/domain'
+import {
+  endOfWeekMonday,
+  formatDayMonthYearId,
+  startOfWeekMonday,
+} from '../utils/calendar'
 
 definePageMeta({
   title: 'Calendar',
@@ -19,7 +30,7 @@ const loading = ref(true)
 const error = ref('')
 const days = ref<CalendarDay[]>([])
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
-const focusDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'))
+const focusDate = ref(dayjs().format('YYYY-MM-DD'))
 const selectedDay = ref<CalendarDay>(emptyCalendarDay(selectedDate.value))
 const actionSubmittingOrderId = ref('')
 const modalSubmitting = ref(false)
@@ -30,10 +41,14 @@ const paymentModalLoading = ref(false)
 const activeOrder = ref<OrderItem | null>(null)
 const activeCoops = ref<CoopItem[]>([])
 const activeLiveStock = ref<LiveStockResponse | null>(null)
+const selectedPrice = ref<PriceItem | null>(null)
+const selectedPriceLoading = ref(false)
+const selectedPriceError = ref(false)
 
 const boardTransitionKey = computed(
   () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
 )
+const selectedDateLabel = computed(() => formatDayMonthYearId(selectedDate.value))
 
 type CalendarOrder = CalendarDay['events']['orders'][number]
 type OrderAction = {
@@ -76,7 +91,7 @@ async function loadCalendar() {
     ui.calendarView === 'day'
       ? { start: focus.startOf('day'), end: focus.endOf('day') }
       : ui.calendarView === 'week'
-        ? { start: focus.startOf('week'), end: focus.endOf('week') }
+        ? { start: startOfWeekMonday(focusDate.value), end: endOfWeekMonday(focusDate.value) }
         : { start: focus.startOf('month'), end: focus.endOf('month') }
 
   if (ui.calendarView === 'month') {
@@ -107,6 +122,36 @@ async function loadCalendar() {
   }
 }
 
+async function loadSelectedDayDetail(date: string) {
+  try {
+    selectedDay.value = await api.get<CalendarDay>(`/calendar/${date}`)
+  } catch (caught) {
+    error.value = api.mapError(caught).message
+    selectedDay.value = days.value.find((item) => item.date === date) ?? emptyCalendarDay(date)
+  }
+}
+
+async function loadSelectedPriceForDate(date: string) {
+  selectedPriceLoading.value = true
+  selectedPriceError.value = false
+
+  try {
+    selectedPrice.value = await api.get<PriceItem>('/prices/current', { date })
+  } catch (caught) {
+    const mapped = api.mapError(caught)
+
+    selectedPrice.value = null
+    selectedPriceError.value = mapped.status !== 404
+  } finally {
+    selectedPriceLoading.value = false
+  }
+}
+
+async function syncCalendarPanel() {
+  await loadCalendar()
+  await loadSelectedPriceForDate(selectedDate.value)
+}
+
 async function selectDate(date: string) {
   selectedDate.value = date
 
@@ -121,16 +166,14 @@ async function selectDate(date: string) {
   }
 
   if (ui.calendarView === 'day') {
-    await loadCalendar()
+    await Promise.all([loadCalendar(), loadSelectedPriceForDate(selectedDate.value)])
     return
   }
 
-  try {
-    selectedDay.value = await api.get<CalendarDay>(`/calendar/${date}`)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-    selectedDay.value = emptyCalendarDay(date)
-  }
+  await Promise.all([
+    loadSelectedDayDetail(selectedDate.value),
+    loadSelectedPriceForDate(selectedDate.value),
+  ])
 }
 
 async function changeMonth(month: string) {
@@ -143,7 +186,7 @@ async function changeMonth(month: string) {
     selectedDate.value = dayjs(month).format('YYYY-MM-DD')
   }
 
-  await loadCalendar()
+  await syncCalendarPanel()
 }
 
 async function loadOrderForAction(orderId: string) {
@@ -188,11 +231,10 @@ async function openPaymentModal(orderId: string) {
 async function refreshCalendarDetailAfterAction() {
   await loadCalendar()
 
-  try {
-    selectedDay.value = await api.get<CalendarDay>(`/calendar/${selectedDate.value}`)
-  } catch {
-    selectedDay.value = days.value.find((item) => item.date === selectedDate.value) ?? emptyCalendarDay(selectedDate.value)
-  }
+  await Promise.all([
+    loadSelectedDayDetail(selectedDate.value),
+    loadSelectedPriceForDate(selectedDate.value),
+  ])
 }
 
 async function submitStartDelivery(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
@@ -239,14 +281,14 @@ watch(
         ? dayjs(selectedDate.value).startOf('month').format('YYYY-MM-DD')
         : dayjs(selectedDate.value).format('YYYY-MM-DD')
 
-    await loadCalendar()
+    await syncCalendarPanel()
   },
 )
 
 function orderActions(order: CalendarOrder): OrderAction[] {
   const actions: OrderAction[] = []
 
-  if (can('orders.deliver') && order.deliveryStatus === 'BELUM_DIHANTAR') {
+  if (auth.role === 'OPERATOR' && order.deliveryStatus === 'BELUM_DIHANTAR') {
     actions.push({
       id: 'start-delivery',
       label: 'Mulai Hantar',
@@ -289,7 +331,7 @@ async function handleOrderAction(order: CalendarOrder, action: OrderAction) {
     try {
       await api.post(`/orders/${order.orderId}/complete-delivery`)
       toast.success('Pengantaran berhasil diselesaikan')
-      await Promise.all([loadCalendar(), selectDate(selectedDate.value)])
+      await refreshCalendarDetailAfterAction()
     } catch (caught) {
       toast.error('Gagal menyelesaikan pengantaran', api.mapError(caught).message)
     } finally {
@@ -313,14 +355,14 @@ async function handleOrderAction(order: CalendarOrder, action: OrderAction) {
   })
 }
 
-onMounted(loadCalendar)
+onMounted(syncCalendarPanel)
 </script>
 
 <template>
   <div class="space-y-4 lg:space-y-6">
-    <LoadingSkeleton v-if="loading" :lines="8" />
+    <CalendarPageSkeleton v-if="loading" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton icon="refresh" @click="loadCalendar">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="syncCalendarPanel">Coba lagi</UiButton>
     </ErrorState>
     <div v-else class="grid gap-4 xl:grid-cols-[1.25fr_1fr] xl:gap-6">
       <div class="space-y-4">
@@ -331,6 +373,9 @@ onMounted(loadCalendar)
             :mode="ui.calendarView"
             :focus-date="focusDate"
             :selected-date="selectedDate"
+            :selected-price="selectedPrice"
+            :selected-price-loading="selectedPriceLoading"
+            :selected-price-error="selectedPriceError"
             @select="selectDate"
             @period-change="changeMonth"
             @mode-change="ui.calendarView = $event"
@@ -343,7 +388,7 @@ onMounted(loadCalendar)
           <div class="mb-3 flex items-center justify-between gap-2">
             <div>
               <p class="text-base font-semibold text-ink-900">Order Actions</p>
-              <p class="text-xs text-ink-500">{{ formatDate(selectedDate) }}</p>
+              <p class="text-xs text-ink-500">{{ selectedDateLabel }}</p>
             </div>
             <span class="rounded-full border border-white/70 bg-white/80 px-2 py-1 text-xs text-ink-600">
               {{ selectedDay.events.orders.length }} order

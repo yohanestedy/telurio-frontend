@@ -46,7 +46,7 @@ async function consumeOpenQuery(value: unknown) {
 
   if (
     openTarget === 'start-delivery' &&
-    can('orders.deliver') &&
+    auth.role === 'OPERATOR' &&
     order.value.lifecycleStatus === 'ACTIVE' &&
     order.value.deliveryStatus === 'BELUM_DIHANTAR'
   ) {
@@ -191,7 +191,7 @@ watch(
           </div>
           <div class="flex flex-wrap gap-2">
             <UiButton
-              v-if="can('orders.deliver') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
+              v-if="auth.role === 'OPERATOR' && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
               icon="package"
               @click="startDeliveryOpen = true"
             >
