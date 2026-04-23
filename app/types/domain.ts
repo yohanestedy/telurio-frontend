@@ -279,6 +279,7 @@ export interface CalendarDay {
     }>;
     expenses: Array<{
       coopId: string;
+      coopName: string;
       totalAmount: string;
     }>;
     priceUpdates: Array<{

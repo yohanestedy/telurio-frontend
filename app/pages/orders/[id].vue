@@ -34,6 +34,38 @@ const coops = ref<CoopItem[]>([])
 const liveStock = ref<LiveStockResponse | null>(null)
 const submitting = ref(false)
 
+async function consumeOpenQuery(value: unknown) {
+  if (!order.value) {
+    return
+  }
+
+  const openTarget = String(value || '')
+  if (!openTarget) {
+    return
+  }
+
+  if (
+    openTarget === 'start-delivery' &&
+    can('orders.deliver') &&
+    order.value.lifecycleStatus === 'ACTIVE' &&
+    order.value.deliveryStatus === 'BELUM_DIHANTAR'
+  ) {
+    startDeliveryOpen.value = true
+  }
+
+  if (
+    openTarget === 'payment-update' &&
+    can('orders.pay') &&
+    order.value.paymentStatus !== 'LUNAS'
+  ) {
+    paymentOpen.value = true
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open
+  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
+}
+
 const coopOptions = computed(() =>
   coops.value.map((item) => ({ label: item.name, value: item.id })),
 )
@@ -64,6 +96,7 @@ async function loadOrder() {
     paymentHistory.value = paymentList
     coops.value = coopList.data
     liveStock.value = stock
+    await consumeOpenQuery(route.query.open)
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : api.mapError(caught).message
   } finally {
@@ -127,6 +160,17 @@ async function cancelOrder(payload: Record<string, unknown>) {
 }
 
 onMounted(loadOrder)
+
+watch(
+  () => route.query.open,
+  (value) => {
+    if (!value || !order.value) {
+      return
+    }
+
+    void consumeOpenQuery(value)
+  },
+)
 </script>
 
 <template>
