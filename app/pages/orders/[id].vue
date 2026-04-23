@@ -161,7 +161,12 @@ onMounted(loadOrder)
             >
               Complete Delivery
             </UiButton>
-            <UiButton v-if="can('orders.pay')" variant="secondary" icon="money" @click="paymentOpen = true">
+            <UiButton
+              v-if="can('orders.pay') && order.paymentStatus !== 'LUNAS'"
+              variant="secondary"
+              icon="money"
+              @click="paymentOpen = true"
+            >
               Payment Update
             </UiButton>
             <UiButton
@@ -277,7 +282,13 @@ onMounted(loadOrder)
         title="Payment Update"
         description="Semua update pembayaran akan masuk ke payment history."
       >
-        <FormsPaymentUpdateForm :submitting="submitting" @submit="updatePayment" />
+        <FormsPaymentUpdateForm
+          :submitting="submitting"
+          :current-payment-status="order.paymentStatus"
+          :total-invoice="order.totalInvoice"
+          :dp-amount="order.dpAmount"
+          @submit="updatePayment"
+        />
       </UiDialog>
 
       <UiDialog
