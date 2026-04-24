@@ -61,6 +61,49 @@ type OrderAction = {
   variant: 'primary' | 'secondary' | 'ghost'
 }
 
+const deliveryPriority: Record<CalendarOrder['deliveryStatus'], number> = {
+  BELUM_DIHANTAR: 0,
+  SEDANG_DIHANTAR: 1,
+  SUDAH_DIHANTAR: 4,
+}
+
+const paymentPriority: Record<CalendarOrder['paymentStatus'], number> = {
+  BELUM_BAYAR: 2,
+  DP: 3,
+  LUNAS: 4,
+}
+
+const sortedSelectedOrders = computed(() =>
+  [...selectedDay.value.events.orders].sort((left, right) => {
+    const leftPrimary = Math.min(
+      deliveryPriority[left.deliveryStatus] ?? 99,
+      paymentPriority[left.paymentStatus] ?? 99,
+    )
+    const rightPrimary = Math.min(
+      deliveryPriority[right.deliveryStatus] ?? 99,
+      paymentPriority[right.paymentStatus] ?? 99,
+    )
+
+    if (leftPrimary !== rightPrimary) {
+      return leftPrimary - rightPrimary
+    }
+
+    const leftDelivery = deliveryPriority[left.deliveryStatus] ?? 99
+    const rightDelivery = deliveryPriority[right.deliveryStatus] ?? 99
+    if (leftDelivery !== rightDelivery) {
+      return leftDelivery - rightDelivery
+    }
+
+    const leftPayment = paymentPriority[left.paymentStatus] ?? 99
+    const rightPayment = paymentPriority[right.paymentStatus] ?? 99
+    if (leftPayment !== rightPayment) {
+      return leftPayment - rightPayment
+    }
+
+    return left.customerName.localeCompare(right.customerName)
+  }),
+)
+
 function emptyCalendarDay(date: string): CalendarDay {
   return {
     date,
@@ -426,13 +469,13 @@ onMounted(syncCalendarPanel)
           </div>
 
           <TransitionGroup
-            v-if="selectedDay.events.orders.length"
+            v-if="sortedSelectedOrders.length"
             name="order-stagger"
             tag="div"
             class="space-y-3 p-3 sm:p-4"
           >
             <article
-              v-for="(order, index) in selectedDay.events.orders"
+              v-for="(order, index) in sortedSelectedOrders"
               :key="order.orderId"
               class="order-action-card overflow-hidden rounded-[24px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(255,249,243,0.94))] shadow-[0_18px_32px_rgba(15,23,42,0.08)]"
               :style="{ '--order-delay': `${index * 45}ms` }"
