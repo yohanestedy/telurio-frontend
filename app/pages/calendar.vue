@@ -12,6 +12,7 @@ import {
   formatDayMonthYearId,
   startOfWeekMonday,
 } from '../utils/calendar'
+import { formatRupiah } from '../utils/formatters'
 
 definePageMeta({
   title: 'Calendar',
@@ -49,6 +50,7 @@ const boardTransitionKey = computed(
   () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
 )
 const selectedDateLabel = computed(() => formatDayMonthYearId(selectedDate.value))
+const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length} order`)
 
 type CalendarOrder = CalendarDay['events']['orders'][number]
 type OrderAction = {
@@ -325,6 +327,38 @@ function orderActions(order: CalendarOrder): OrderAction[] {
   return actions
 }
 
+function orderPriceLabel(pricePerKg: string | null) {
+  return pricePerKg ? formatRupiah(pricePerKg) : 'Belum dikunci'
+}
+
+function orderInvoiceLabel(totalInvoice: string | null) {
+  return totalInvoice ? formatRupiah(totalInvoice) : 'Invoice belum dihitung'
+}
+
+function shortOrderId(orderId: string) {
+  if (!orderId) {
+    return '-'
+  }
+
+  return orderId.length > 12 ? `#${orderId.slice(0, 8).toUpperCase()}` : orderId.toUpperCase()
+}
+
+function isCompletedDelivery(order: CalendarOrder) {
+  return order.deliveryStatus === 'SUDAH_DIHANTAR'
+}
+
+function deliveryAccentClass(order: CalendarOrder) {
+  if (order.deliveryStatus === 'SUDAH_DIHANTAR') {
+    return 'bg-[linear-gradient(90deg,#10B981,#34D399)]'
+  }
+
+  if (order.deliveryStatus === 'SEDANG_DIHANTAR') {
+    return 'bg-[linear-gradient(90deg,#3B82F6,#60A5FA)]'
+  }
+
+  return 'bg-[linear-gradient(90deg,#F59E0B,#FCD34D)]'
+}
+
 async function handleOrderAction(order: CalendarOrder, action: OrderAction) {
   if (action.id === 'complete-delivery') {
     actionSubmittingOrderId.value = order.orderId
@@ -364,7 +398,7 @@ onMounted(syncCalendarPanel)
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="syncCalendarPanel">Coba lagi</UiButton>
     </ErrorState>
-    <div v-else class="grid gap-4 xl:grid-cols-[1.25fr_1fr] xl:gap-6">
+    <div v-else class="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_minmax(0,1fr)] xl:gap-6">
       <div class="space-y-4">
         <Transition name="calendar-swap" mode="out-in">
           <CalendarBoard
@@ -384,14 +418,14 @@ onMounted(syncCalendarPanel)
       </div>
 
       <div class="space-y-4">
-        <GlassCard class="p-4 sm:p-5">
-          <div class="mb-3 flex items-center justify-between gap-2">
+        <GlassCard class="overflow-hidden">
+          <div class="flex items-center justify-between gap-2 border-b border-white/70 px-4 py-3.5 sm:px-5 sm:py-4">
             <div>
               <p class="text-base font-semibold text-ink-900">Order Actions</p>
               <p class="text-xs text-ink-500">{{ selectedDateLabel }}</p>
             </div>
             <span class="rounded-full border border-white/70 bg-white/80 px-2 py-1 text-xs text-ink-600">
-              {{ selectedDay.events.orders.length }} order
+              {{ orderCountLabel }}
             </span>
           </div>
 
@@ -399,43 +433,104 @@ onMounted(syncCalendarPanel)
             v-if="selectedDay.events.orders.length"
             name="order-stagger"
             tag="div"
-            class="space-y-3"
+            class="space-y-3 p-3 sm:p-4"
           >
             <article
               v-for="(order, index) in selectedDay.events.orders"
               :key="order.orderId"
-              class="order-action-card rounded-3xl border border-white/80 bg-white/90 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.08)]"
+              class="order-action-card overflow-hidden rounded-[24px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(255,249,243,0.94))] shadow-[0_18px_32px_rgba(15,23,42,0.08)]"
               :style="{ '--order-delay': `${index * 45}ms` }"
             >
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <p class="text-base font-semibold text-ink-900">{{ order.customerName }}</p>
-                  <p class="mt-1 text-sm text-ink-600">{{ formatKg(order.quantityKg) }} kg</p>
+              <div :class="['h-1.5', deliveryAccentClass(order)]" />
+
+              <div class="p-3.5 sm:p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-400">
+                      {{ shortOrderId(order.orderId) }}
+                    </p>
+                    <p class="mt-1 truncate text-sm font-extrabold tracking-[-0.01em] text-ink-900 sm:text-base">
+                      {{ order.customerName }}
+                    </p>
+                  </div>
+
+                  <StatusChip compact kind="delivery" :value="order.deliveryStatus" />
                 </div>
 
-                <div class="flex flex-wrap justify-end gap-1.5">
-                  <StatusChip compact kind="delivery" :value="order.deliveryStatus" />
+                <div class="mt-3 rounded-[18px] border border-white/80 bg-white/72 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
+                  <div class="grid grid-cols-3 gap-2">
+                    <div class="text-center">
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
+                        Jumlah
+                      </p>
+                      <div class="mt-1 flex items-end justify-center gap-1">
+                        <span class="text-lg font-black leading-none tracking-tight text-brand-700 sm:text-xl">
+                          {{ formatKg(order.quantityKg) }}
+                        </span>
+                        <span class="pb-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-500">
+                          kg
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="text-center">
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
+                        Harga/Kg
+                      </p>
+                      <p class="mt-1 text-[11px] font-semibold leading-tight text-ink-800 sm:text-[13px]">
+                        {{ orderPriceLabel(order.pricePerKg) }}
+                      </p>
+                    </div>
+
+                    <div class="text-center">
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
+                        Total
+                      </p>
+                      <p class="mt-1 text-[11px] font-black leading-tight text-brand-700 sm:text-[13px]">
+                        {{ orderInvoiceLabel(order.totalInvoice) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 flex items-center gap-2">
+                  <span class="text-[11px] font-medium text-ink-500">Pembayaran:</span>
                   <StatusChip compact kind="payment" :value="order.paymentStatus" />
                 </div>
-              </div>
 
-              <div class="mt-4 flex flex-wrap gap-2">
-                <UiButton
-                  v-for="action in orderActions(order)"
-                  :key="`${order.orderId}-${action.id}`"
-                  :variant="action.variant"
-                  size="sm"
-                  :icon="action.icon"
-                  class="transition-transform duration-150 active:scale-[0.97]"
-                  :disabled="actionSubmittingOrderId === order.orderId"
-                  @click="handleOrderAction(order, action)"
-                >
-                  {{ action.label }}
-                </UiButton>
+                <div class="my-3 h-px bg-slate-200/80" />
+
+                <div class="flex flex-wrap gap-2">
+                  <div
+                    v-if="isCompletedDelivery(order)"
+                    class="flex min-w-[130px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-700"
+                  >
+                    <span>✓</span>
+                    <span>Terhantar</span>
+                  </div>
+
+                  <UiButton
+                    v-for="action in orderActions(order)"
+                    :key="`${order.orderId}-${action.id}`"
+                    :variant="action.variant"
+                    size="sm"
+                    :icon="action.icon"
+                    :class="[
+                      'transition-transform duration-150 active:scale-[0.97] text-[11px] sm:text-xs',
+                      action.id === 'start-delivery' || action.id === 'complete-delivery'
+                        ? 'min-w-[140px] flex-1'
+                        : '',
+                    ]"
+                    :disabled="actionSubmittingOrderId === order.orderId"
+                    @click="handleOrderAction(order, action)"
+                  >
+                    {{ action.label }}
+                  </UiButton>
+                </div>
               </div>
             </article>
           </TransitionGroup>
-          <p v-else class="text-sm text-ink-500">Tidak ada order di tanggal ini.</p>
+          <p v-else class="p-4 text-sm text-ink-500 sm:p-5">Tidak ada order di tanggal ini.</p>
         </GlassCard>
 
         <GlassCard class="p-4 sm:p-5">

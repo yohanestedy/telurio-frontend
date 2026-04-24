@@ -268,6 +268,8 @@ export interface CalendarDay {
       orderId: string;
       customerName: string;
       quantityKg: string;
+      pricePerKg: string | null;
+      totalInvoice: string | null;
       deliveryStatus: DeliveryStatus;
       paymentStatus: PaymentStatus;
     }>;

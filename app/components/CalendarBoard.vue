@@ -7,6 +7,7 @@ import {
   formatDayMonthYearId,
   formatMonthYearId,
   startOfWeekMonday,
+  weekdayShortLabelId,
   weekdayLongLabelId,
 } from '../utils/calendar'
 import { formatRupiah } from '../utils/formatters'
@@ -43,6 +44,9 @@ const dayMap = computed(() => new Map(props.days.map((day) => [day.date, day])))
 const focus = computed(() => dayjs(props.focusDate))
 const flashedDate = ref('')
 let flashTimer: ReturnType<typeof setTimeout> | null = null
+const selectedDateCompactLabel = computed(
+  () => `${weekdayShortLabelId(props.selectedDate)}, ${formatDayMonthId(props.selectedDate)}`,
+)
 
 const titleLabel = computed(() => {
   if (props.mode === 'week') {
@@ -56,18 +60,6 @@ const titleLabel = computed(() => {
   }
 
   return formatMonthYearId(focus.value.startOf('month').toDate())
-})
-
-const subtitleLabel = computed(() => {
-  if (props.mode === 'week') {
-    return 'Fokus Mingguan'
-  }
-
-  if (props.mode === 'day') {
-    return 'Fokus Harian'
-  }
-
-  return 'Tampilan Bulanan'
 })
 
 type CalendarMarker = {
@@ -217,14 +209,6 @@ function goToNextPeriod() {
   emit('periodChange', next.format('YYYY-MM-DD'))
 }
 
-function goToCurrentPeriod() {
-  const today = dayjs()
-  const focusDate =
-    props.mode === 'month' ? today.startOf('month') : today.startOf('day')
-
-  emit('periodChange', focusDate.format('YYYY-MM-DD'))
-}
-
 function changeMode(mode: 'month' | 'week' | 'day') {
   emit('modeChange', mode)
 }
@@ -248,36 +232,69 @@ onBeforeUnmount(() => {
           @click="goToPreviousPeriod"
         />
         <div class="text-center">
-          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-500">{{ subtitleLabel }}</p>
-          <p class="text-base font-semibold text-ink-900 sm:text-lg">{{ titleLabel }}</p>
+          <p class="text-sm font-semibold text-ink-900 sm:text-lg">{{ titleLabel }}</p>
         </div>
-        <div class="flex items-center gap-2">
-          <UiButton
-            variant="ghost"
-            size="sm"
-            icon="chevronRight"
-            :aria-label="nextAriaLabel"
-            @click="goToNextPeriod"
-          />
-          <UiButton variant="secondary" size="sm" @click="goToCurrentPeriod">Hari Ini</UiButton>
-        </div>
+        <UiButton
+          variant="ghost"
+          size="sm"
+          icon="chevronRight"
+          :aria-label="nextAriaLabel"
+          @click="goToNextPeriod"
+        />
       </div>
 
-      <div class="flex w-full items-center rounded-2xl border border-white/80 bg-white/80 p-1">
-        <button
-          v-for="option in viewOptions"
-          :key="option.value"
-          type="button"
-          :class="[
-            'flex-1 rounded-xl px-3 py-2 text-sm font-medium transition',
-            props.mode === option.value
-              ? 'bg-brand-500 text-white shadow-[0_8px_18px_rgba(243,95,16,0.26)]'
-              : 'text-ink-600 hover:bg-white',
-          ]"
-          @click="changeMode(option.value)"
-        >
-          {{ option.label }}
-        </button>
+      <div class="flex flex-col gap-3 md:flex-row md:items-center">
+        <div class="flex w-full items-center rounded-2xl border border-white/80 bg-white/80 p-1 md:flex-1">
+          <button
+            v-for="option in viewOptions"
+            :key="option.value"
+            type="button"
+            :class="[
+              'flex-1 rounded-xl px-3 py-2 text-sm font-medium transition',
+              props.mode === option.value
+                ? 'bg-brand-500 text-white shadow-[0_8px_18px_rgba(243,95,16,0.26)]'
+                : 'text-ink-600 hover:bg-white',
+            ]"
+            @click="changeMode(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+
+        <div class="rounded-2xl border border-brand-100/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(255,248,243,0.9))] px-3 py-2.5 shadow-[0_10px_24px_rgba(243,95,16,0.08)] md:min-w-[255px]">
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-700">
+              <UiIcon name="prices" class="h-4 w-4" />
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">Harga aktif</p>
+
+              <div v-if="props.selectedPriceLoading" class="mt-1.5 flex items-center gap-2">
+                <div class="h-4 w-24 animate-pulse rounded-md bg-slate-200/70" />
+                <div class="h-3 w-12 animate-pulse rounded-md bg-slate-200/55" />
+              </div>
+
+              <template v-else-if="props.selectedPrice">
+                <p class="mt-1 text-sm font-semibold text-ink-900 sm:text-[15px]">
+                  {{ formatRupiah(props.selectedPrice.pricePerKg) }}
+                  <span class="text-[11px] font-medium text-ink-500">/kg</span>
+                </p>
+              </template>
+
+              <p v-else class="mt-1 text-xs font-medium text-ink-600">
+                {{ props.selectedPriceError ? 'Harga belum bisa dimuat' : 'Belum tersedia' }}
+              </p>
+            </div>
+
+            <div class="shrink-0 text-right">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-400">Terpilih</p>
+              <p class="mt-1 text-xs font-medium leading-tight text-ink-700">
+                {{ selectedDateCompactLabel }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-if="showWeekHeader" class="grid grid-cols-7 gap-2">
@@ -340,31 +357,6 @@ onBeforeUnmount(() => {
             </span>
           </div>
         </button>
-      </div>
-
-      <div class="rounded-2xl border border-white/75 bg-white/88 p-3.5">
-        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-500">Harga Aktif</p>
-
-        <div v-if="props.selectedPriceLoading" class="mt-3 animate-pulse space-y-2">
-          <div class="h-6 w-32 rounded-md bg-slate-200/70" />
-          <div class="h-3 w-48 rounded-md bg-slate-200/60" />
-        </div>
-
-        <template v-else-if="props.selectedPrice">
-          <p class="mt-2 text-lg font-semibold text-ink-900">
-            {{ formatRupiah(props.selectedPrice.pricePerKg) }}/kg
-          </p>
-          <p class="mt-1 text-xs text-ink-500">
-            Berlaku pada {{ formatDayMonthYearId(props.selectedPrice.effectiveDate) }}
-          </p>
-        </template>
-
-        <template v-else>
-          <p class="mt-2 text-lg font-semibold text-ink-900">-</p>
-          <p class="mt-1 text-xs text-ink-500">
-            {{ props.selectedPriceError ? 'Harga aktif belum bisa dimuat.' : 'Harga telur belum diinput untuk tanggal ini.' }}
-          </p>
-        </template>
       </div>
 
       <div class="border-t border-white/70 pt-3">
