@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import type { CalendarDay, PriceItem } from '../types/domain'
+import type { CalendarMarkerDay, PriceItem } from '../types/domain'
 import {
   endOfWeekMonday,
   formatDayMonthId,
@@ -13,7 +13,7 @@ import {
 import { formatRupiah } from '../utils/formatters'
 
 const props = defineProps<{
-  days: CalendarDay[]
+  markerDays: CalendarMarkerDay[]
   mode: 'month' | 'week' | 'day'
   focusDate: string
   selectedDate: string
@@ -40,7 +40,7 @@ const markerLegend = [
   { label: 'Pengeluaran', className: 'bg-slate-500' },
 ]
 
-const dayMap = computed(() => new Map(props.days.map((day) => [day.date, day])))
+const markerMap = computed(() => new Map(props.markerDays.map((day) => [day.date, day.markers])))
 const focus = computed(() => dayjs(props.focusDate))
 const flashedDate = ref('')
 let flashTimer: ReturnType<typeof setTimeout> | null = null
@@ -78,10 +78,10 @@ type CalendarCell = {
 }
 
 function buildMarkers(date: string): CalendarMarker[] {
-  const payload = dayMap.value.get(date)
-  const orderCount = payload?.events.orders.length ?? 0
-  const productionCount = payload?.events.productions.length ?? 0
-  const expenseCount = payload?.events.expenses.length ?? 0
+  const payload = markerMap.value.get(date)
+  const orderCount = payload?.orders ?? 0
+  const productionCount = payload?.productions ?? 0
+  const expenseCount = payload?.expenses ?? 0
   const markers: CalendarMarker[] = []
 
   if (orderCount > 0) {

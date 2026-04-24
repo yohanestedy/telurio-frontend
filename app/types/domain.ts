@@ -290,6 +290,16 @@ export interface CalendarDay {
   };
 }
 
+export interface CalendarMarkerDay {
+  date: string;
+  markers: {
+    orders: number;
+    productions: number;
+    expenses: number;
+    priceUpdates: number;
+  };
+}
+
 export interface MenuItem {
   label: string;
   path: string;

@@ -2,6 +2,7 @@
 import dayjs from 'dayjs'
 import type {
   CalendarDay,
+  CalendarMarkerDay,
   CoopItem,
   LiveStockResponse,
   OrderItem,
@@ -29,7 +30,7 @@ const { currentPrice, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
 const error = ref('')
-const days = ref<CalendarDay[]>([])
+const markerDays = ref<CalendarMarkerDay[]>([])
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 const focusDate = ref(dayjs().format('YYYY-MM-DD'))
 const selectedDay = ref<CalendarDay>(emptyCalendarDay(selectedDate.value))
@@ -110,13 +111,10 @@ async function loadCalendar() {
   }
 
   try {
-    days.value = await api.get<CalendarDay[]>('/calendar', {
+    markerDays.value = await api.get<CalendarMarkerDay[]>('/calendar/markers', {
       startDate: range.start.format('YYYY-MM-DD'),
       endDate: range.end.format('YYYY-MM-DD'),
     })
-    selectedDay.value =
-      days.value.find((item) => item.date === selectedDate.value) ??
-      emptyCalendarDay(selectedDate.value)
   } catch (caught) {
     error.value = api.mapError(caught).message
   } finally {
@@ -129,7 +127,7 @@ async function loadSelectedDayDetail(date: string) {
     selectedDay.value = await api.get<CalendarDay>(`/calendar/${date}`)
   } catch (caught) {
     error.value = api.mapError(caught).message
-    selectedDay.value = days.value.find((item) => item.date === date) ?? emptyCalendarDay(date)
+    selectedDay.value = emptyCalendarDay(date)
   }
 }
 
@@ -151,7 +149,10 @@ async function loadSelectedPriceForDate(date: string) {
 
 async function syncCalendarPanel() {
   await loadCalendar()
-  await loadSelectedPriceForDate(selectedDate.value)
+  await Promise.all([
+    loadSelectedDayDetail(selectedDate.value),
+    loadSelectedPriceForDate(selectedDate.value),
+  ])
 }
 
 async function selectDate(date: string) {
@@ -168,7 +169,11 @@ async function selectDate(date: string) {
   }
 
   if (ui.calendarView === 'day') {
-    await Promise.all([loadCalendar(), loadSelectedPriceForDate(selectedDate.value)])
+    await Promise.all([
+      loadCalendar(),
+      loadSelectedDayDetail(selectedDate.value),
+      loadSelectedPriceForDate(selectedDate.value),
+    ])
     return
   }
 
@@ -395,7 +400,7 @@ onMounted(syncCalendarPanel)
         <Transition name="calendar-swap" mode="out-in">
           <CalendarBoard
             :key="boardTransitionKey"
-            :days="days"
+            :marker-days="markerDays"
             :mode="ui.calendarView"
             :focus-date="focusDate"
             :selected-date="selectedDate"
