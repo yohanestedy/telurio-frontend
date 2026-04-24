@@ -4,24 +4,53 @@ interface Props {
   label?: string
   placeholder?: string
   type?: string
+  min?: string | number
+  max?: string | number
+  step?: string | number
+  inputmode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
   error?: string
   help?: string
   disabled?: boolean
+  preventScrollOnNumber?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   label: '',
   placeholder: '',
   type: 'text',
+  min: undefined,
+  max: undefined,
+  step: undefined,
+  inputmode: undefined,
   error: '',
   help: '',
   disabled: false,
+  preventScrollOnNumber: true,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
+
+function handleInput(event: Event) {
+  emit('update:modelValue', (event.target as HTMLInputElement).value)
+}
+
+function handleWheel(event: WheelEvent) {
+  if (!props.preventScrollOnNumber || props.type !== 'number') {
+    return
+  }
+
+  if (event.cancelable) {
+    event.preventDefault()
+  }
+
+  const target = event.target as HTMLInputElement
+  if (document.activeElement === target) {
+    target.blur()
+  }
+}
 </script>
 
 <template>
@@ -30,10 +59,15 @@ const emit = defineEmits<{
     <input
       :value="modelValue ?? ''"
       :type="type"
+      :min="min"
+      :max="max"
+      :step="step"
+      :inputmode="inputmode"
       :placeholder="placeholder"
       :disabled="disabled"
       class="field-shell"
-      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      @input="handleInput"
+      @wheel="handleWheel"
     >
     <span v-if="error" class="text-xs font-medium text-rose-600">{{ error }}</span>
     <span v-else-if="help" class="text-xs text-ink-500">{{ help }}</span>

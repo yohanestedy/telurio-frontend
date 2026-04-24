@@ -229,6 +229,17 @@ function onSubmit() {
       : {}),
   })
 }
+
+function preventNumberScroll(event: WheelEvent) {
+  if (event.cancelable) {
+    event.preventDefault()
+  }
+
+  const target = event.target as HTMLInputElement
+  if (document.activeElement === target) {
+    target.blur()
+  }
+}
 </script>
 
 <template>
@@ -331,6 +342,7 @@ function onSubmit() {
             min="0"
             class="field-shell max-w-[160px]"
             placeholder="0.00"
+            @wheel="preventNumberScroll"
           >
         </div>
       </label>
