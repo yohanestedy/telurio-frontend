@@ -89,8 +89,7 @@
 
               <div class="p-3.5 sm:p-4">
                 <div class="flex items-start justify-between gap-3">
-                  <div class="space-y-2">
-                    <div class="h-3 w-16 rounded-md bg-slate-200/60" />
+                  <div>
                     <div class="h-5 w-28 rounded-md bg-slate-200/70" />
                   </div>
                   <div class="h-6 w-20 rounded-full bg-slate-200/60" />

@@ -50,7 +50,7 @@ const boardTransitionKey = computed(
   () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
 )
 const selectedDateLabel = computed(() => formatDayMonthYearId(selectedDate.value))
-const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length} order`)
+const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length}`)
 
 type CalendarOrder = CalendarDay['events']['orders'][number]
 type OrderAction = {
@@ -335,14 +335,6 @@ function orderInvoiceLabel(totalInvoice: string | null) {
   return totalInvoice ? formatRupiah(totalInvoice) : 'Invoice belum dihitung'
 }
 
-function shortOrderId(orderId: string) {
-  if (!orderId) {
-    return '-'
-  }
-
-  return orderId.length > 12 ? `#${orderId.slice(0, 8).toUpperCase()}` : orderId.toUpperCase()
-}
-
 function isCompletedDelivery(order: CalendarOrder) {
   return order.deliveryStatus === 'SUDAH_DIHANTAR'
 }
@@ -421,11 +413,10 @@ onMounted(syncCalendarPanel)
         <GlassCard class="overflow-hidden">
           <div class="flex items-center justify-between gap-2 border-b border-white/70 px-4 py-3.5 sm:px-5 sm:py-4">
             <div>
-              <p class="text-base font-semibold text-ink-900">Order Actions</p>
-              <p class="text-xs text-ink-500">{{ selectedDateLabel }}</p>
+              <p class="text-base font-semibold text-ink-900">{{ orderCountLabel }} Pesanan</p>
             </div>
             <span class="rounded-full border border-white/70 bg-white/80 px-2 py-1 text-xs text-ink-600">
-              {{ orderCountLabel }}
+              {{ selectedDateLabel }}
             </span>
           </div>
 
@@ -446,10 +437,7 @@ onMounted(syncCalendarPanel)
               <div class="p-3.5 sm:p-4">
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-400">
-                      {{ shortOrderId(order.orderId) }}
-                    </p>
-                    <p class="mt-1 truncate text-sm font-extrabold tracking-[-0.01em] text-ink-900 sm:text-base">
+                    <p class="truncate text-sm font-extrabold tracking-[-0.01em] text-ink-900 sm:text-base">
                       {{ order.customerName }}
                     </p>
                   </div>

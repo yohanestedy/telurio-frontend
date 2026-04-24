@@ -285,11 +285,11 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         icon: "dashboard",
       },
       {
-        label: "Orders",
-        path: "/orders",
-        description: "Order",
-        permission: "orders.view",
-        icon: "orders",
+        label: "Calendar",
+        path: "/calendar",
+        description: "Kalender",
+        permission: "calendar.view",
+        icon: "calendar",
       },
       {
         label: "Productions",
