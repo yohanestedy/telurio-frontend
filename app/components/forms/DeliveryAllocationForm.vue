@@ -14,12 +14,20 @@ interface CoopStockItem {
   availableKg: string
 }
 
+interface AllocationDraftItem {
+  coopId: string
+  quantityKg: number | string
+}
+
 const props = withDefaults(defineProps<{
   coopOptions: Array<{ label: string; value: string }>
   orderQuantityKg: string
   orderPricePerKg?: string | null
   todayPricePerKg?: string | null
   canSetPriceNow?: boolean
+  enablePriceLock?: boolean
+  submitLabel?: string
+  initialAllocations?: AllocationDraftItem[]
   combinedAvailableKg?: string | null
   coopStocks?: CoopStockItem[]
   submitting?: boolean
@@ -27,6 +35,9 @@ const props = withDefaults(defineProps<{
   orderPricePerKg: null,
   todayPricePerKg: null,
   canSetPriceNow: false,
+  enablePriceLock: true,
+  submitLabel: 'Mulai pengantaran',
+  initialAllocations: () => [],
   combinedAvailableKg: null,
   coopStocks: () => [],
   submitting: false,
@@ -46,8 +57,33 @@ const total = computed(() =>
   Object.values(values.value).reduce((sum, item) => sum + (Number(item) || 0), 0),
 )
 
+const existingAllocationByCoop = computed(() => {
+  const map = new Map<string, number>()
+
+  for (const item of props.initialAllocations) {
+    const normalized = Number(item.quantityKg)
+    if (Number.isNaN(normalized)) {
+      continue
+    }
+
+    const current = map.get(item.coopId) ?? 0
+    map.set(item.coopId, Number((current + normalized).toFixed(3)))
+  }
+
+  return map
+})
+
+const existingAllocationTotal = computed(() =>
+  [...existingAllocationByCoop.value.values()].reduce((sum, item) => sum + item, 0),
+)
+
 const stockByCoop = computed(() =>
-  new Map(props.coopStocks.map((item) => [item.coopId, Number(item.availableKg)])),
+  new Map(
+    props.coopStocks.map((item) => [
+      item.coopId,
+      Number((Number(item.availableKg) + (existingAllocationByCoop.value.get(item.coopId) ?? 0)).toFixed(3)),
+    ]),
+  ),
 )
 
 const overByCoop = computed(() => {
@@ -65,13 +101,20 @@ const overByCoop = computed(() => {
   return result
 })
 
-const combinedOverKg = computed(() => {
+const combinedAvailableForForm = computed(() => {
   if (props.combinedAvailableKg === null) {
+    return null
+  }
+
+  return Number((Number(props.combinedAvailableKg) + existingAllocationTotal.value).toFixed(3))
+})
+
+const combinedOverKg = computed(() => {
+  if (combinedAvailableForForm.value === null) {
     return 0
   }
 
-  const available = Number(props.combinedAvailableKg)
-  return Number((total.value - available).toFixed(3))
+  return Number((total.value - combinedAvailableForForm.value).toFixed(3))
 })
 
 const hasStockShortage = computed(() =>
@@ -101,7 +144,13 @@ const todayPricePerKgValue = computed(() => {
   return Number.isNaN(normalized) ? null : normalized
 })
 
-const requiresPriceLock = computed(() => orderPricePerKgValue.value === null)
+const requiresPriceLock = computed(() =>
+  props.enablePriceLock && orderPricePerKgValue.value === null,
+)
+
+const shouldShowPriceLockCard = computed(() =>
+  props.enablePriceLock || orderPricePerKgValue.value !== null,
+)
 
 const effectivePricePerKg = computed(() => {
   if (!requiresPriceLock.value) {
@@ -156,6 +205,22 @@ watch(priceMode, () => {
 watch(customPricePerKg, () => {
   priceError.value = ''
 })
+
+watch(
+  () => [props.coopOptions, props.initialAllocations],
+  () => {
+    const nextValues: Record<string, string> = {}
+
+    for (const coop of props.coopOptions) {
+      const initial = existingAllocationByCoop.value.get(coop.value)
+      nextValues[coop.value] = initial !== undefined ? String(initial) : ''
+    }
+
+    values.value = nextValues
+    error.value = ''
+  },
+  { immediate: true },
+)
 
 function formatKg(value: number | string | null | undefined) {
   if (value === null || value === undefined || value === '') {
@@ -249,10 +314,13 @@ function preventNumberScroll(event: WheelEvent) {
       <span class="mx-2">•</span>
       Total alokasi: <span class="font-semibold">{{ formatKg(total) }} kg</span>
       <span class="mx-2">•</span>
-      Stok gabungan tersedia: <span class="font-semibold">{{ formatKg(combinedAvailableKg) }} kg</span>
+      Stok gabungan tersedia: <span class="font-semibold">{{ formatKg(combinedAvailableForForm) }} kg</span>
     </div>
 
-    <div class="space-y-3 rounded-2xl border border-brand-200/70 bg-brand-50/40 px-4 py-4">
+    <div
+      v-if="shouldShowPriceLockCard"
+      class="space-y-3 rounded-2xl border border-brand-200/70 bg-brand-50/40 px-4 py-4"
+    >
       <p class="text-sm font-semibold text-ink-900">Lock harga order</p>
 
       <template v-if="!requiresPriceLock">
@@ -353,7 +421,7 @@ function preventNumberScroll(event: WheelEvent) {
     <p v-if="error" class="text-sm font-medium text-rose-600">{{ error }}</p>
     <div class="flex justify-end">
       <UiButton :disabled="submitting || hasStockShortage || hasPriceBlockingCondition" @click="onSubmit">
-        {{ submitting ? 'Menyimpan...' : 'Mulai pengantaran' }}
+        {{ submitting ? 'Menyimpan...' : submitLabel }}
       </UiButton>
     </div>
   </div>

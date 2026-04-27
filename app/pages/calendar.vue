@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import type {
+  AllocationItem,
   CalendarDay,
   CalendarMarkerDay,
   CoopItem,
@@ -38,11 +39,13 @@ const actionSubmittingOrderId = ref('')
 const modalSubmitting = ref(false)
 const startDeliveryOpen = ref(false)
 const paymentOpen = ref(false)
-const startModalLoading = ref(false)
+const allocationModalLoading = ref(false)
 const paymentModalLoading = ref(false)
 const activeOrder = ref<OrderItem | null>(null)
 const activeCoops = ref<CoopItem[]>([])
 const activeLiveStock = ref<LiveStockResponse | null>(null)
+const activeAllocations = ref<AllocationItem[]>([])
+const allocationModalMode = ref<'start' | 'edit'>('start')
 const selectedPrice = ref<PriceItem | null>(null)
 const selectedPriceLoading = ref(false)
 const selectedPriceError = ref(false)
@@ -55,9 +58,9 @@ const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length
 
 type CalendarOrder = CalendarDay['events']['orders'][number]
 type OrderAction = {
-  id: 'start-delivery' | 'complete-delivery' | 'payment-update' | 'open-detail'
+  id: 'start-delivery' | 'edit-allocation' | 'complete-delivery' | 'payment-update' | 'open-detail'
   label: string
-  icon: 'package' | 'chevronRight' | 'money' | 'search'
+  icon: 'package' | 'edit' | 'chevronRight' | 'money' | 'search'
   variant: 'primary' | 'secondary' | 'ghost'
 }
 
@@ -127,6 +130,16 @@ const activeOrderIsTodayDelivery = computed(() => {
 
   return dayjs(activeOrder.value.deliveryDate).startOf('day').isSame(dayjs().startOf('day'))
 })
+
+const allocationDialogTitle = computed(() =>
+  allocationModalMode.value === 'edit' ? 'Ubah Alokasi Pengantaran' : 'Start Delivery',
+)
+
+const allocationDialogDescription = computed(() =>
+  allocationModalMode.value === 'edit'
+    ? 'Koreksi alokasi kandang. Sistem akan menyesuaikan live stock secara otomatis.'
+    : 'Masukkan alokasi kandang hingga totalnya sama dengan quantity order.',
+)
 
 async function loadCalendar() {
   loading.value = true
@@ -243,25 +256,30 @@ async function loadOrderForAction(orderId: string) {
   return await api.get<OrderItem>(`/orders/${orderId}`)
 }
 
-async function openStartDeliveryModal(orderId: string) {
-  startModalLoading.value = true
+async function openAllocationModal(orderId: string, mode: 'start' | 'edit') {
+  allocationModalLoading.value = true
 
   try {
-    const [orderDetail, coopList, stock] = await Promise.all([
+    const [orderDetail, coopList, stock, allocationList] = await Promise.all([
       loadOrderForAction(orderId),
       api.getPage<CoopItem[]>('/coops', { all: true }),
       api.get<LiveStockResponse>('/stocks/live'),
+      mode === 'edit'
+        ? api.get<AllocationItem[]>(`/orders/${orderId}/allocations`)
+        : Promise.resolve([] as AllocationItem[]),
       loadTodayPriceStatus(),
     ])
 
+    allocationModalMode.value = mode
     activeOrder.value = orderDetail
     activeCoops.value = coopList.data
     activeLiveStock.value = stock
+    activeAllocations.value = allocationList
     startDeliveryOpen.value = true
   } catch (caught) {
     toast.error('Gagal menyiapkan modal pengantaran', api.mapError(caught).message)
   } finally {
-    startModalLoading.value = false
+    allocationModalLoading.value = false
   }
 }
 
@@ -287,19 +305,32 @@ async function refreshCalendarDetailAfterAction() {
   ])
 }
 
-async function submitStartDelivery(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
+async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
   if (!activeOrder.value) {
     return
   }
 
   modalSubmitting.value = true
   try {
-    await api.post(`/orders/${activeOrder.value.id}/start-delivery`, payload)
-    toast.success('Pengantaran berhasil dimulai')
+    if (allocationModalMode.value === 'edit') {
+      await api.patch(`/orders/${activeOrder.value.id}/allocations`, {
+        allocations: payload.allocations,
+      })
+      toast.success('Alokasi pengantaran berhasil diperbarui')
+    } else {
+      await api.post(`/orders/${activeOrder.value.id}/start-delivery`, payload)
+      toast.success('Pengantaran berhasil dimulai')
+    }
+
     startDeliveryOpen.value = false
     await refreshCalendarDetailAfterAction()
   } catch (caught) {
-    toast.error('Gagal memulai pengantaran', api.mapError(caught).message)
+    toast.error(
+      allocationModalMode.value === 'edit'
+        ? 'Gagal mengubah alokasi'
+        : 'Gagal memulai pengantaran',
+      api.mapError(caught).message,
+    )
   } finally {
     modalSubmitting.value = false
   }
@@ -348,6 +379,13 @@ function orderActions(order: CalendarOrder): OrderAction[] {
   }
 
   if (auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR') {
+    actions.push({
+      id: 'edit-allocation',
+      label: 'Ubah Alokasi',
+      icon: 'edit',
+      variant: 'secondary',
+    })
+
     actions.push({
       id: 'complete-delivery',
       label: 'Selesai Hantar',
@@ -415,7 +453,12 @@ async function handleOrderAction(order: CalendarOrder, action: OrderAction) {
   }
 
   if (action.id === 'start-delivery') {
-    await openStartDeliveryModal(order.orderId)
+    await openAllocationModal(order.orderId, 'start')
+    return
+  }
+
+  if (action.id === 'edit-allocation') {
+    await openAllocationModal(order.orderId, 'edit')
     return
   }
 
@@ -553,7 +596,9 @@ onMounted(syncCalendarPanel)
                     :icon="action.icon"
                     :class="[
                       'transition-transform duration-150 active:scale-[0.97] text-[11px] sm:text-xs',
-                      action.id === 'start-delivery' || action.id === 'complete-delivery'
+                      action.id === 'start-delivery'
+                      || action.id === 'edit-allocation'
+                      || action.id === 'complete-delivery'
                         ? 'min-w-[140px] flex-1'
                         : '',
                     ]"
@@ -609,22 +654,25 @@ onMounted(syncCalendarPanel)
 
     <UiDialog
       v-model:open="startDeliveryOpen"
-      title="Start Delivery"
-      description="Masukkan alokasi kandang hingga totalnya sama dengan quantity order."
+      :title="allocationDialogTitle"
+      :description="allocationDialogDescription"
       size="xl"
     >
-      <LoadingSkeleton v-if="startModalLoading" :lines="6" />
+      <LoadingSkeleton v-if="allocationModalLoading" :lines="6" />
       <FormsDeliveryAllocationForm
         v-else-if="activeOrder"
         :coop-options="activeCoopOptions"
         :order-quantity-kg="activeOrder.quantityKg"
         :order-price-per-kg="activeOrder.pricePerKg"
         :today-price-per-kg="currentPrice?.pricePerKg ?? null"
-        :can-set-price-now="activeOrderIsTodayDelivery"
+        :can-set-price-now="allocationModalMode === 'start' && activeOrderIsTodayDelivery"
+        :enable-price-lock="allocationModalMode === 'start'"
+        :initial-allocations="allocationModalMode === 'edit' ? activeAllocations : []"
         :combined-available-kg="activeLiveStock?.combinedAvailableKg ?? null"
         :coop-stocks="activeLiveStock?.coops ?? []"
+        :submit-label="allocationModalMode === 'edit' ? 'Simpan perubahan alokasi' : 'Mulai pengantaran'"
         :submitting="modalSubmitting"
-        @submit="submitStartDelivery"
+        @submit="submitDeliveryAllocation"
       />
     </UiDialog>
 

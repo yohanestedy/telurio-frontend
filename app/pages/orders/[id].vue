@@ -28,6 +28,8 @@ const allocations = ref<AllocationItem[]>([])
 const paymentHistory = ref<PaymentHistoryItem[]>([])
 const activeTab = ref<'summary' | 'allocations' | 'payments'>('summary')
 const startDeliveryOpen = ref(false)
+const allocationModalMode = ref<'start' | 'edit'>('start')
+const allocationModalLoading = ref(false)
 const paymentOpen = ref(false)
 const cancelOpen = ref(false)
 const coops = ref<CoopItem[]>([])
@@ -50,7 +52,16 @@ async function consumeOpenQuery(value: unknown) {
     order.value.lifecycleStatus === 'ACTIVE' &&
     order.value.deliveryStatus === 'BELUM_DIHANTAR'
   ) {
-    startDeliveryOpen.value = true
+    await openAllocationModal('start')
+  }
+
+  if (
+    openTarget === 'edit-allocation' &&
+    auth.role === 'OPERATOR' &&
+    order.value.lifecycleStatus === 'ACTIVE' &&
+    order.value.deliveryStatus === 'SEDANG_DIHANTAR'
+  ) {
+    await openAllocationModal('edit')
   }
 
   if (
@@ -78,6 +89,16 @@ const isTodayDelivery = computed(() => {
   return dayjs(order.value.deliveryDate).startOf('day').isSame(dayjs().startOf('day'))
 })
 
+const allocationDialogTitle = computed(() =>
+  allocationModalMode.value === 'edit' ? 'Ubah Alokasi Pengantaran' : 'Start Delivery',
+)
+
+const allocationDialogDescription = computed(() =>
+  allocationModalMode.value === 'edit'
+    ? 'Koreksi alokasi kandang. Sistem akan menyesuaikan live stock secara otomatis.'
+    : 'Masukkan alokasi kandang hingga totalnya sama dengan quantity order.',
+)
+
 async function loadOrder() {
   loading.value = true
   error.value = ''
@@ -104,15 +125,55 @@ async function loadOrder() {
   }
 }
 
-async function startDelivery(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
+async function openAllocationModal(mode: 'start' | 'edit') {
+  if (!order.value) {
+    return
+  }
+
+  allocationModalLoading.value = true
+
+  try {
+    const [orderDetail, allocationList, stock] = await Promise.all([
+      api.get<OrderItem>(`/orders/${route.params.id}`),
+      api.get<AllocationItem[]>(`/orders/${route.params.id}/allocations`),
+      api.get<LiveStockResponse>('/stocks/live'),
+      loadTodayPriceStatus(),
+    ])
+
+    order.value = orderDetail
+    allocations.value = allocationList
+    liveStock.value = stock
+    allocationModalMode.value = mode
+    startDeliveryOpen.value = true
+  } catch (caught) {
+    toast.error('Gagal menyiapkan modal alokasi', api.mapError(caught).message)
+  } finally {
+    allocationModalLoading.value = false
+  }
+}
+
+async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
   submitting.value = true
   try {
-    await api.post(`/orders/${route.params.id}/start-delivery`, payload)
-    toast.success('Pengantaran berhasil dimulai')
+    if (allocationModalMode.value === 'edit') {
+      await api.patch(`/orders/${route.params.id}/allocations`, {
+        allocations: payload.allocations,
+      })
+      toast.success('Alokasi pengantaran berhasil diperbarui')
+    } else {
+      await api.post(`/orders/${route.params.id}/start-delivery`, payload)
+      toast.success('Pengantaran berhasil dimulai')
+    }
+
     startDeliveryOpen.value = false
     await loadOrder()
   } catch (caught) {
-    toast.error('Gagal memulai pengantaran', api.mapError(caught).message)
+    toast.error(
+      allocationModalMode.value === 'edit'
+        ? 'Gagal mengubah alokasi'
+        : 'Gagal memulai pengantaran',
+      api.mapError(caught).message,
+    )
   } finally {
     submitting.value = false
   }
@@ -193,9 +254,17 @@ watch(
             <UiButton
               v-if="auth.role === 'OPERATOR' && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
               icon="package"
-              @click="startDeliveryOpen = true"
+              @click="openAllocationModal('start')"
             >
               Start Delivery
+            </UiButton>
+            <UiButton
+              v-if="auth.role === 'OPERATOR' && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'SEDANG_DIHANTAR'"
+              variant="secondary"
+              icon="edit"
+              @click="openAllocationModal('edit')"
+            >
+              Edit Allocation
             </UiButton>
             <UiButton
               v-if="auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR'"
@@ -305,19 +374,24 @@ watch(
 
       <UiDialog
         v-model:open="startDeliveryOpen"
-        title="Start Delivery"
-        description="Masukkan alokasi kandang hingga totalnya sama dengan quantity order."
+        :title="allocationDialogTitle"
+        :description="allocationDialogDescription"
       >
+        <LoadingSkeleton v-if="allocationModalLoading" :lines="6" />
         <FormsDeliveryAllocationForm
+          v-else
           :coop-options="coopOptions"
           :order-quantity-kg="order.quantityKg"
           :order-price-per-kg="order.pricePerKg"
           :today-price-per-kg="currentPrice?.pricePerKg ?? null"
-          :can-set-price-now="isTodayDelivery"
+          :can-set-price-now="allocationModalMode === 'start' && isTodayDelivery"
+          :enable-price-lock="allocationModalMode === 'start'"
+          :initial-allocations="allocationModalMode === 'edit' ? allocations : []"
           :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
           :coop-stocks="liveStock?.coops ?? []"
+          :submit-label="allocationModalMode === 'edit' ? 'Simpan perubahan alokasi' : 'Mulai pengantaran'"
           :submitting="submitting"
-          @submit="startDelivery"
+          @submit="submitDeliveryAllocation"
         />
       </UiDialog>
 
