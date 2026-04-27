@@ -4,10 +4,12 @@ import type {
   CustomerItem,
   ExpenseItem,
   GrossIncomeItem,
+  LiveStockCoopItem,
   LiveStockResponse,
   MonthlySummaryResponse,
   OrderItem,
   ProductionItem,
+  StockMovementItem,
 } from '../types/domain'
 
 definePageMeta({
@@ -28,11 +30,18 @@ const productions = ref<ProductionItem[]>([])
 const expenses = ref<ExpenseItem[]>([])
 const grossIncome = ref<GrossIncomeItem[]>([])
 const liveStock = ref<LiveStockResponse | null>(null)
+const todayStockMovements = ref<StockMovementItem[]>([])
 const monthlySummary = ref<MonthlySummaryResponse | null>(null)
 const customers = ref<CustomerItem[]>([])
 const createOrderOpen = ref(false)
 const creatingOrder = ref(false)
 const shareImageVersion = ref(Date.now())
+const coopFlowDetailOpen = ref(false)
+const coopFlowDetailLoading = ref(false)
+const activeCoopForDetail = ref<LiveStockCoopItem | null>(null)
+const activeCoopFlowDetail = ref<CoopFlowDetailPayload | null>(null)
+
+const orderDetailCache = ref<Record<string, OrderItem>>({})
 
 async function loadDashboard() {
   loading.value = true
@@ -57,6 +66,15 @@ async function loadDashboard() {
       }),
       api.get<LiveStockResponse>('/stocks/live').then((value) => {
         liveStock.value = value
+      }),
+      api.getPage<StockMovementItem[]>('/stocks/movements', {
+        all: true,
+        sortBy: 'createdAt',
+        order: 'desc',
+        startDate: today,
+        endDate: today,
+      }).then((value) => {
+        todayStockMovements.value = value.data
       }),
     ]
 
@@ -146,6 +164,316 @@ async function createOrder(payload: Record<string, unknown>) {
     creatingOrder.value = false
   }
 }
+
+interface CoopDailyFlow {
+  productionInKg: number
+  allocationReleaseInKg: number
+  adjustmentInKg: number
+  allocationOutKg: number
+  adjustmentOutKg: number
+  totalInKg: number
+  totalOutKg: number
+}
+
+interface CoopFlowSummary extends CoopDailyFlow {
+  netFlowKg: number
+}
+
+interface ProductionFlowDetail {
+  movementId: string
+  quantityKg: string
+  goodCount: number | null
+  collectionTime: string | null
+  operatorName: string | null
+  createdAt: string
+  notes: string | null
+}
+
+interface AllocationFlowDetail {
+  movementId: string
+  orderId: string | null
+  customerName: string | null
+  deliveryDate: string | null
+  allocatedKg: string
+  orderQuantityKg: string | null
+  pricePerKg: string | null
+  totalInvoice: string | null
+  operatorName: string | null
+  createdAt: string
+}
+
+interface AdjustmentFlowDetail {
+  movementId: string
+  movementType: StockMovementItem['movementType']
+  movementTypeLabel: string
+  quantityKg: string
+  notes: string | null
+  operatorName: string | null
+  createdAt: string
+}
+
+interface CoopFlowDetailPayload {
+  inDetails: {
+    productions: ProductionFlowDetail[]
+    allocationReleases: AllocationFlowDetail[]
+    adjustments: AdjustmentFlowDetail[]
+  }
+  outDetails: {
+    allocations: AllocationFlowDetail[]
+    adjustments: AdjustmentFlowDetail[]
+  }
+}
+
+function normalizeKgNumber(value: number) {
+  return Number(value.toFixed(3))
+}
+
+function emptyCoopDailyFlow(): CoopDailyFlow {
+  return {
+    productionInKg: 0,
+    allocationReleaseInKg: 0,
+    adjustmentInKg: 0,
+    allocationOutKg: 0,
+    adjustmentOutKg: 0,
+    totalInKg: 0,
+    totalOutKg: 0,
+  }
+}
+
+const dailyFlowByCoop = computed(() => {
+  const map = new Map<string, CoopDailyFlow>()
+
+  for (const item of liveStock.value?.coops ?? []) {
+    map.set(item.coopId, emptyCoopDailyFlow())
+  }
+
+  for (const movement of todayStockMovements.value) {
+    const quantity = normalizeKgNumber(Number(movement.quantityKg))
+    if (Number.isNaN(quantity) || quantity <= 0) {
+      continue
+    }
+
+    const flow = map.get(movement.coopId) ?? emptyCoopDailyFlow()
+
+    if (movement.direction === 'IN') {
+      flow.totalInKg = normalizeKgNumber(flow.totalInKg + quantity)
+
+      if (movement.movementType === 'PRODUCTION_IN') {
+        flow.productionInKg = normalizeKgNumber(flow.productionInKg + quantity)
+      } else if (movement.movementType === 'ALLOCATION_RELEASE') {
+        flow.allocationReleaseInKg = normalizeKgNumber(flow.allocationReleaseInKg + quantity)
+      } else {
+        flow.adjustmentInKg = normalizeKgNumber(flow.adjustmentInKg + quantity)
+      }
+    } else {
+      flow.totalOutKg = normalizeKgNumber(flow.totalOutKg + quantity)
+
+      if (movement.movementType === 'ALLOCATION_OUT') {
+        flow.allocationOutKg = normalizeKgNumber(flow.allocationOutKg + quantity)
+      } else {
+        flow.adjustmentOutKg = normalizeKgNumber(flow.adjustmentOutKg + quantity)
+      }
+    }
+
+    map.set(movement.coopId, flow)
+  }
+
+  return map
+})
+
+function coopFlow(coopId: string) {
+  return dailyFlowByCoop.value.get(coopId) ?? emptyCoopDailyFlow()
+}
+
+function movementTypeLabel(value: StockMovementItem['movementType']) {
+  return {
+    PRODUCTION_IN: 'Produksi Masuk',
+    PRODUCTION_CORRECTION_IN: 'Koreksi Produksi (+)',
+    PRODUCTION_CORRECTION_OUT: 'Koreksi Produksi (-)',
+    ALLOCATION_OUT: 'Alokasi Order',
+    ALLOCATION_RELEASE: 'Rilis Alokasi',
+    MANUAL_ADJUST_IN: 'Penyesuaian Manual (+)',
+    MANUAL_ADJUST_OUT: 'Penyesuaian Manual (-)',
+  }[value]
+}
+
+function coopFlowSummary(coopId: string): CoopFlowSummary {
+  const flow = coopFlow(coopId)
+
+  return {
+    ...flow,
+    netFlowKg: normalizeKgNumber(flow.totalInKg - flow.totalOutKg),
+  }
+}
+
+function emptyCoopFlowDetail(): CoopFlowDetailPayload {
+  return {
+    inDetails: {
+      productions: [],
+      allocationReleases: [],
+      adjustments: [],
+    },
+    outDetails: {
+      allocations: [],
+      adjustments: [],
+    },
+  }
+}
+
+async function loadOrderDetailsMap(orderIds: string[]) {
+  const uniqueIds = [...new Set(orderIds.filter((item): item is string => Boolean(item)))]
+  const missingIds = uniqueIds.filter((id) => !orderDetailCache.value[id])
+
+  if (missingIds.length) {
+    const results = await Promise.all(
+      missingIds.map(async (id) => {
+        try {
+          const detail = await api.get<OrderItem>(`/orders/${id}`)
+          return { id, detail }
+        } catch {
+          return null
+        }
+      }),
+    )
+
+    for (const result of results) {
+      if (result) {
+        orderDetailCache.value[result.id] = result.detail
+      }
+    }
+  }
+
+  return new Map(
+    uniqueIds.map((id) => [id, orderDetailCache.value[id] ?? null]),
+  )
+}
+
+function buildAllocationDetailRow(
+  movement: StockMovementItem,
+  order: OrderItem | null | undefined,
+): AllocationFlowDetail {
+  return {
+    movementId: movement.id,
+    orderId: movement.orderId,
+    customerName: order?.customer.name ?? null,
+    deliveryDate: order?.deliveryDate ?? null,
+    allocatedKg: movement.quantityKg,
+    orderQuantityKg: order?.quantityKg ?? null,
+    pricePerKg: order?.pricePerKg ?? null,
+    totalInvoice: order?.totalInvoice ?? null,
+    operatorName: movement.createdByName ?? null,
+    createdAt: movement.createdAt,
+  }
+}
+
+function buildAdjustmentDetailRow(movement: StockMovementItem): AdjustmentFlowDetail {
+  return {
+    movementId: movement.id,
+    movementType: movement.movementType,
+    movementTypeLabel: movementTypeLabel(movement.movementType),
+    quantityKg: movement.quantityKg,
+    notes: movement.notes,
+    operatorName: movement.createdByName ?? null,
+    createdAt: movement.createdAt,
+  }
+}
+
+async function openCoopFlowDetail(coop: LiveStockCoopItem) {
+  coopFlowDetailOpen.value = true
+  coopFlowDetailLoading.value = true
+  activeCoopForDetail.value = coop
+  activeCoopFlowDetail.value = emptyCoopFlowDetail()
+
+  try {
+    const today = isoDate(new Date())
+    const coopMovements = todayStockMovements.value.filter(
+      (movement) => movement.coopId === coop.coopId,
+    )
+
+    const productionInMovements = coopMovements.filter(
+      (movement) => movement.direction === 'IN' && movement.movementType === 'PRODUCTION_IN',
+    )
+    const allocationReleaseMovements = coopMovements.filter(
+      (movement) => movement.direction === 'IN' && movement.movementType === 'ALLOCATION_RELEASE',
+    )
+    const adjustmentInMovements = coopMovements.filter(
+      (movement) =>
+        movement.direction === 'IN'
+        && movement.movementType !== 'PRODUCTION_IN'
+        && movement.movementType !== 'ALLOCATION_RELEASE',
+    )
+    const allocationOutMovements = coopMovements.filter(
+      (movement) => movement.direction === 'OUT' && movement.movementType === 'ALLOCATION_OUT',
+    )
+    const adjustmentOutMovements = coopMovements.filter(
+      (movement) => movement.direction === 'OUT' && movement.movementType !== 'ALLOCATION_OUT',
+    )
+
+    const orderIds = [
+      ...allocationReleaseMovements.map((movement) => movement.orderId).filter(Boolean),
+      ...allocationOutMovements.map((movement) => movement.orderId).filter(Boolean),
+    ] as string[]
+
+    const [productionResponse, orderMap] = await Promise.all([
+      productionInMovements.length
+        ? api.getPage<ProductionItem[]>('/productions', {
+            all: true,
+            coopId: coop.coopId,
+            date: today,
+            sortBy: 'createdAt',
+            order: 'asc',
+          }).then((response) => response.data)
+        : Promise.resolve([] as ProductionItem[]),
+      loadOrderDetailsMap(orderIds),
+    ])
+
+    const productionMap = new Map(
+      productionResponse.map((item) => [item.id, item]),
+    )
+
+    const inProductionDetails: ProductionFlowDetail[] = productionInMovements.map((movement) => {
+      const production = productionMap.get(movement.sourceId)
+
+      return {
+        movementId: movement.id,
+        quantityKg: movement.quantityKg,
+        goodCount: production?.goodCount ?? null,
+        collectionTime: production?.collectionTime ?? null,
+        operatorName: production?.createdByName ?? movement.createdByName ?? null,
+        createdAt: production?.createdAt ?? movement.createdAt,
+        notes: production?.notes ?? movement.notes,
+      }
+    })
+
+    const inAllocationReleaseDetails = allocationReleaseMovements.map((movement) =>
+      buildAllocationDetailRow(
+        movement,
+        movement.orderId ? orderMap.get(movement.orderId) : null,
+      ))
+
+    const outAllocationDetails = allocationOutMovements.map((movement) =>
+      buildAllocationDetailRow(
+        movement,
+        movement.orderId ? orderMap.get(movement.orderId) : null,
+      ))
+
+    activeCoopFlowDetail.value = {
+      inDetails: {
+        productions: inProductionDetails,
+        allocationReleases: inAllocationReleaseDetails,
+        adjustments: adjustmentInMovements.map(buildAdjustmentDetailRow),
+      },
+      outDetails: {
+        allocations: outAllocationDetails,
+        adjustments: adjustmentOutMovements.map(buildAdjustmentDetailRow),
+      },
+    }
+  } catch (caught) {
+    toast.error('Gagal memuat detail alur kandang', api.mapError(caught).message)
+  } finally {
+    coopFlowDetailLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -194,29 +522,30 @@ async function createOrder(payload: Record<string, unknown>) {
 
       <TableCard
         title="Live Stock Per Kandang"
-        description="Stok aktif saat ini berdasarkan akses kandang user."
+        description="Stok aktif + breakdown alur pergerakan hari ini per kandang."
         icon="layers"
       >
-        <div v-if="liveStock?.coops?.length" class="space-y-3">
-          <div
+        <div v-if="liveStock?.coops?.length" class="space-y-2.5">
+          <DashboardLiveStockCoopCard
             v-for="item in liveStock.coops"
             :key="item.coopId"
-            class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3 text-sm"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-3 text-ink-900">
-              <p class="font-semibold">{{ item.coopName }}</p>
-              <p>{{ formatKg(item.availableKg) }} kg</p>
-            </div>
-            <p class="mt-2 text-xs text-ink-600">
-              Masuk hari ini {{ formatKg(item.todayInKg) }} kg • Keluar hari ini {{ formatKg(item.todayOutKg) }} kg
-            </p>
-            <p class="mt-1 text-[11px] text-ink-500">
-              Update terakhir {{ formatDateTime(item.updatedAt) }}
-            </p>
-          </div>
+            :item="item"
+            :summary="coopFlowSummary(item.coopId)"
+            @show-detail="openCoopFlowDetail(item)"
+          />
         </div>
         <p v-else class="text-sm text-ink-500">Belum ada stok kandang dalam scope akses Anda.</p>
       </TableCard>
+
+      <DashboardCoopFlowDetailDialog
+        v-model:open="coopFlowDetailOpen"
+        :loading="coopFlowDetailLoading"
+        :coop-name="activeCoopForDetail?.coopName ?? '-'"
+        :date-label="formatDate(isoDate(new Date()))"
+        :summary="activeCoopForDetail ? coopFlowSummary(activeCoopForDetail.coopId) : null"
+        :in-details="activeCoopFlowDetail?.inDetails"
+        :out-details="activeCoopFlowDetail?.outDetails"
+      />
 
       <div class="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
         <TableCard

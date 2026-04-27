@@ -62,6 +62,8 @@ type OrderAction = {
   label: string
   icon: 'package' | 'edit' | 'chevronRight' | 'money' | 'search'
   variant: 'primary' | 'secondary' | 'ghost'
+  prominent?: boolean
+  iconOnly?: boolean
 }
 
 const deliveryPriority: Record<CalendarOrder['deliveryStatus'], number> = {
@@ -375,22 +377,24 @@ function orderActions(order: CalendarOrder): OrderAction[] {
       label: 'Mulai Hantar',
       icon: 'package',
       variant: 'primary',
+      prominent: true,
     })
   }
 
   if (auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR') {
     actions.push({
-      id: 'edit-allocation',
-      label: 'Ubah Alokasi',
-      icon: 'edit',
-      variant: 'secondary',
-    })
-
-    actions.push({
       id: 'complete-delivery',
       label: 'Selesai Hantar',
       icon: 'chevronRight',
-      variant: 'secondary',
+      variant: 'primary',
+      prominent: true,
+    })
+
+    actions.push({
+      id: 'edit-allocation',
+      label: 'Ubah Alokasi',
+      icon: 'edit',
+      variant: 'ghost',
     })
   }
 
@@ -405,9 +409,10 @@ function orderActions(order: CalendarOrder): OrderAction[] {
 
   actions.push({
     id: 'open-detail',
-    label: 'Detail',
+    label: 'Lihat Detail',
     icon: 'search',
     variant: 'ghost',
+    iconOnly: true,
   })
 
   return actions
@@ -596,16 +601,20 @@ onMounted(syncCalendarPanel)
                     :icon="action.icon"
                     :class="[
                       'transition-transform duration-150 active:scale-[0.97] text-[11px] sm:text-xs',
-                      action.id === 'start-delivery'
-                      || action.id === 'edit-allocation'
-                      || action.id === 'complete-delivery'
-                        ? 'min-w-[140px] flex-1'
+                      action.prominent
+                        ? 'basis-full min-w-[140px] flex-1 sm:basis-auto'
+                        : '',
+                      action.iconOnly
+                        ? '!h-8 !w-8 !rounded-xl !px-0 !py-0'
                         : '',
                     ]"
                     :disabled="actionSubmittingOrderId === order.orderId"
+                    :aria-label="action.label"
+                    :title="action.label"
                     @click="handleOrderAction(order, action)"
                   >
-                    {{ action.label }}
+                    <span v-if="!action.iconOnly">{{ action.label }}</span>
+                    <span v-else class="sr-only">{{ action.label }}</span>
                   </UiButton>
                 </div>
               </div>
