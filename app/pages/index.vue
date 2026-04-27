@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type {
+  AllocationItem,
   CalendarDay,
-  CustomerItem,
-  ExpenseItem,
+  CoopItem,
   GrossIncomeItem,
   LiveStockCoopItem,
   LiveStockResponse,
@@ -11,6 +11,7 @@ import type {
   ProductionItem,
   StockMovementItem,
 } from '../types/domain'
+import type { CalendarOrder, CalendarOrderAction } from '../types/calendar-orders'
 
 definePageMeta({
   title: 'Dashboard',
@@ -20,26 +21,33 @@ definePageMeta({
 const api = useApi()
 const auth = useAuthStore()
 const toast = useToast()
+const { can } = useAuth()
 const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
 const error = ref('')
-const todayOrders = ref<OrderItem[]>([])
 const todayCalendar = ref<CalendarDay | null>(null)
-const productions = ref<ProductionItem[]>([])
-const expenses = ref<ExpenseItem[]>([])
+const tomorrowCalendar = ref<CalendarDay | null>(null)
 const grossIncome = ref<GrossIncomeItem[]>([])
 const liveStock = ref<LiveStockResponse | null>(null)
 const todayStockMovements = ref<StockMovementItem[]>([])
 const monthlySummary = ref<MonthlySummaryResponse | null>(null)
-const customers = ref<CustomerItem[]>([])
-const createOrderOpen = ref(false)
-const creatingOrder = ref(false)
 const shareImageVersion = ref(Date.now())
 const coopFlowDetailOpen = ref(false)
 const coopFlowDetailLoading = ref(false)
 const activeCoopForDetail = ref<LiveStockCoopItem | null>(null)
 const activeCoopFlowDetail = ref<CoopFlowDetailPayload | null>(null)
+const actionSubmittingOrderId = ref('')
+const modalSubmitting = ref(false)
+const startDeliveryOpen = ref(false)
+const paymentOpen = ref(false)
+const allocationModalLoading = ref(false)
+const paymentModalLoading = ref(false)
+const activeOrder = ref<OrderItem | null>(null)
+const activeCoops = ref<CoopItem[]>([])
+const activeLiveStock = ref<LiveStockResponse | null>(null)
+const activeAllocations = ref<AllocationItem[]>([])
+const allocationModalMode = ref<'start' | 'edit'>('start')
 
 const orderDetailCache = ref<Record<string, OrderItem>>({})
 
@@ -49,17 +57,14 @@ async function loadDashboard() {
 
   try {
     const today = isoDate(new Date())
+    const tomorrow = isoDate(new Date(Date.now() + 24 * 60 * 60 * 1000))
     const tasks: Array<Promise<unknown>> = [
       loadTodayPriceStatus(),
-      api.get<OrderItem[]>('/orders', {
-        deliveryDate: today,
-        page: 1,
-        limit: 5,
-      } as never).then((value) => {
-        todayOrders.value = value
-      }),
       api.get<CalendarDay>(`/calendar/${today}`).then((value) => {
         todayCalendar.value = value
+      }),
+      api.get<CalendarDay>(`/calendar/${tomorrow}`).then((value) => {
+        tomorrowCalendar.value = value
       }),
       api.get<GrossIncomeItem[]>('/reports/gross-income').then((value) => {
         grossIncome.value = value
@@ -77,30 +82,6 @@ async function loadDashboard() {
         todayStockMovements.value = value.data
       }),
     ]
-
-    if (auth.role === 'ADMIN') {
-      tasks.push(
-        api.getPage<CustomerItem[]>('/customers', { all: true }).then((value) => {
-          customers.value = value.data
-        }),
-      )
-    }
-
-    if (auth.role === 'OPERATOR') {
-      tasks.push(
-        api.get<ProductionItem[]>('/productions', { page: 1, limit: 5 } as never).then((value) => {
-          productions.value = value
-        }),
-      )
-    }
-
-    if (auth.role === 'ADMIN' || auth.role === 'OWNER') {
-      tasks.push(
-        api.get<ExpenseItem[]>('/expenses', { page: 1, limit: 5 } as never).then((value) => {
-          expenses.value = value
-        }),
-      )
-    }
 
     if (auth.role === 'OWNER') {
       tasks.push(
@@ -134,7 +115,7 @@ const dashboardCards = computed(() => [
   },
   {
     label: 'Order Hari Ini',
-    value: String(todayOrders.value.length),
+    value: String(todayCalendar.value?.events.orders.length ?? 0),
     helper: 'Pesanan pada tanggal hari ini',
   },
   {
@@ -146,24 +127,6 @@ const dashboardCards = computed(() => [
     helper: 'Ringkasan cepat untuk monitoring',
   },
 ])
-
-const customerOptions = computed(() =>
-  customers.value.map((item) => ({ label: item.name, value: item.id })),
-)
-
-async function createOrder(payload: Record<string, unknown>) {
-  creatingOrder.value = true
-  try {
-    await api.post('/orders', payload)
-    toast.success('Order berhasil dibuat', 'Pesanan baru sudah masuk ke daftar order.')
-    createOrderOpen.value = false
-    await loadDashboard()
-  } catch (caught) {
-    toast.error('Gagal membuat order', api.mapError(caught).message)
-  } finally {
-    creatingOrder.value = false
-  }
-}
 
 interface CoopDailyFlow {
   productionInKg: number
@@ -474,6 +437,205 @@ async function openCoopFlowDetail(coop: LiveStockCoopItem) {
     coopFlowDetailLoading.value = false
   }
 }
+
+const todayDate = computed(() => isoDate(new Date()))
+const tomorrowDate = computed(() => isoDate(new Date(Date.now() + 24 * 60 * 60 * 1000)))
+
+const activeCoopOptions = computed(() =>
+  activeCoops.value.map((item) => ({ label: item.name, value: item.id })),
+)
+
+const activeOrderIsTodayDelivery = computed(() =>
+  activeOrder.value?.deliveryDate === todayDate.value,
+)
+
+const allocationDialogTitle = computed(() =>
+  allocationModalMode.value === 'edit' ? 'Ubah Alokasi Pengantaran' : 'Start Delivery',
+)
+
+const allocationDialogDescription = computed(() =>
+  allocationModalMode.value === 'edit'
+    ? 'Koreksi alokasi kandang. Sistem akan menyesuaikan live stock secara otomatis.'
+    : 'Masukkan alokasi kandang hingga totalnya sama dengan quantity order.',
+)
+
+async function loadOrderForAction(orderId: string) {
+  return await api.get<OrderItem>(`/orders/${orderId}`)
+}
+
+async function openAllocationModal(orderId: string, mode: 'start' | 'edit') {
+  allocationModalLoading.value = true
+
+  try {
+    const [orderDetail, coopList, stock, allocationList] = await Promise.all([
+      loadOrderForAction(orderId),
+      api.getPage<CoopItem[]>('/coops', { all: true }),
+      api.get<LiveStockResponse>('/stocks/live'),
+      mode === 'edit'
+        ? api.get<AllocationItem[]>(`/orders/${orderId}/allocations`)
+        : Promise.resolve([] as AllocationItem[]),
+      loadTodayPriceStatus(),
+    ])
+
+    allocationModalMode.value = mode
+    activeOrder.value = orderDetail
+    activeCoops.value = coopList.data
+    activeLiveStock.value = stock
+    activeAllocations.value = allocationList
+    startDeliveryOpen.value = true
+  } catch (caught) {
+    toast.error('Gagal menyiapkan modal pengantaran', api.mapError(caught).message)
+  } finally {
+    allocationModalLoading.value = false
+  }
+}
+
+async function openPaymentModal(orderId: string) {
+  paymentModalLoading.value = true
+
+  try {
+    activeOrder.value = await loadOrderForAction(orderId)
+    paymentOpen.value = true
+  } catch (caught) {
+    toast.error('Gagal menyiapkan modal pembayaran', api.mapError(caught).message)
+  } finally {
+    paymentModalLoading.value = false
+  }
+}
+
+function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
+  const actions: CalendarOrderAction[] = []
+
+  if (auth.role === 'OPERATOR' && order.deliveryStatus === 'BELUM_DIHANTAR') {
+    actions.push({
+      id: 'start-delivery',
+      label: 'Mulai Hantar',
+      icon: 'package',
+      variant: 'primary',
+      prominent: true,
+    })
+  }
+
+  if (auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR') {
+    actions.push({
+      id: 'complete-delivery',
+      label: 'Selesai Hantar',
+      icon: 'chevronRight',
+      variant: 'primary',
+      prominent: true,
+    })
+
+    actions.push({
+      id: 'edit-allocation',
+      label: 'Ubah Alokasi',
+      icon: 'edit',
+      variant: 'ghost',
+    })
+  }
+
+  if (can('orders.pay') && order.paymentStatus !== 'LUNAS') {
+    actions.push({
+      id: 'payment-update',
+      label: 'Update Bayar',
+      icon: 'money',
+      variant: 'ghost',
+    })
+  }
+
+  actions.push({
+    id: 'open-detail',
+    label: 'Lihat Detail',
+    icon: 'search',
+    variant: 'ghost',
+    iconOnly: true,
+  })
+
+  return actions
+}
+
+async function handleDashboardOrderAction(order: CalendarOrder, action: CalendarOrderAction) {
+  if (action.id === 'complete-delivery') {
+    actionSubmittingOrderId.value = order.orderId
+    try {
+      await api.post(`/orders/${order.orderId}/complete-delivery`)
+      toast.success('Pengantaran berhasil diselesaikan')
+      await loadDashboard()
+    } catch (caught) {
+      toast.error('Gagal menyelesaikan pengantaran', api.mapError(caught).message)
+    } finally {
+      actionSubmittingOrderId.value = ''
+    }
+    return
+  }
+
+  if (action.id === 'start-delivery') {
+    await openAllocationModal(order.orderId, 'start')
+    return
+  }
+
+  if (action.id === 'edit-allocation') {
+    await openAllocationModal(order.orderId, 'edit')
+    return
+  }
+
+  if (action.id === 'payment-update') {
+    await openPaymentModal(order.orderId)
+    return
+  }
+
+  await navigateTo({
+    path: `/orders/${order.orderId}`,
+  })
+}
+
+async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }) {
+  if (!activeOrder.value) {
+    return
+  }
+
+  modalSubmitting.value = true
+  try {
+    if (allocationModalMode.value === 'edit') {
+      await api.patch(`/orders/${activeOrder.value.id}/allocations`, {
+        allocations: payload.allocations,
+      })
+      toast.success('Alokasi pengantaran berhasil diperbarui')
+    } else {
+      await api.post(`/orders/${activeOrder.value.id}/start-delivery`, payload)
+      toast.success('Pengantaran berhasil dimulai')
+    }
+
+    startDeliveryOpen.value = false
+    await loadDashboard()
+  } catch (caught) {
+    toast.error(
+      allocationModalMode.value === 'edit'
+        ? 'Gagal mengubah alokasi'
+        : 'Gagal memulai pengantaran',
+      api.mapError(caught).message,
+    )
+  } finally {
+    modalSubmitting.value = false
+  }
+}
+
+async function submitPaymentUpdate(payload: Record<string, unknown>) {
+  if (!activeOrder.value) {
+    return
+  }
+
+  modalSubmitting.value = true
+  try {
+    await api.post(`/orders/${activeOrder.value.id}/payment-updates`, payload)
+    toast.success('Pembayaran berhasil diperbarui')
+    paymentOpen.value = false
+    await loadDashboard()
+  } catch (caught) {
+    toast.error('Gagal update pembayaran', api.mapError(caught).message)
+  } finally {
+    modalSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -520,22 +682,68 @@ async function openCoopFlowDetail(coop: LiveStockCoopItem) {
         </MetricCard>
       </div>
 
-      <TableCard
-        title="Live Stock Per Kandang"
-        description="Stok aktif + breakdown alur pergerakan hari ini per kandang."
-        icon="layers"
-      >
-        <div v-if="liveStock?.coops?.length" class="space-y-2.5">
-          <DashboardLiveStockCoopCard
-            v-for="item in liveStock.coops"
-            :key="item.coopId"
-            :item="item"
-            :summary="coopFlowSummary(item.coopId)"
-            @show-detail="openCoopFlowDetail(item)"
-          />
-        </div>
-        <p v-else class="text-sm text-ink-500">Belum ada stok kandang dalam scope akses Anda.</p>
-      </TableCard>
+      <div class="grid gap-6 xl:grid-cols-12 xl:items-start">
+        <TableCard
+          title="Live Stock Per Kandang"
+          description="Stok aktif + breakdown pergerakan telur hari ini per kandang."
+          icon="layers"
+          class="xl:col-span-7"
+        >
+          <div v-if="liveStock?.coops?.length" class="space-y-2.5">
+            <DashboardLiveStockCoopCard
+              v-for="item in liveStock.coops"
+              :key="item.coopId"
+              :item="item"
+              :summary="coopFlowSummary(item.coopId)"
+              @show-detail="openCoopFlowDetail(item)"
+            />
+          </div>
+          <p v-else class="text-sm text-ink-500">Belum ada stok kandang dalam scope akses Anda.</p>
+        </TableCard>
+
+        <TableCard
+          title="Pesanan Terjadwal"
+          description="Pesanan hari ini dan besok yang perlu ditangani."
+          icon="orders"
+          class="xl:col-span-5"
+        >
+          <div class="space-y-4 xl:max-h-[calc(100vh-14rem)] xl:overflow-y-auto xl:pr-1">
+            <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
+              <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
+                <p class="text-sm font-semibold text-ink-900">Hari Ini</p>
+                <span class="rounded-full border border-white/80 bg-white/80 px-2 py-1 text-[11px] text-ink-600">
+                  {{ formatDate(todayDate) }}
+                </span>
+              </div>
+              <CalendarOrderList
+                dense
+                :orders="todayCalendar?.events.orders ?? []"
+                :order-actions="dashboardOrderActions"
+                :action-submitting-order-id="actionSubmittingOrderId"
+                empty-message="Tidak ada pesanan untuk hari ini."
+                @action="handleDashboardOrderAction"
+              />
+            </section>
+
+            <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
+              <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
+                <p class="text-sm font-semibold text-ink-900">Besok</p>
+                <span class="rounded-full border border-white/80 bg-white/80 px-2 py-1 text-[11px] text-ink-600">
+                  {{ formatDate(tomorrowDate) }}
+                </span>
+              </div>
+              <CalendarOrderList
+                dense
+                :orders="tomorrowCalendar?.events.orders ?? []"
+                :order-actions="dashboardOrderActions"
+                :action-submitting-order-id="actionSubmittingOrderId"
+                empty-message="Tidak ada pesanan untuk besok."
+                @action="handleDashboardOrderAction"
+              />
+            </section>
+          </div>
+        </TableCard>
+      </div>
 
       <DashboardCoopFlowDetailDialog
         v-model:open="coopFlowDetailOpen"
@@ -546,158 +754,45 @@ async function openCoopFlowDetail(coop: LiveStockCoopItem) {
         :in-details="activeCoopFlowDetail?.inDetails"
         :out-details="activeCoopFlowDetail?.outDetails"
       />
-
-      <div class="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
-        <TableCard
-          title="Agenda Hari Ini"
-          description="Order, produksi, expense, dan perubahan harga yang jatuh hari ini."
-          icon="calendar"
-        >
-          <div v-if="todayCalendar" class="space-y-5 text-sm text-ink-700">
-            <div>
-              <p class="font-semibold text-ink-900">Orders</p>
-              <div v-if="todayCalendar.events.orders.length" class="mt-2 space-y-2">
-                <div
-                  v-for="order in todayCalendar.events.orders"
-                  :key="order.orderId"
-                  class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
-                >
-                  <div class="flex items-center justify-between gap-3">
-                    <span>{{ order.customerName }} • {{ formatKg(order.quantityKg) }} kg</span>
-                    <StatusChip kind="payment" :value="order.paymentStatus" />
-                  </div>
-                </div>
-              </div>
-              <p v-else class="mt-2 text-ink-500">Belum ada order untuk hari ini.</p>
-            </div>
-
-            <div>
-              <p class="font-semibold text-ink-900">Productions</p>
-              <div v-if="todayCalendar.events.productions.length" class="mt-2 space-y-2">
-                <div
-                  v-for="item in todayCalendar.events.productions"
-                  :key="item.coopId"
-                  class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
-                >
-                  {{ item.coopName }} • {{ formatKg(item.totalGoodKg) }} kg • {{ item.collectionCount }} pengambilan
-                </div>
-              </div>
-              <p v-else class="mt-2 text-ink-500">Belum ada produksi tercatat.</p>
-            </div>
-          </div>
-        </TableCard>
-
-        <TableCard title="Prioritas Cepat" description="Arahkan tim ke halaman yang paling sering dipakai." icon="chevronRight">
-          <div class="grid gap-3">
-            <UiButton
-              v-if="auth.role === 'ADMIN'"
-              icon="plus"
-              class="justify-start"
-              @click="createOrderOpen = true"
-            >
-              Buat pesanan baru
-            </UiButton>
-            <NuxtLink
-              to="/orders"
-              class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
-            >
-              Buka daftar order aktif
-            </NuxtLink>
-            <NuxtLink
-              to="/stocks"
-              class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
-            >
-              Pantau ledger live stock
-            </NuxtLink>
-            <NuxtLink
-              v-if="auth.role === 'OPERATOR'"
-              to="/productions"
-              class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
-            >
-              Input produksi harian
-            </NuxtLink>
-            <NuxtLink
-              v-if="auth.role === 'OWNER' || auth.role === 'ADMIN'"
-              to="/expenses"
-              class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
-            >
-              Cek pengeluaran kandang
-            </NuxtLink>
-            <NuxtLink
-              to="/calendar"
-              class="rounded-2xl border border-white/40 bg-white/60 px-4 py-4 text-sm text-ink-700 transition hover:bg-white"
-            >
-              Lihat agenda kalender penuh
-            </NuxtLink>
-          </div>
-        </TableCard>
-      </div>
-
-      <div class="grid gap-6 xl:grid-cols-2">
-        <TableCard title="Order Terdekat" description="Pesanan yang perlu diperhatikan lebih dulu." icon="orders">
-          <table class="min-w-full text-left text-sm">
-            <thead class="text-ink-500">
-              <tr>
-                <th class="pb-3 pr-4">Customer</th>
-                <th class="pb-3 pr-4">Tanggal</th>
-                <th class="pb-3 pr-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="order in todayOrders" :key="order.id" class="border-t border-white/40">
-                <td class="py-4 pr-4">{{ order.customer.name }}</td>
-                <td class="py-4 pr-4">{{ formatDate(order.deliveryDate) }}</td>
-                <td class="py-4 pr-4">
-                  <StatusChip kind="delivery" :value="order.deliveryStatus" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </TableCard>
-
-        <TableCard
-          :title="auth.role === 'OPERATOR' ? 'Produksi Terbaru' : 'Pengeluaran Terbaru'"
-          description="Feed ringkas dari aktivitas terbaru di backend."
-          :icon="auth.role === 'OPERATOR' ? 'productions' : 'expenses'"
-        >
-          <div class="space-y-3 text-sm">
-            <template v-if="auth.role === 'OPERATOR'">
-              <div
-                v-for="item in productions"
-                :key="item.id"
-                class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
-              >
-                {{ item.coopName }} • {{ formatDate(item.date) }} • {{ formatKg(item.goodKg) }} kg
-              </div>
-              <p v-if="!productions.length" class="text-ink-500">Belum ada data produksi terbaru.</p>
-            </template>
-            <template v-else>
-              <div
-                v-for="item in expenses"
-                :key="item.id"
-                class="rounded-2xl border border-white/40 bg-white/60 px-4 py-3"
-              >
-                {{ item.coopName }} • {{ formatRupiah(item.amount) }}
-              </div>
-              <p v-if="!expenses.length" class="text-ink-500">Belum ada pengeluaran terbaru.</p>
-            </template>
-          </div>
-        </TableCard>
-      </div>
     </template>
 
     <UiDialog
-      v-model:open="createOrderOpen"
-      title="Buat Pesanan Baru"
-      description="Quick action admin untuk membuat order langsung dari dashboard."
+      v-model:open="startDeliveryOpen"
+      :title="allocationDialogTitle"
+      :description="allocationDialogDescription"
       size="xl"
     >
-      <FormsOrderForm
-        :customer-options="customerOptions"
+      <LoadingSkeleton v-if="allocationModalLoading" :lines="6" />
+      <FormsDeliveryAllocationForm
+        v-else-if="activeOrder"
+        :coop-options="activeCoopOptions"
+        :order-quantity-kg="activeOrder.quantityKg"
+        :order-price-per-kg="activeOrder.pricePerKg"
         :today-price-per-kg="currentPrice?.pricePerKg ?? null"
-        :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
-        :submitting="creatingOrder"
-        @submit="createOrder"
+        :can-set-price-now="allocationModalMode === 'start' && activeOrderIsTodayDelivery"
+        :enable-price-lock="allocationModalMode === 'start'"
+        :initial-allocations="allocationModalMode === 'edit' ? activeAllocations : []"
+        :combined-available-kg="activeLiveStock?.combinedAvailableKg ?? null"
+        :coop-stocks="activeLiveStock?.coops ?? []"
+        :submit-label="allocationModalMode === 'edit' ? 'Simpan perubahan alokasi' : 'Mulai pengantaran'"
+        :submitting="modalSubmitting"
+        @submit="submitDeliveryAllocation"
+      />
+    </UiDialog>
+
+    <UiDialog
+      v-model:open="paymentOpen"
+      title="Payment Update"
+      description="Semua update pembayaran akan masuk ke payment history."
+    >
+      <LoadingSkeleton v-if="paymentModalLoading" :lines="5" />
+      <FormsPaymentUpdateForm
+        v-else-if="activeOrder"
+        :submitting="modalSubmitting"
+        :current-payment-status="activeOrder.paymentStatus"
+        :total-invoice="activeOrder.totalInvoice"
+        :dp-amount="activeOrder.dpAmount"
+        @submit="submitPaymentUpdate"
       />
     </UiDialog>
   </div>

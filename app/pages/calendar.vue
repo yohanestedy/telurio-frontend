@@ -15,6 +15,7 @@ import {
   startOfWeekMonday,
 } from '../utils/calendar'
 import { formatRupiah } from '../utils/formatters'
+import type { CalendarOrder, CalendarOrderAction } from '../types/calendar-orders'
 
 definePageMeta({
   title: 'Calendar',
@@ -55,59 +56,6 @@ const boardTransitionKey = computed(
 )
 const selectedDateLabel = computed(() => formatDayMonthYearId(selectedDate.value))
 const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length}`)
-
-type CalendarOrder = CalendarDay['events']['orders'][number]
-type OrderAction = {
-  id: 'start-delivery' | 'edit-allocation' | 'complete-delivery' | 'payment-update' | 'open-detail'
-  label: string
-  icon: 'package' | 'edit' | 'chevronRight' | 'money' | 'search'
-  variant: 'primary' | 'secondary' | 'ghost'
-  prominent?: boolean
-  iconOnly?: boolean
-}
-
-const deliveryPriority: Record<CalendarOrder['deliveryStatus'], number> = {
-  BELUM_DIHANTAR: 0,
-  SEDANG_DIHANTAR: 1,
-  SUDAH_DIHANTAR: 4,
-}
-
-const paymentPriority: Record<CalendarOrder['paymentStatus'], number> = {
-  BELUM_BAYAR: 2,
-  DP: 3,
-  LUNAS: 4,
-}
-
-const sortedSelectedOrders = computed(() =>
-  [...selectedDay.value.events.orders].sort((left, right) => {
-    const leftPrimary = Math.min(
-      deliveryPriority[left.deliveryStatus] ?? 99,
-      paymentPriority[left.paymentStatus] ?? 99,
-    )
-    const rightPrimary = Math.min(
-      deliveryPriority[right.deliveryStatus] ?? 99,
-      paymentPriority[right.paymentStatus] ?? 99,
-    )
-
-    if (leftPrimary !== rightPrimary) {
-      return leftPrimary - rightPrimary
-    }
-
-    const leftDelivery = deliveryPriority[left.deliveryStatus] ?? 99
-    const rightDelivery = deliveryPriority[right.deliveryStatus] ?? 99
-    if (leftDelivery !== rightDelivery) {
-      return leftDelivery - rightDelivery
-    }
-
-    const leftPayment = paymentPriority[left.paymentStatus] ?? 99
-    const rightPayment = paymentPriority[right.paymentStatus] ?? 99
-    if (leftPayment !== rightPayment) {
-      return leftPayment - rightPayment
-    }
-
-    return left.customerName.localeCompare(right.customerName)
-  }),
-)
 
 function emptyCalendarDay(date: string): CalendarDay {
   return {
@@ -368,8 +316,8 @@ watch(
   },
 )
 
-function orderActions(order: CalendarOrder): OrderAction[] {
-  const actions: OrderAction[] = []
+function orderActions(order: CalendarOrder): CalendarOrderAction[] {
+  const actions: CalendarOrderAction[] = []
 
   if (auth.role === 'OPERATOR' && order.deliveryStatus === 'BELUM_DIHANTAR') {
     actions.push({
@@ -418,31 +366,7 @@ function orderActions(order: CalendarOrder): OrderAction[] {
   return actions
 }
 
-function orderPriceLabel(pricePerKg: string | null) {
-  return pricePerKg ? formatRupiah(pricePerKg) : 'Belum dikunci'
-}
-
-function orderInvoiceLabel(totalInvoice: string | null) {
-  return totalInvoice ? formatRupiah(totalInvoice) : 'Invoice belum dihitung'
-}
-
-function isCompletedDelivery(order: CalendarOrder) {
-  return order.deliveryStatus === 'SUDAH_DIHANTAR'
-}
-
-function deliveryAccentClass(order: CalendarOrder) {
-  if (order.deliveryStatus === 'SUDAH_DIHANTAR') {
-    return 'bg-[linear-gradient(90deg,#10B981,#34D399)]'
-  }
-
-  if (order.deliveryStatus === 'SEDANG_DIHANTAR') {
-    return 'bg-[linear-gradient(90deg,#3B82F6,#60A5FA)]'
-  }
-
-  return 'bg-[linear-gradient(90deg,#F59E0B,#FCD34D)]'
-}
-
-async function handleOrderAction(order: CalendarOrder, action: OrderAction) {
+async function handleOrderAction(order: CalendarOrder, action: CalendarOrderAction) {
   if (action.id === 'complete-delivery') {
     actionSubmittingOrderId.value = order.orderId
     try {
@@ -516,111 +440,12 @@ onMounted(syncCalendarPanel)
             </span>
           </div>
 
-          <TransitionGroup
-            v-if="sortedSelectedOrders.length"
-            name="order-stagger"
-            tag="div"
-            class="space-y-3 p-3 sm:p-4"
-          >
-            <article
-              v-for="(order, index) in sortedSelectedOrders"
-              :key="order.orderId"
-              class="order-action-card overflow-hidden rounded-[24px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(255,249,243,0.94))] shadow-[0_18px_32px_rgba(15,23,42,0.08)]"
-              :style="{ '--order-delay': `${index * 45}ms` }"
-            >
-              <div :class="['h-1.5', deliveryAccentClass(order)]" />
-
-              <div class="p-3.5 sm:p-4">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-extrabold tracking-[-0.01em] text-ink-900 sm:text-base">
-                      {{ order.customerName }}
-                    </p>
-                  </div>
-
-                  <StatusChip compact kind="delivery" :value="order.deliveryStatus" />
-                </div>
-
-                <div class="mt-3 rounded-[18px] border border-white/80 bg-white/72 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
-                  <div class="grid grid-cols-3 gap-2">
-                    <div class="text-center">
-                      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
-                        Jumlah
-                      </p>
-                      <div class="mt-1 flex items-end justify-center gap-1">
-                        <span class="text-lg font-black leading-none tracking-tight text-brand-700 sm:text-xl">
-                          {{ formatKg(order.quantityKg) }}
-                        </span>
-                        <span class="pb-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-500">
-                          kg
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="text-center">
-                      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
-                        Harga/Kg
-                      </p>
-                      <p class="mt-1 text-[11px] font-semibold leading-tight text-ink-800 sm:text-[13px]">
-                        {{ orderPriceLabel(order.pricePerKg) }}
-                      </p>
-                    </div>
-
-                    <div class="text-center">
-                      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
-                        Total
-                      </p>
-                      <p class="mt-1 text-[11px] font-black leading-tight text-brand-700 sm:text-[13px]">
-                        {{ orderInvoiceLabel(order.totalInvoice) }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-3 flex items-center gap-2">
-                  <span class="text-[11px] font-medium text-ink-500">Pembayaran:</span>
-                  <StatusChip compact kind="payment" :value="order.paymentStatus" />
-                </div>
-
-                <div class="my-3 h-px bg-slate-200/80" />
-
-                <div class="flex flex-wrap gap-2">
-                  <div
-                    v-if="isCompletedDelivery(order)"
-                    class="flex min-w-[130px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-700"
-                  >
-                    <span>✓</span>
-                    <span>Terhantar</span>
-                  </div>
-
-                  <UiButton
-                    v-for="action in orderActions(order)"
-                    :key="`${order.orderId}-${action.id}`"
-                    :variant="action.variant"
-                    size="sm"
-                    :icon="action.icon"
-                    :class="[
-                      'transition-transform duration-150 active:scale-[0.97] text-[11px] sm:text-xs',
-                      action.prominent
-                        ? 'basis-full min-w-[140px] flex-1 sm:basis-auto'
-                        : '',
-                      action.iconOnly
-                        ? '!h-8 !w-8 !rounded-xl !px-0 !py-0'
-                        : '',
-                    ]"
-                    :disabled="actionSubmittingOrderId === order.orderId"
-                    :aria-label="action.label"
-                    :title="action.label"
-                    @click="handleOrderAction(order, action)"
-                  >
-                    <span v-if="!action.iconOnly">{{ action.label }}</span>
-                    <span v-else class="sr-only">{{ action.label }}</span>
-                  </UiButton>
-                </div>
-              </div>
-            </article>
-          </TransitionGroup>
-          <p v-else class="p-4 text-sm text-ink-500 sm:p-5">Tidak ada order di tanggal ini.</p>
+          <CalendarOrderList
+            :orders="selectedDay.events.orders"
+            :order-actions="orderActions"
+            :action-submitting-order-id="actionSubmittingOrderId"
+            @action="handleOrderAction"
+          />
         </GlassCard>
 
         <GlassCard class="p-4 sm:p-5">
@@ -715,26 +540,4 @@ onMounted(syncCalendarPanel)
   transform: translateY(6px) scale(0.995);
 }
 
-.order-action-card {
-  transform: translateZ(0);
-  transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.order-action-card:active {
-  transform: scale(0.988);
-}
-
-.order-stagger-enter-active,
-.order-stagger-leave-active {
-  transition:
-    opacity 0.32s ease,
-    transform 0.32s ease;
-  transition-delay: var(--order-delay, 0ms);
-}
-
-.order-stagger-enter-from,
-.order-stagger-leave-to {
-  opacity: 0;
-  transform: translateY(10px) scale(0.985);
-}
 </style>

@@ -88,6 +88,14 @@ const outFlowRows = computed(() => [
     icon: 'minus' as const,
   },
 ])
+
+const visibleInFlowRows = computed(() =>
+  inFlowRows.value.filter((row) => row.value > 0),
+)
+
+const visibleOutFlowRows = computed(() =>
+  outFlowRows.value.filter((row) => row.value > 0),
+)
 </script>
 
 <template>
@@ -132,11 +140,11 @@ const outFlowRows = computed(() => [
           <span class="grid h-6 w-6 place-items-center rounded-full bg-emerald-100/90 text-emerald-700">
             <UiIcon name="arrowDown" class="h-3 w-3" />
           </span>
-          <p class="text-sm font-semibold text-emerald-700">Alur Masuk</p>
+          <p class="text-sm font-semibold text-emerald-700">Telur Masuk</p>
         </div>
         <div class="flex-1 space-y-1.5 px-2.5 py-2">
           <div
-            v-for="row in inFlowRows"
+            v-for="row in visibleInFlowRows"
             :key="row.label"
             class="flex items-center justify-between gap-2 text-xs text-ink-700 sm:text-sm"
           >
@@ -146,6 +154,9 @@ const outFlowRows = computed(() => [
             </span>
             <span class="font-medium text-ink-900">{{ formatKg(row.value) }} kg</span>
           </div>
+          <p v-if="!visibleInFlowRows.length" class="text-xs text-ink-500">
+            Belum ada telur masuk hari ini.
+          </p>
         </div>
         <div class="flex items-center justify-between border-t border-emerald-100/80 px-2.5 py-2 text-emerald-700">
           <span class="text-sm font-semibold">Total Masuk</span>
@@ -156,13 +167,13 @@ const outFlowRows = computed(() => [
       <section class="flex flex-col rounded-xl border border-brand-200/70 bg-brand-50/35">
         <div class="flex items-center gap-1.5 border-b border-brand-100/80 px-2.5 py-2">
           <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-100/90 text-brand-700">
-            <UiIcon name="delivery" class="h-3 w-3" />
+            <UiIcon name="arrowUp" class="h-3 w-3" />
           </span>
-          <p class="text-sm font-semibold text-brand-700">Alur Keluar</p>
+          <p class="text-sm font-semibold text-brand-700">Telur Keluar</p>
         </div>
         <div class="flex-1 space-y-1.5 px-2.5 py-2">
           <div
-            v-for="row in outFlowRows"
+            v-for="row in visibleOutFlowRows"
             :key="row.label"
             class="flex items-center justify-between gap-2 text-xs text-ink-700 sm:text-sm"
           >
@@ -172,6 +183,9 @@ const outFlowRows = computed(() => [
             </span>
             <span class="font-medium text-ink-900">{{ formatKg(row.value) }} kg</span>
           </div>
+          <p v-if="!visibleOutFlowRows.length" class="text-xs text-ink-500">
+            Belum ada telur keluar hari ini.
+          </p>
         </div>
         <div class="flex items-center justify-between border-t border-brand-100/80 px-2.5 py-2 text-brand-700">
           <span class="text-sm font-semibold">Total Keluar</span>
