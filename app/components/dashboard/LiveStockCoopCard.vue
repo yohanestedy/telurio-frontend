@@ -92,14 +92,14 @@ const outFlowRows = computed(() => [
 
 <template>
   <article class="rounded-2xl border border-white/70 bg-white/88 px-3 py-3 shadow-[0_8px_18px_rgba(67,63,57,0.07)] sm:px-3.5 sm:py-3.5">
-    <div class="flex flex-col gap-2.5 md:flex-row md:items-start md:justify-between">
-      <div class="flex min-w-0 items-start gap-2">
+    <div class="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
+      <div class="flex min-w-0 items-center gap-2">
         <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-100/80 bg-emerald-50 text-emerald-700">
           <UiIcon name="coops" class="h-5 w-5" />
         </div>
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2">
-            <p class="truncate text-lg font-semibold leading-tight text-ink-900 sm:text-xl">
+            <p class="truncate text-base font-semibold leading-tight text-ink-900 sm:text-lg">
               {{ props.item.coopName }}
             </p>
             <span
@@ -113,16 +113,11 @@ const outFlowRows = computed(() => [
               {{ isActive ? 'Aktif' : 'Kosong' }}
             </span>
           </div>
-          <p class="mt-1 text-xs text-ink-600">
-            Total masuk hari ini {{ formatKg(props.summary.totalInKg) }} kg
-            <span class="mx-1 text-ink-300">•</span>
-            Total keluar hari ini {{ formatKg(props.summary.totalOutKg) }} kg
-          </p>
         </div>
       </div>
 
       <div class="text-left md:text-right">
-        <p class="text-xl font-bold tracking-tight text-ink-900 sm:text-2xl">{{ formatKg(props.item.availableKg) }} kg</p>
+        <p class="text-lg font-bold tracking-tight text-ink-900 sm:text-xl">{{ formatKg(props.item.availableKg) }} kg</p>
         <p class="mt-1 inline-flex items-center gap-1 text-xs font-semibold" :class="netFlowToneClass(props.summary.netFlowKg)">
           <span class="text-ink-500">Net pergerakan</span>
           <UiIcon :name="netFlowIcon(props.summary.netFlowKg)" class="h-3.5 w-3.5" />
@@ -132,14 +127,14 @@ const outFlowRows = computed(() => [
     </div>
 
     <div class="mt-2.5 grid gap-2 xl:grid-cols-2">
-      <section class="rounded-xl border border-emerald-200/70 bg-emerald-50/40">
+      <section class="flex flex-col rounded-xl border border-emerald-200/70 bg-emerald-50/40">
         <div class="flex items-center gap-1.5 border-b border-emerald-100/80 px-2.5 py-2">
           <span class="grid h-6 w-6 place-items-center rounded-full bg-emerald-100/90 text-emerald-700">
             <UiIcon name="arrowDown" class="h-3 w-3" />
           </span>
           <p class="text-sm font-semibold text-emerald-700">Alur Masuk</p>
         </div>
-        <div class="space-y-1.5 px-2.5 py-2">
+        <div class="flex-1 space-y-1.5 px-2.5 py-2">
           <div
             v-for="row in inFlowRows"
             :key="row.label"
@@ -158,14 +153,14 @@ const outFlowRows = computed(() => [
         </div>
       </section>
 
-      <section class="rounded-xl border border-brand-200/70 bg-brand-50/35">
+      <section class="flex flex-col rounded-xl border border-brand-200/70 bg-brand-50/35">
         <div class="flex items-center gap-1.5 border-b border-brand-100/80 px-2.5 py-2">
           <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-100/90 text-brand-700">
             <UiIcon name="delivery" class="h-3 w-3" />
           </span>
           <p class="text-sm font-semibold text-brand-700">Alur Keluar</p>
         </div>
-        <div class="space-y-1.5 px-2.5 py-2">
+        <div class="flex-1 space-y-1.5 px-2.5 py-2">
           <div
             v-for="row in outFlowRows"
             :key="row.label"

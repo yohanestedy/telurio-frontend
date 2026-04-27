@@ -280,15 +280,14 @@ function netFlowIcon(value: number): AppIconName {
                     <p class="text-sm font-semibold text-ink-900">{{ item.customerName || '-' }}</p>
                     <p class="text-xs text-ink-500">{{ orderRefLabel(item.orderId) }}</p>
                   </div>
-                  <span class="inline-flex items-center gap-1 rounded-full border border-emerald-100 bg-white px-2 py-0.5 text-[11px] text-ink-600">
-                    <UiIcon name="clock" class="h-3 w-3" />
-                    {{ timeLabel(item.createdAt) }}
+                  <span class="inline-flex rounded-full border border-emerald-100 bg-white px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                    {{ formatKg(item.allocatedKg) }} kg
                   </span>
                 </div>
                 <div class="grid gap-1.5 border-b border-emerald-100/80 px-2.5 py-1.5 text-xs sm:grid-cols-3">
                   <div>
-                    <p class="font-semibold text-ink-900">{{ formatKg(item.allocatedKg) }} kg</p>
-                    <p class="text-ink-500">@ {{ priceLabel(item.pricePerKg) }}<span v-if="item.pricePerKg">/kg</span></p>
+                    <p class="text-ink-500">Harga/Kg</p>
+                    <p class="font-semibold text-ink-900">{{ priceLabel(item.pricePerKg) }}<span v-if="item.pricePerKg">/kg</span></p>
                   </div>
                   <div>
                     <p class="text-ink-500">Total</p>
@@ -306,7 +305,7 @@ function netFlowIcon(value: number): AppIconName {
                   </p>
                   <p class="inline-flex items-center gap-1">
                     <UiIcon name="calendar" class="h-3 w-3" />
-                    Dicatat {{ formatDate(item.createdAt) }}
+                    Dicatat {{ formatDate(item.createdAt, 'DD MMM YYYY HH:mm') }}
                   </p>
                 </div>
               </article>
@@ -365,16 +364,15 @@ function netFlowIcon(value: number): AppIconName {
                       <p class="text-xs text-ink-500">{{ orderRefLabel(item.orderId) }}</p>
                     </div>
                   </div>
-                  <span class="inline-flex items-center gap-1 rounded-full border border-brand-100 bg-white px-2 py-0.5 text-[11px] text-ink-600">
-                    <UiIcon name="clock" class="h-3 w-3" />
-                    {{ timeLabel(item.createdAt) }}
+                  <span class="inline-flex rounded-full border border-brand-100 bg-white px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                    {{ formatKg(item.allocatedKg) }} kg
                   </span>
                 </div>
 
                 <div class="grid gap-1.5 border-b border-brand-100/80 px-2.5 py-1.5 text-xs sm:grid-cols-3">
                   <div>
-                    <p class="font-semibold text-ink-900">{{ formatKg(item.allocatedKg) }} kg</p>
-                    <p class="text-ink-500">@ {{ priceLabel(item.pricePerKg) }}<span v-if="item.pricePerKg">/kg</span></p>
+                    <p class="text-ink-500">Harga/Kg</p>
+                    <p class="font-semibold text-ink-900">{{ priceLabel(item.pricePerKg) }}<span v-if="item.pricePerKg">/kg</span></p>
                   </div>
                   <div>
                     <p class="text-ink-500">Total</p>
@@ -393,7 +391,7 @@ function netFlowIcon(value: number): AppIconName {
                   </p>
                   <p class="inline-flex items-center gap-1">
                     <UiIcon name="calendar" class="h-3 w-3" />
-                    Dicatat {{ formatDate(item.createdAt) }}
+                    Dicatat {{ formatDate(item.createdAt, 'DD MMM YYYY HH:mm') }}
                   </p>
                 </div>
               </article>
