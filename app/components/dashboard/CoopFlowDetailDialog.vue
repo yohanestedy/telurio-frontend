@@ -61,6 +61,7 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   coopName?: string
   dateLabel?: string
+  currentStockKg?: number | string | null
   summary?: CoopFlowSummary | null
   inDetails?: InFlowDetails
   outDetails?: OutFlowDetails
@@ -68,6 +69,7 @@ const props = withDefaults(defineProps<{
   loading: false,
   coopName: '-',
   dateLabel: '-',
+  currentStockKg: null,
   summary: null,
   inDetails: () => ({
     productions: [],
@@ -209,9 +211,9 @@ const hasOutDetails = computed(() =>
 
       <div
         v-if="props.summary"
-        class="grid gap-1.5 rounded-xl border border-white/70 bg-white/90 p-1.5 sm:grid-cols-3"
+        class="grid grid-cols-2 gap-1.5 rounded-xl border border-white/70 bg-white/90 p-1.5 sm:grid-cols-4"
       >
-        <div class="flex items-center gap-2 rounded-lg bg-emerald-50/50 px-2.5 py-1.5 sm:border-r sm:border-emerald-100/70">
+        <div class="flex items-center gap-2 rounded-lg bg-emerald-50/50 px-2.5 py-1.5">
           <span class="grid h-7 w-7 place-items-center rounded-full bg-emerald-100/80 text-emerald-700">
             <UiIcon name="arrowDown" class="h-3 w-3" />
           </span>
@@ -221,13 +223,23 @@ const hasOutDetails = computed(() =>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 rounded-lg bg-brand-50/50 px-2.5 py-1.5 sm:border-r sm:border-brand-100/70">
+        <div class="flex items-center gap-2 rounded-lg bg-brand-50/50 px-2.5 py-1.5">
           <span class="grid h-7 w-7 place-items-center rounded-full bg-brand-100/80 text-brand-700">
             <UiIcon name="arrowUp" class="h-3 w-3" />
           </span>
           <div>
             <p class="text-xs text-ink-600">Total Keluar</p>
             <p class="text-lg font-bold text-brand-700 sm:text-xl">{{ formatKg(props.summary.totalOutKg) }} kg</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 rounded-lg bg-white px-2.5 py-1.5">
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-blue-100/80 text-blue-700">
+            <UiIcon name="layers" class="h-3 w-3" />
+          </span>
+          <div>
+            <p class="text-xs text-ink-600">Stok Saat Ini</p>
+            <p class="text-lg font-bold text-blue-700 sm:text-xl">{{ formatKg(props.currentStockKg ?? 0) }} kg</p>
           </div>
         </div>
 

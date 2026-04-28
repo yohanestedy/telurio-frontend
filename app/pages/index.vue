@@ -743,14 +743,14 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         </MetricCard>
       </div>
 
-      <div class="grid gap-6 xl:grid-cols-12 xl:items-start">
+      <div class="grid gap-6 min-[1024px]:grid-cols-10 min-[1024px]:items-stretch min-[1866px]:grid-cols-12">
         <TableCard
           title="Live Stock Per Kandang"
           description="Stok aktif + breakdown pergerakan telur hari ini per kandang."
           icon="layers"
-          class="xl:col-span-7"
+          class="min-[1024px]:order-1 min-[1024px]:col-span-6 min-[1024px]:h-full min-[1866px]:col-span-4"
         >
-          <div v-if="liveStock?.coops?.length" class="space-y-2.5">
+          <div v-if="liveStock?.coops?.length" class="space-y-2.5 min-[1024px]:max-h-[37rem] min-[1024px]:overflow-y-auto min-[1024px]:pr-1">
             <DashboardLiveStockCoopCard
               v-for="item in liveStock.coops"
               :key="item.coopId"
@@ -766,9 +766,9 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           title="Pesanan Terjadwal"
           description="Pesanan hari ini dan besok yang perlu ditangani."
           icon="orders"
-          class="xl:col-span-5"
+          class="min-[1024px]:order-2 min-[1024px]:col-span-4 min-[1024px]:h-full min-[1866px]:col-span-3"
         >
-          <div class="space-y-4 xl:max-h-[calc(100vh-14rem)] xl:overflow-y-auto xl:pr-1">
+          <div class="space-y-4 min-[1024px]:max-h-[37rem] min-[1024px]:overflow-y-auto min-[1024px]:pr-1">
             <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
               <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
                 <p class="text-sm font-semibold text-ink-900">Hari Ini</p>
@@ -804,44 +804,47 @@ async function submitPopulationUpdate(payload: { population: number; populationC
             </section>
           </div>
         </TableCard>
-      </div>
 
-      <TableCard
-        title="Profil Kandang"
-        description="Strain ayam, populasi, dan umur ayam aktif per kandang."
-        icon="coops"
-      >
-        <div v-if="dashboardCoops.length" class="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-          <DashboardCoopProfileCard
-            v-for="coop in dashboardCoops"
-            :key="coop.id"
-            :coop="coop"
-            :can-update-population="can('coops.manage')"
-            @update-population="openPopulationModal"
+        <TableCard
+          title="Produksi Telur"
+          description="Produksi butir dan performa berdasarkan periode."
+          icon="productions"
+          class="min-[1024px]:order-3 min-[1024px]:col-span-10 min-[1581px]:col-span-6 min-[1024px]:h-full min-[1866px]:col-span-5"
+        >
+          <DashboardProductionAnalyticsCard
+            v-model:period="productionAnalyticsPeriod"
+            v-model:coop-id="productionAnalyticsCoopId"
+            :analytics="productionAnalytics"
+            :loading="productionAnalyticsLoading"
+            :coops="dashboardCoops"
           />
-        </div>
-        <p v-else class="text-sm text-ink-500">Belum ada kandang aktif dalam scope akses Anda.</p>
-      </TableCard>
+        </TableCard>
 
-      <TableCard
-        title="Produksi Telur"
-        description="Produksi butir dan performa berdasarkan periode."
-        icon="productions"
-      >
-        <DashboardProductionAnalyticsCard
-          v-model:period="productionAnalyticsPeriod"
-          v-model:coop-id="productionAnalyticsCoopId"
-          :analytics="productionAnalytics"
-          :loading="productionAnalyticsLoading"
-          :coops="dashboardCoops"
-        />
-      </TableCard>
+        <TableCard
+          title="Profil Kandang"
+          description="Strain ayam, populasi, dan umur ayam aktif per kandang."
+          icon="coops"
+          class="min-[1024px]:order-4 min-[1024px]:col-span-10 min-[1581px]:col-span-4 min-[1866px]:col-span-12"
+        >
+          <div v-if="dashboardCoops.length" class="grid gap-3 md:grid-cols-2 min-[1581px]:grid-cols-1 min-[1866px]:grid-cols-2">
+            <DashboardCoopProfileCard
+              v-for="coop in dashboardCoops"
+              :key="coop.id"
+              :coop="coop"
+              :can-update-population="can('coops.manage')"
+              @update-population="openPopulationModal"
+            />
+          </div>
+          <p v-else class="text-sm text-ink-500">Belum ada kandang aktif dalam scope akses Anda.</p>
+        </TableCard>
+      </div>
 
       <DashboardCoopFlowDetailDialog
         v-model:open="coopFlowDetailOpen"
         :loading="coopFlowDetailLoading"
         :coop-name="activeCoopForDetail?.coopName ?? '-'"
         :date-label="formatDate(isoDate(new Date()))"
+        :current-stock-kg="activeCoopForDetail?.availableKg ?? 0"
         :summary="activeCoopForDetail ? coopFlowSummary(activeCoopForDetail.coopId) : null"
         :in-details="activeCoopFlowDetail?.inDetails"
         :out-details="activeCoopFlowDetail?.outDetails"

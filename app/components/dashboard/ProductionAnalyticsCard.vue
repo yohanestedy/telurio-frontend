@@ -25,10 +25,9 @@ const periodOptions: Array<{ label: string; value: ProductionAnalyticsPeriod }> 
   { label: '6 Bulan', value: '6m' },
 ]
 
-const coopOptions = computed(() => [
-  { label: 'Semua kandang', value: '' },
-  ...props.coops.map((coop) => ({ label: coop.name, value: coop.id })),
-])
+const coopOptions = computed(() =>
+  props.coops.map((coop) => ({ label: coop.name, value: coop.id })),
+)
 
 const series = computed(() => props.analytics?.series ?? [])
 const activeTooltipDate = ref<string | null>(null)
@@ -147,20 +146,17 @@ watch([() => props.period, () => props.coopId], () => {
 
 const summaryCards = computed(() => {
   const summary = props.analytics?.summary
-  const changes = props.analytics?.changes
 
   return [
     {
       label: 'Total Produksi',
       value: summary ? formatCount(summary.totalGoodCount) : '-',
       suffix: 'butir',
-      change: changes?.totalGoodCountPercent ?? null,
     },
     {
       label: 'Rata-rata Harian',
       value: summary ? formatCount(summary.averageDailyGoodCount) : '-',
       suffix: 'butir',
-      change: changes?.averageDailyGoodCountPercent ?? null,
     },
     {
       label: 'Rata-rata Performa',
@@ -168,13 +164,11 @@ const summaryCards = computed(() => {
         ? `${summary.averagePerformancePercent}%`
         : '-',
       suffix: '',
-      change: changes?.averagePerformancePercent ?? null,
     },
     {
       label: 'Populasi Aktif Rata-rata',
       value: summary?.averagePopulation ? formatCount(summary.averagePopulation) : '-',
       suffix: 'ekor',
-      change: null,
     },
   ]
 })
@@ -250,25 +244,6 @@ function formatPerformance(value: number | null) {
   return value === null ? '-' : `${value}%`
 }
 
-function formatPercentChange(value: number | null) {
-  if (value === null) {
-    return 'Belum ada pembanding'
-  }
-
-  return `${value > 0 ? '+' : ''}${value}% vs periode sebelumnya`
-}
-
-function changeTone(value: number | null) {
-  if (value === null) {
-    return 'text-ink-400'
-  }
-
-  if (value >= 0) {
-    return 'text-emerald-700'
-  }
-
-  return 'text-rose-600'
-}
 </script>
 
 <template>
@@ -312,9 +287,6 @@ function changeTone(value: number | null) {
           <p class="mt-1 flex items-baseline gap-1 text-xl font-semibold text-ink-900">
             {{ item.value }}
             <span v-if="item.suffix" class="text-xs font-medium text-ink-500">{{ item.suffix }}</span>
-          </p>
-          <p class="mt-2 text-xs" :class="changeTone(item.change)">
-            {{ formatPercentChange(item.change) }}
           </p>
         </div>
       </div>

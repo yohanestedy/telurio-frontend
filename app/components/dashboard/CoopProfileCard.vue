@@ -36,7 +36,7 @@ const age = computed(() => {
   const days = totalDays % 7
 
   return {
-    main: days > 0 ? `${weeks} mg ${days} hr` : `${weeks} mg`,
+    main: days > 0 ? `${weeks} minggu ${days} hari` : `${weeks} minggu`,
     since: `Sejak ${formatDate(props.coop.chickBirthDate)}`,
     tone: weeks >= 1 ? 'text-brand-700' : 'text-ink-900',
   }
@@ -55,11 +55,11 @@ const populationLabel = computed(() =>
           <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
             <UiIcon name="coops" class="h-4.5 w-4.5" />
           </span>
-          <div class="min-w-0">
+          <div class="flex min-w-0 items-center gap-2">
             <p class="truncate text-sm font-semibold text-ink-900 sm:text-base">{{ props.coop.name }}</p>
             <span
               :class="[
-                'mt-1 inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold',
                 props.coop.isActive
                   ? 'border-emerald-200 bg-emerald-100/80 text-emerald-700'
                   : 'border-ink-200 bg-ink-100/70 text-ink-600',
@@ -83,7 +83,7 @@ const populationLabel = computed(() =>
 
       <div class="mt-3 h-px bg-slate-200/75" />
 
-      <div class="mt-3 grid grid-cols-3 gap-2">
+      <div class="mt-3 grid grid-cols-[minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,1.3fr)] gap-2">
         <div class="min-w-0 border-r border-slate-200/80 pr-2">
           <div class="flex items-center gap-1.5">
             <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700">
@@ -115,7 +115,7 @@ const populationLabel = computed(() =>
             </span>
             <p class="text-[11px] text-ink-500">Umur</p>
           </div>
-          <p class="mt-2 truncate text-sm font-bold sm:text-base" :class="age.tone">
+          <p class="mt-2 text-sm font-bold leading-tight sm:text-base" :class="age.tone">
             {{ age.main }}
           </p>
           <p class="mt-0.5 truncate text-[10px] text-ink-500">{{ age.since }}</p>
