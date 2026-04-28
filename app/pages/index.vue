@@ -8,6 +8,8 @@ import type {
   LiveStockResponse,
   MonthlySummaryResponse,
   OrderItem,
+  ProductionAnalyticsPeriod,
+  ProductionAnalyticsResponse,
   ProductionItem,
   StockMovementItem,
 } from '../types/domain'
@@ -28,10 +30,15 @@ const loading = ref(true)
 const error = ref('')
 const todayCalendar = ref<CalendarDay | null>(null)
 const tomorrowCalendar = ref<CalendarDay | null>(null)
+const dashboardCoops = ref<CoopItem[]>([])
 const grossIncome = ref<GrossIncomeItem[]>([])
 const liveStock = ref<LiveStockResponse | null>(null)
 const todayStockMovements = ref<StockMovementItem[]>([])
 const monthlySummary = ref<MonthlySummaryResponse | null>(null)
+const productionAnalytics = ref<ProductionAnalyticsResponse | null>(null)
+const productionAnalyticsLoading = ref(false)
+const productionAnalyticsPeriod = ref<ProductionAnalyticsPeriod>('1w')
+const productionAnalyticsCoopId = ref('')
 const shareImageVersion = ref(Date.now())
 const coopFlowDetailOpen = ref(false)
 const coopFlowDetailLoading = ref(false)
@@ -41,9 +48,11 @@ const actionSubmittingOrderId = ref('')
 const modalSubmitting = ref(false)
 const startDeliveryOpen = ref(false)
 const paymentOpen = ref(false)
+const populationOpen = ref(false)
 const allocationModalLoading = ref(false)
 const paymentModalLoading = ref(false)
 const activeOrder = ref<OrderItem | null>(null)
+const activePopulationCoop = ref<CoopItem | null>(null)
 const activeCoops = ref<CoopItem[]>([])
 const activeLiveStock = ref<LiveStockResponse | null>(null)
 const activeAllocations = ref<AllocationItem[]>([])
@@ -66,6 +75,14 @@ async function loadDashboard() {
       api.get<CalendarDay>(`/calendar/${tomorrow}`).then((value) => {
         tomorrowCalendar.value = value
       }),
+      api.getPage<CoopItem[]>('/coops', {
+        all: true,
+        isActive: true,
+        sortBy: 'name',
+        order: 'asc',
+      }).then((value) => {
+        dashboardCoops.value = value.data
+      }),
       api.get<GrossIncomeItem[]>('/reports/gross-income').then((value) => {
         grossIncome.value = value
       }),
@@ -81,6 +98,7 @@ async function loadDashboard() {
       }).then((value) => {
         todayStockMovements.value = value.data
       }),
+      loadProductionAnalytics(),
     ]
 
     if (auth.role === 'OWNER') {
@@ -101,6 +119,25 @@ async function loadDashboard() {
 }
 
 onMounted(loadDashboard)
+
+watch([productionAnalyticsPeriod, productionAnalyticsCoopId], () => {
+  if (!loading.value) {
+    void loadProductionAnalytics()
+  }
+})
+
+async function loadProductionAnalytics() {
+  productionAnalyticsLoading.value = true
+
+  try {
+    productionAnalytics.value = await api.get<ProductionAnalyticsResponse>('/productions/analytics', {
+      period: productionAnalyticsPeriod.value,
+      ...(productionAnalyticsCoopId.value ? { coopId: productionAnalyticsCoopId.value } : {}),
+    })
+  } finally {
+    productionAnalyticsLoading.value = false
+  }
+}
 
 const dashboardCards = computed(() => [
   {
@@ -636,6 +673,30 @@ async function submitPaymentUpdate(payload: Record<string, unknown>) {
     modalSubmitting.value = false
   }
 }
+
+function openPopulationModal(coop: CoopItem) {
+  activePopulationCoop.value = coop
+  populationOpen.value = true
+}
+
+async function submitPopulationUpdate(payload: { population: number; populationChangeReason?: string }) {
+  if (!activePopulationCoop.value) {
+    return
+  }
+
+  modalSubmitting.value = true
+  try {
+    await api.patch(`/coops/${activePopulationCoop.value.id}`, payload)
+    toast.success('Populasi kandang berhasil diperbarui')
+    populationOpen.value = false
+    activePopulationCoop.value = null
+    await loadDashboard()
+  } catch (caught) {
+    toast.error('Gagal update populasi', api.mapError(caught).message)
+  } finally {
+    modalSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -745,6 +806,37 @@ async function submitPaymentUpdate(payload: Record<string, unknown>) {
         </TableCard>
       </div>
 
+      <TableCard
+        title="Profil Kandang"
+        description="Strain ayam, populasi, dan umur ayam aktif per kandang."
+        icon="coops"
+      >
+        <div v-if="dashboardCoops.length" class="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+          <DashboardCoopProfileCard
+            v-for="coop in dashboardCoops"
+            :key="coop.id"
+            :coop="coop"
+            :can-update-population="can('coops.manage')"
+            @update-population="openPopulationModal"
+          />
+        </div>
+        <p v-else class="text-sm text-ink-500">Belum ada kandang aktif dalam scope akses Anda.</p>
+      </TableCard>
+
+      <TableCard
+        title="Produksi Telur"
+        description="Produksi butir dan performa berdasarkan periode."
+        icon="productions"
+      >
+        <DashboardProductionAnalyticsCard
+          v-model:period="productionAnalyticsPeriod"
+          v-model:coop-id="productionAnalyticsCoopId"
+          :analytics="productionAnalytics"
+          :loading="productionAnalyticsLoading"
+          :coops="dashboardCoops"
+        />
+      </TableCard>
+
       <DashboardCoopFlowDetailDialog
         v-model:open="coopFlowDetailOpen"
         :loading="coopFlowDetailLoading"
@@ -793,6 +885,20 @@ async function submitPaymentUpdate(payload: Record<string, unknown>) {
         :total-invoice="activeOrder.totalInvoice"
         :dp-amount="activeOrder.dpAmount"
         @submit="submitPaymentUpdate"
+      />
+    </UiDialog>
+
+    <UiDialog
+      v-model:open="populationOpen"
+      title="Update Populasi"
+      description="Perubahan akan disimpan sebagai histori populasi kandang."
+      size="md"
+    >
+      <FormsCoopPopulationForm
+        v-if="activePopulationCoop"
+        :coop="activePopulationCoop"
+        :submitting="modalSubmitting"
+        @submit="submitPopulationUpdate"
       />
     </UiDialog>
   </div>

@@ -138,9 +138,44 @@ export interface ProductionItem {
   goodKg: string;
   goodCount: number;
   brokenCount: number | null;
+  populationSnapshot: number | null;
   notes: string | null;
   createdByName: string | null;
   createdAt: string;
+}
+
+export type ProductionAnalyticsPeriod = "1w" | "1m" | "3m" | "6m";
+
+export interface ProductionAnalyticsPoint {
+  date: string;
+  hasProduction: boolean;
+  goodCount: number;
+  averagePopulation: number | null;
+  performancePercent: number | null;
+}
+
+export interface ProductionAnalyticsSummary {
+  totalGoodCount: number;
+  averageDailyGoodCount: number;
+  averagePerformancePercent: number | null;
+  averagePopulation: number | null;
+}
+
+export interface ProductionAnalyticsResponse {
+  period: ProductionAnalyticsPeriod;
+  coopId: string | null;
+  startDate: string;
+  endDate: string;
+  previousStartDate: string;
+  previousEndDate: string;
+  summary: ProductionAnalyticsSummary;
+  previousSummary: ProductionAnalyticsSummary;
+  changes: {
+    totalGoodCountPercent: number | null;
+    averageDailyGoodCountPercent: number | null;
+    averagePerformancePercent: number | null;
+  };
+  series: ProductionAnalyticsPoint[];
 }
 
 export interface ExpenseCategoryItem {
