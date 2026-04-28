@@ -16,6 +16,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:period': [value: ProductionAnalyticsPeriod]
   'update:coopId': [value: string]
+  navigatePeriod: [direction: 'previous' | 'next']
 }>()
 
 const periodOptions: Array<{ label: string; value: ProductionAnalyticsPeriod }> = [
@@ -34,6 +35,13 @@ const activeTooltipDate = ref<string | null>(null)
 const tooltipPinned = ref(false)
 const hasData = computed(() => series.value.some((item) => item.hasProduction))
 const hasPerformance = computed(() => series.value.some((item) => item.performancePercent !== null))
+const canNavigateNext = computed(() => {
+  if (!props.analytics?.endDate) {
+    return false
+  }
+
+  return props.analytics.endDate < isoDate(new Date())
+})
 
 const chart = computed(() => {
   const items = series.value
@@ -166,7 +174,7 @@ const summaryCards = computed(() => {
       suffix: '',
     },
     {
-      label: 'Populasi Aktif Rata-rata',
+      label: 'Populasi Rata-rata',
       value: summary?.averagePopulation ? formatCount(summary.averagePopulation) : '-',
       suffix: 'ekor',
     },
@@ -179,6 +187,16 @@ function updatePeriod(value: ProductionAnalyticsPeriod) {
 
 function updateCoop(value: string) {
   emit('update:coopId', value)
+}
+
+function navigatePeriod(direction: 'previous' | 'next') {
+  if (direction === 'next' && !canNavigateNext.value) {
+    return
+  }
+
+  activeTooltipDate.value = null
+  tooltipPinned.value = false
+  emit('navigatePeriod', direction)
 }
 
 function formatCount(value: number) {
@@ -277,7 +295,7 @@ function formatPerformance(value: number | null) {
     <LoadingSkeleton v-if="loading" :lines="8" />
 
     <template v-else>
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <div
           v-for="item in summaryCards"
           :key="item.label"
@@ -303,9 +321,30 @@ function formatPerformance(value: number | null) {
               Performa (%)
             </span>
           </div>
-          <p v-if="analytics" class="text-xs text-ink-500">
-            {{ formatDate(analytics.startDate) }} - {{ formatDate(analytics.endDate) }}
-          </p>
+          <div v-if="analytics" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/70 p-1">
+            <button
+              type="button"
+              class="grid h-7 w-7 place-items-center rounded-lg text-ink-500 transition hover:bg-white hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              title="Periode sebelumnya"
+              aria-label="Periode sebelumnya"
+              @click="navigatePeriod('previous')"
+            >
+              <UiIcon name="chevronLeft" class="h-3.5 w-3.5" />
+            </button>
+            <p class="px-1 text-center text-xs font-medium text-ink-600">
+              {{ formatDate(analytics.startDate) }} - {{ formatDate(analytics.endDate) }}
+            </p>
+            <button
+              type="button"
+              class="grid h-7 w-7 place-items-center rounded-lg text-ink-500 transition hover:bg-white hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-ink-500"
+              title="Periode berikutnya"
+              aria-label="Periode berikutnya"
+              :disabled="!canNavigateNext"
+              @click="navigatePeriod('next')"
+            >
+              <UiIcon name="chevronRight" class="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         <div v-if="!hasData" class="px-4 py-12 text-center text-sm text-ink-500">
@@ -445,11 +484,11 @@ function formatPerformance(value: number | null) {
 
             <div
               v-if="activeTooltipPoint"
-              class="pointer-events-none absolute z-10 w-64 rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-[0_18px_38px_rgba(15,23,42,0.16)]"
+              class="pointer-events-none absolute z-10 w-52 rounded-xl border border-slate-200/90 bg-white px-3 py-2.5 text-xs shadow-[0_18px_38px_rgba(15,23,42,0.16)] sm:w-64 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm"
               :style="activeTooltipStyle"
             >
               <p class="font-semibold text-ink-900">{{ formatFullDate(activeTooltipPoint.date) }}</p>
-              <div class="mt-3 space-y-2 text-ink-600">
+              <div class="mt-2.5 space-y-1.5 text-ink-600 sm:mt-3 sm:space-y-2">
                 <div class="flex items-center justify-between gap-3">
                   <span class="inline-flex items-center gap-2">
                     <span class="h-2 w-2 rounded-full bg-emerald-600" />

@@ -39,6 +39,7 @@ const productionAnalytics = ref<ProductionAnalyticsResponse | null>(null)
 const productionAnalyticsLoading = ref(false)
 const productionAnalyticsPeriod = ref<ProductionAnalyticsPeriod>('1w')
 const productionAnalyticsCoopId = ref('')
+const productionAnalyticsEndDate = ref(isoDate(new Date()))
 const shareImageVersion = ref(Date.now())
 const coopFlowDetailOpen = ref(false)
 const coopFlowDetailLoading = ref(false)
@@ -120,7 +121,7 @@ async function loadDashboard() {
 
 onMounted(loadDashboard)
 
-watch([productionAnalyticsPeriod, productionAnalyticsCoopId], () => {
+watch([productionAnalyticsPeriod, productionAnalyticsCoopId, productionAnalyticsEndDate], () => {
   if (!loading.value) {
     void loadProductionAnalytics()
   }
@@ -132,11 +133,36 @@ async function loadProductionAnalytics() {
   try {
     productionAnalytics.value = await api.get<ProductionAnalyticsResponse>('/productions/analytics', {
       period: productionAnalyticsPeriod.value,
+      endDate: productionAnalyticsEndDate.value,
       ...(productionAnalyticsCoopId.value ? { coopId: productionAnalyticsCoopId.value } : {}),
     })
   } finally {
     productionAnalyticsLoading.value = false
   }
+}
+
+function productionAnalyticsPeriodDays(period: ProductionAnalyticsPeriod) {
+  return {
+    '1w': 7,
+    '1m': 30,
+    '3m': 90,
+    '6m': 180,
+  }[period]
+}
+
+function updateProductionAnalyticsPeriod(value: ProductionAnalyticsPeriod) {
+  productionAnalyticsPeriod.value = value
+  productionAnalyticsEndDate.value = isoDate(new Date())
+}
+
+function shiftProductionAnalyticsPeriod(direction: 'previous' | 'next') {
+  const days = productionAnalyticsPeriodDays(productionAnalyticsPeriod.value)
+  const cursor = new Date(`${productionAnalyticsEndDate.value}T00:00:00`)
+  cursor.setDate(cursor.getDate() + (direction === 'previous' ? -days : days))
+
+  const today = isoDate(new Date())
+  const nextDate = isoDate(cursor)
+  productionAnalyticsEndDate.value = direction === 'next' && nextDate > today ? today : nextDate
 }
 
 const dashboardCards = computed(() => [
@@ -771,9 +797,9 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           <div class="space-y-4 min-[1024px]:max-h-[37rem] min-[1024px]:overflow-y-auto min-[1024px]:pr-1">
             <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
               <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
-                <p class="text-sm font-semibold text-ink-900">Hari Ini</p>
-                <span class="rounded-full border border-white/80 bg-white/80 px-2 py-1 text-[11px] text-ink-600">
-                  {{ formatDate(todayDate) }}
+                <p class="text-base font-bold text-ink-900 sm:text-lg">Hari Ini</p>
+                <span class="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-ink-600 sm:text-xs">
+                  {{ formatWeekdayDayMonthYearId(todayDate) }}
                 </span>
               </div>
               <CalendarOrderList
@@ -788,9 +814,9 @@ async function submitPopulationUpdate(payload: { population: number; populationC
 
             <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
               <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
-                <p class="text-sm font-semibold text-ink-900">Besok</p>
-                <span class="rounded-full border border-white/80 bg-white/80 px-2 py-1 text-[11px] text-ink-600">
-                  {{ formatDate(tomorrowDate) }}
+                <p class="text-base font-bold text-ink-900 sm:text-lg">Besok</p>
+                <span class="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-ink-600 sm:text-xs">
+                  {{ formatWeekdayDayMonthYearId(tomorrowDate) }}
                 </span>
               </div>
               <CalendarOrderList
@@ -812,11 +838,13 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           class="min-[1024px]:order-3 min-[1024px]:col-span-10 min-[1581px]:col-span-6 min-[1024px]:h-full min-[1866px]:col-span-5"
         >
           <DashboardProductionAnalyticsCard
-            v-model:period="productionAnalyticsPeriod"
+            :period="productionAnalyticsPeriod"
             v-model:coop-id="productionAnalyticsCoopId"
             :analytics="productionAnalytics"
             :loading="productionAnalyticsLoading"
             :coops="dashboardCoops"
+            @update:period="updateProductionAnalyticsPeriod"
+            @navigate-period="shiftProductionAnalyticsPeriod"
           />
         </TableCard>
 

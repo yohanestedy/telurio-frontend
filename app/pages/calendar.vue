@@ -54,7 +54,7 @@ const selectedPriceError = ref(false)
 const boardTransitionKey = computed(
   () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
 )
-const selectedDateLabel = computed(() => formatDayMonthYearId(selectedDate.value))
+const selectedDateLabel = computed(() => formatWeekdayDayMonthYearId(selectedDate.value))
 const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length}`)
 
 function emptyCalendarDay(date: string): CalendarDay {

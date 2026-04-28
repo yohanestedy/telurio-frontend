@@ -14,6 +14,13 @@ const dayMonthYearFormatterId = new Intl.DateTimeFormat('id-ID', {
   year: 'numeric',
 })
 
+const weekdayDayMonthYearFormatterId = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+})
+
 const monthYearFormatterId = new Intl.DateTimeFormat('id-ID', {
   month: 'long',
   year: 'numeric',
@@ -49,6 +56,10 @@ export function formatDayMonthId(value: string | Date) {
 
 export function formatDayMonthYearId(value: string | Date) {
   return dayMonthYearFormatterId.format(toDate(value))
+}
+
+export function formatWeekdayDayMonthYearId(value: string | Date) {
+  return weekdayDayMonthYearFormatterId.format(toDate(value))
 }
 
 export function formatMonthYearId(value: string | Date) {

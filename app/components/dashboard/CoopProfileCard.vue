@@ -37,7 +37,7 @@ const age = computed(() => {
 
   return {
     main: days > 0 ? `${weeks} minggu ${days} hari` : `${weeks} minggu`,
-    since: `Sejak ${formatDate(props.coop.chickBirthDate)}`,
+    since: `Sejak ${formatDayMonthYearId(props.coop.chickBirthDate)}`,
     tone: weeks >= 1 ? 'text-brand-700' : 'text-ink-900',
   }
 })
@@ -86,7 +86,7 @@ const populationLabel = computed(() =>
       <div class="mt-3 grid grid-cols-[minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,1.3fr)] gap-2">
         <div class="min-w-0 border-r border-slate-200/80 pr-2">
           <div class="flex items-center gap-1.5">
-            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+            <span class="hidden h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700 sm:grid">
               <UiIcon name="productions" class="h-3.5 w-3.5" />
             </span>
             <p class="text-[11px] text-ink-500">Strain</p>
@@ -98,7 +98,7 @@ const populationLabel = computed(() =>
 
         <div class="min-w-0 border-r border-slate-200/80 px-2">
           <div class="flex items-center gap-1.5">
-            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700">
+            <span class="hidden h-7 w-7 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700 sm:grid">
               <UiIcon name="users" class="h-3.5 w-3.5" />
             </span>
             <p class="text-[11px] text-ink-500">Populasi</p>
@@ -110,7 +110,7 @@ const populationLabel = computed(() =>
 
         <div class="min-w-0 pl-2">
           <div class="flex items-center gap-1.5">
-            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700">
+            <span class="hidden h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700 sm:grid">
               <UiIcon name="calendar" class="h-3.5 w-3.5" />
             </span>
             <p class="text-[11px] text-ink-500">Umur</p>
