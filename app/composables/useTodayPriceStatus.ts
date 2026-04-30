@@ -1,5 +1,6 @@
 import type { PriceItem } from '../types/domain'
 import { ApiClientError } from '../types/api'
+import { isoDate } from '../utils/formatters'
 
 export function useTodayPriceStatus() {
   const api = useApi()
@@ -11,7 +12,9 @@ export function useTodayPriceStatus() {
     todayPriceMissing.value = false
 
     try {
-      currentPrice.value = await api.get<PriceItem>('/prices/current')
+      currentPrice.value = await api.get<PriceItem>('/prices/current', {
+        date: isoDate(new Date()),
+      })
     } catch (caught) {
       const mapped = caught instanceof ApiClientError ? caught : api.mapError(caught)
 

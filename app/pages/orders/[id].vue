@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import type {
   AllocationItem,
   CoopItem,
@@ -7,7 +6,7 @@ import type {
   OrderItem,
   PaymentHistoryItem,
 } from '../../types/domain'
-import { deliveryStatusLabel, paymentStatusLabel } from '../../utils/formatters'
+import { deliveryStatusLabel, isoDate, paymentStatusLabel } from '../../utils/formatters'
 
 definePageMeta({
   title: 'Order Detail',
@@ -86,7 +85,7 @@ const isTodayDelivery = computed(() => {
     return false
   }
 
-  return dayjs(order.value.deliveryDate).startOf('day').isSame(dayjs().startOf('day'))
+  return isoDate(order.value.deliveryDate) === isoDate(new Date())
 })
 
 const allocationDialogTitle = computed(() =>

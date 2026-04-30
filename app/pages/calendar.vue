@@ -14,7 +14,7 @@ import {
   formatDayMonthYearId,
   startOfWeekMonday,
 } from '../utils/calendar'
-import { formatRupiah } from '../utils/formatters'
+import { formatRupiah, isoDate } from '../utils/formatters'
 import type { CalendarOrder, CalendarOrderAction } from '../types/calendar-orders'
 
 definePageMeta({
@@ -33,8 +33,8 @@ const { currentPrice, loadTodayPriceStatus } = useTodayPriceStatus()
 const loading = ref(true)
 const error = ref('')
 const markerDays = ref<CalendarMarkerDay[]>([])
-const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
-const focusDate = ref(dayjs().format('YYYY-MM-DD'))
+const selectedDate = ref(isoDate(new Date()))
+const focusDate = ref(isoDate(new Date()))
 const selectedDay = ref<CalendarDay>(emptyCalendarDay(selectedDate.value))
 const actionSubmittingOrderId = ref('')
 const modalSubmitting = ref(false)
@@ -78,7 +78,7 @@ const activeOrderIsTodayDelivery = computed(() => {
     return false
   }
 
-  return dayjs(activeOrder.value.deliveryDate).startOf('day').isSame(dayjs().startOf('day'))
+  return isoDate(activeOrder.value.deliveryDate) === isoDate(new Date())
 })
 
 const allocationDialogTitle = computed(() =>
@@ -401,7 +401,12 @@ async function handleOrderAction(order: CalendarOrder, action: CalendarOrderActi
   })
 }
 
-onMounted(syncCalendarPanel)
+onMounted(() => {
+  const today = isoDate(new Date())
+  selectedDate.value = today
+  focusDate.value = today
+  void syncCalendarPanel()
+})
 </script>
 
 <template>

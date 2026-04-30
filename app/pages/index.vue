@@ -119,7 +119,10 @@ async function loadDashboard() {
   }
 }
 
-onMounted(loadDashboard)
+onMounted(() => {
+  productionAnalyticsEndDate.value = isoDate(new Date())
+  void loadDashboard()
+})
 
 watch([productionAnalyticsPeriod, productionAnalyticsCoopId, productionAnalyticsEndDate], () => {
   if (!loading.value) {
