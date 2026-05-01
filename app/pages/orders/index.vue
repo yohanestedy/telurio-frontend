@@ -360,38 +360,40 @@ watch(
           </div>
 
           <div class="space-y-3">
-            <div class="space-y-1.5">
-              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                <UiIcon name="delivery" class="h-3.5 w-3.5 text-ink-500" />
-                <span>{{ t('order.delivery') }}</span>
-              </p>
-              <select
-                :value="draftFilters.deliveryStatus"
-                class="field-shell py-2.5"
-                @change="draftFilters.deliveryStatus = ($event.target as HTMLSelectElement).value"
-              >
-                <option value="">{{ t('common.all') }}</option>
-                <option v-for="item in deliveryStatusOptions" :key="item.value" :value="item.value">
-                  {{ item.label }}
-                </option>
-              </select>
-            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="min-w-0 space-y-1.5">
+                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
+                  <UiIcon name="delivery" class="h-3.5 w-3.5 text-ink-500" />
+                  <span>{{ t('order.delivery') }}</span>
+                </p>
+                <select
+                  :value="draftFilters.deliveryStatus"
+                  class="field-shell px-3 py-2.5"
+                  @change="draftFilters.deliveryStatus = ($event.target as HTMLSelectElement).value"
+                >
+                  <option value="">{{ t('common.all') }}</option>
+                  <option v-for="item in deliveryStatusOptions" :key="item.value" :value="item.value">
+                    {{ item.label }}
+                  </option>
+                </select>
+              </div>
 
-            <div class="space-y-1.5">
-              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
-                <UiIcon name="money" class="h-3.5 w-3.5 text-ink-500" />
-                <span>{{ t('order.payment') }}</span>
-              </p>
-              <select
-                :value="draftFilters.paymentStatus"
-                class="field-shell py-2.5"
-                @change="draftFilters.paymentStatus = ($event.target as HTMLSelectElement).value"
-              >
-                <option value="">{{ t('common.all') }}</option>
-                <option v-for="item in paymentStatusOptions" :key="item.value" :value="item.value">
-                  {{ item.label }}
-                </option>
-              </select>
+              <div class="min-w-0 space-y-1.5">
+                <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
+                  <UiIcon name="money" class="h-3.5 w-3.5 text-ink-500" />
+                  <span>{{ t('order.payment') }}</span>
+                </p>
+                <select
+                  :value="draftFilters.paymentStatus"
+                  class="field-shell px-3 py-2.5"
+                  @change="draftFilters.paymentStatus = ($event.target as HTMLSelectElement).value"
+                >
+                  <option value="">{{ t('common.all') }}</option>
+                  <option v-for="item in paymentStatusOptions" :key="item.value" :value="item.value">
+                    {{ item.label }}
+                  </option>
+                </select>
+              </div>
             </div>
 
             <UiDatePicker
@@ -400,7 +402,7 @@ watch(
               :placeholder="t('order.pickDeliveryDate')"
             />
 
-            <div class="grid gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-2 gap-2.5">
               <UiDatePicker
                 v-model="draftFilters.startDate"
                 :label="t('date.start')"

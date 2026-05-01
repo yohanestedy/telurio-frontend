@@ -332,7 +332,7 @@ watch(
               </select>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-2 gap-2.5">
               <UiDatePicker
                 v-model="draftFilters.startDate"
                 :label="t('date.start')"

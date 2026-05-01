@@ -150,16 +150,34 @@ watch(
       class="fixed inset-0 z-40 bg-ink-900/18 backdrop-blur-[3px] lg:hidden"
       @click.self="closePanels"
     >
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="translate-y-8 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-8 opacity-0"
+        appear
+      >
       <div v-if="activePanel === 'quick'" class="absolute inset-x-0 bottom-0">
         <div
           ref="quickPanelRef"
-          class="mx-auto max-w-xl rounded-t-[42px] border-x border-t border-white/20 bg-[linear-gradient(180deg,#ff7a21_0%,#f7691b_58%,#ef5e17_100%)] px-6 pb-8 pt-7 text-white shadow-[0_-18px_54px_rgba(239,94,23,0.28)]"
+          class="mx-auto max-w-xl rounded-t-[42px] border-x border-t border-white/20 bg-[linear-gradient(180deg,#ff7a21_0%,#f7691b_58%,#ef5e17_100%)] px-6 pb-[8.5rem] pt-7 text-white shadow-[0_-18px_54px_rgba(239,94,23,0.28)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#a13a12_0%,#7f2d12_58%,#4a2015_100%)]"
         >
           <div class="mx-auto mb-5 h-1.5 w-14 rounded-full bg-white/35" />
 
-          <div class="mb-5 text-center">
-            <p class="text-base font-semibold">{{ t('mobile.quickAction') }}</p>
-            <p class="mt-1 text-sm text-white/80">{{ t('mobile.quickActionDescription') }}</p>
+          <div class="mb-5 flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-base font-semibold">{{ t('mobile.quickAction') }}</p>
+              <p class="mt-1 text-sm text-white/80">{{ t('mobile.quickActionDescription') }}</p>
+            </div>
+            <button
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/24 bg-white/12 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/18"
+              @click="closePanels"
+            >
+              <UiIcon name="close" class="h-3.5 w-3.5" />
+              <span>{{ t('common.close') }}</span>
+            </button>
           </div>
 
           <div class="grid gap-2.5">
@@ -172,7 +190,7 @@ watch(
             >
               <div class="flex items-start gap-3">
                 <div
-                  class="rounded-2xl border border-white/95 bg-white/95 p-2.5 text-[#e25f16] shadow-[0_8px_18px_rgba(0,0,0,0.12)]"
+                  class="rounded-2xl border border-white/95 bg-[#fffaf5] p-2.5 text-[#e25f16] shadow-[0_8px_18px_rgba(0,0,0,0.12)] dark:border-white/15 dark:bg-[#f6f1eb] dark:text-[#ca470c]"
                 >
                   <UiIcon :name="item.icon" class="h-4 w-4" />
                 </div>
@@ -192,18 +210,20 @@ watch(
             </NuxtLink>
           </div>
 
-          <div class="mt-8 flex justify-center">
-            <button
-              class="flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#ef5e17] shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition hover:scale-[1.02]"
-              @click="closePanels"
-            >
-              <UiIcon name="close" class="h-5 w-5" />
-            </button>
-          </div>
         </div>
       </div>
+      </Transition>
 
-      <div v-else class="absolute inset-x-0 bottom-[6.25rem] px-3">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="translate-y-4 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-4 opacity-0"
+        appear
+      >
+      <div v-if="activePanel === 'more'" class="absolute inset-x-0 bottom-[6.25rem] px-3">
         <div
           ref="morePanelRef"
           class="mx-auto max-w-xl rounded-[30px] border border-white/70 bg-white/96 p-4 shadow-[0_24px_64px_rgba(15,23,42,0.18)]"
@@ -218,27 +238,24 @@ watch(
             </UiButton>
           </div>
 
-          <div class="grid gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <NuxtLink
               v-for="item in moreItems"
               :key="item.path"
               :to="item.path"
-              class="rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 transition hover:bg-slate-50"
+              class="min-h-[4.75rem] rounded-2xl border border-slate-200/80 bg-white/80 px-3 py-3 transition hover:bg-slate-50"
               @click="closePanels"
             >
-              <div class="flex items-start gap-3">
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-2 text-brand-700">
+              <div class="flex h-full items-center gap-2.5">
+                <div class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-2 text-brand-700">
                   <UiIcon :name="item.icon" class="h-4 w-4" />
                 </div>
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-ink-900">{{ item.label }}</p>
-                  <p class="mt-0.5 text-xs leading-5 text-ink-500">{{ item.description }}</p>
-                </div>
+                <p class="min-w-0 text-sm font-semibold leading-tight text-ink-900">{{ item.label }}</p>
               </div>
             </NuxtLink>
 
             <button
-              class="rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-left transition hover:bg-slate-50"
+              class="col-span-2 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-left transition hover:bg-slate-50"
               @click="logoutDialogOpen = true"
             >
               <div class="flex items-start gap-3">
@@ -254,6 +271,7 @@ watch(
           </div>
         </div>
       </div>
+      </Transition>
     </div>
   </Teleport>
 
@@ -266,7 +284,10 @@ watch(
 
       <div class="relative pt-2 max-[380px]:pt-1">
         <div
-          class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[30px] border border-white/90 bg-white/96 px-2 pb-2 pt-1.5 shadow-[0_16px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl max-[380px]:gap-0.5 max-[380px]:rounded-[26px] max-[380px]:px-1.5 max-[380px]:pb-1.5 max-[380px]:pt-1"
+          class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[30px] px-2 pb-2 pt-1.5 backdrop-blur-xl transition-colors duration-200 max-[380px]:gap-0.5 max-[380px]:rounded-[26px] max-[380px]:px-1.5 max-[380px]:pb-1.5 max-[380px]:pt-1"
+          :class="activePanel === 'quick'
+            ? 'border border-orange-100/90 bg-white/98 shadow-[0_18px_44px_rgba(15,23,42,0.22)] ring-1 ring-white/80 dark:border-white/10 dark:bg-[#1c1916]/95 dark:ring-white/10'
+            : 'border border-white/90 bg-white/96 shadow-[0_16px_34px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-[#1c1916]/90'"
         >
           <NuxtLink
             v-for="item in leftItems"
@@ -287,8 +308,10 @@ watch(
             @click="togglePanel('quick')"
           >
             <span
-              class="flex h-[3.9rem] w-[3.9rem] -translate-y-[1.75rem] items-center justify-center rounded-full border-[5px] border-white bg-[linear-gradient(180deg,#ff8a2d_0%,#f97316_100%)] text-white shadow-[0_14px_28px_rgba(249,115,22,0.34)] transition max-[380px]:h-[3.45rem] max-[380px]:w-[3.45rem] max-[380px]:-translate-y-[1.45rem] max-[380px]:border-[4px]"
-              :class="activePanel === 'quick' ? 'scale-[1.04]' : ''"
+              class="flex h-[3.9rem] w-[3.9rem] -translate-y-[1.75rem] items-center justify-center rounded-full border-[5px] shadow-[0_14px_28px_rgba(249,115,22,0.34)] transition max-[380px]:h-[3.45rem] max-[380px]:w-[3.45rem] max-[380px]:-translate-y-[1.45rem] max-[380px]:border-[4px]"
+              :class="activePanel === 'quick'
+                ? 'scale-[1.04] border-orange-100 bg-[#fffaf5] text-[#ef5e17] dark:border-white/15 dark:bg-[#f6f1eb] dark:text-[#ca470c]'
+                : 'border-white bg-[linear-gradient(180deg,#ff8a2d_0%,#f97316_100%)] text-white'"
             >
               <UiIcon name="plus" class="h-7 w-7 max-[380px]:h-6 max-[380px]:w-6" />
             </span>
