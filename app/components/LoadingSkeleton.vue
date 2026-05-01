@@ -30,7 +30,7 @@ const tableColumnsStyle = computed(() => ({
           :key="`head-${index}`"
           :class="[
             index % 3 === 0 ? 'w-10/12' : index % 3 === 1 ? 'w-8/12' : 'w-9/12',
-            'h-3 animate-pulse rounded-md bg-slate-200/70',
+            'h-3 skeleton-block',
           ]"
         />
       </div>
@@ -47,7 +47,7 @@ const tableColumnsStyle = computed(() => ({
             :key="`cell-${row}-${column}`"
             :class="[
               (row + column) % 3 === 0 ? 'w-11/12' : (row + column) % 3 === 1 ? 'w-9/12' : 'w-10/12',
-              'h-4 animate-pulse rounded-md bg-slate-200/70',
+              'h-4 skeleton-block',
             ]"
           />
         </div>
@@ -60,7 +60,7 @@ const tableColumnsStyle = computed(() => ({
         :key="index"
         :class="[
           index % 3 === 0 ? 'w-full' : index % 3 === 1 ? 'w-11/12' : 'w-9/12',
-          'h-4 animate-pulse rounded-md bg-slate-200/70',
+          'h-4 skeleton-block',
         ]"
       />
     </div>

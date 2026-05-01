@@ -738,9 +738,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
 
 <template>
   <div class="space-y-6">
-    <div v-if="loading" class="grid gap-4 md:grid-cols-3">
-      <LoadingSkeleton v-for="index in 3" :key="index" :lines="4" />
-    </div>
+    <DashboardSkeleton v-if="loading" />
     <ErrorState v-else-if="error" :message="error">
       <UiButton icon="refresh" @click="loadDashboard">{{ t('common.retry') }}</UiButton>
     </ErrorState>

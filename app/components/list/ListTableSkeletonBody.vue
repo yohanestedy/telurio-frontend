@@ -31,7 +31,7 @@ withDefaults(defineProps<{
         <div
           v-for="(line, lineIndex) in cell.lines"
           :key="`${rowKeyPrefix}-${row}-cell-${cellIndex}-line-${lineIndex}`"
-          class="h-4 animate-pulse rounded-md bg-slate-200/70"
+          class="h-4 skeleton-block"
           :class="line.class"
         />
       </td>
