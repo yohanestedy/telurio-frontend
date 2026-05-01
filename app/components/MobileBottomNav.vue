@@ -279,15 +279,11 @@ watch(
     <div class="relative mx-auto max-w-xl">
       <div
         class="pointer-events-none absolute inset-x-14 top-1.5 h-14 rounded-[24px] bg-[linear-gradient(180deg,rgba(255,163,94,0.72)_0%,rgba(249,115,22,0.16)_100%)] blur-xl max-[380px]:inset-x-16 max-[380px]:top-1 max-[380px]:h-12 max-[380px]:rounded-[20px]"
-        :class="activePanel === 'quick' ? 'opacity-0' : 'opacity-100'"
       />
 
       <div class="relative pt-2 max-[380px]:pt-1">
         <div
-          class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[30px] px-2 pb-2 pt-1.5 backdrop-blur-xl transition-colors duration-200 max-[380px]:gap-0.5 max-[380px]:rounded-[26px] max-[380px]:px-1.5 max-[380px]:pb-1.5 max-[380px]:pt-1"
-          :class="activePanel === 'quick'
-            ? 'border border-orange-100/90 bg-white/98 shadow-[0_18px_44px_rgba(15,23,42,0.22)] ring-1 ring-white/80 dark:border-white/10 dark:bg-[#1c1916]/95 dark:ring-white/10'
-            : 'border border-white/90 bg-white/96 shadow-[0_16px_34px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-[#1c1916]/90'"
+          class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[30px] border border-white/90 bg-white/96 px-2 pb-2 pt-1.5 shadow-[0_16px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl transition-colors duration-200 max-[380px]:gap-0.5 max-[380px]:rounded-[26px] max-[380px]:px-1.5 max-[380px]:pb-1.5 max-[380px]:pt-1 dark:border-white/10 dark:bg-[#1c1916]/90"
         >
           <NuxtLink
             v-for="item in leftItems"
@@ -308,10 +304,8 @@ watch(
             @click="togglePanel('quick')"
           >
             <span
-              class="flex h-[3.9rem] w-[3.9rem] -translate-y-[1.75rem] items-center justify-center rounded-full border-[5px] shadow-[0_14px_28px_rgba(249,115,22,0.34)] transition max-[380px]:h-[3.45rem] max-[380px]:w-[3.45rem] max-[380px]:-translate-y-[1.45rem] max-[380px]:border-[4px]"
-              :class="activePanel === 'quick'
-                ? 'scale-[1.04] border-orange-100 bg-[#fffaf5] text-[#ef5e17] dark:border-white/15 dark:bg-[#f6f1eb] dark:text-[#ca470c]'
-                : 'border-white bg-[linear-gradient(180deg,#ff8a2d_0%,#f97316_100%)] text-white'"
+              class="flex h-[3.9rem] w-[3.9rem] -translate-y-[1.75rem] items-center justify-center rounded-full border-[5px] border-white bg-[linear-gradient(180deg,#ff8a2d_0%,#f97316_100%)] text-white shadow-[0_14px_28px_rgba(249,115,22,0.34)] transition max-[380px]:h-[3.45rem] max-[380px]:w-[3.45rem] max-[380px]:-translate-y-[1.45rem] max-[380px]:border-[4px] dark:border-white/15"
+              :class="activePanel === 'quick' ? 'scale-[1.04]' : ''"
             >
               <UiIcon name="plus" class="h-7 w-7 max-[380px]:h-6 max-[380px]:w-6" />
             </span>
