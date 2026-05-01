@@ -23,6 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const SHOW_ALL_VALUE = '__all__'
+const { t } = useI18n()
 
 const safeTotalPages = computed(() => Math.max(props.totalPages, 1))
 const selectedLimit = computed(() =>
@@ -31,11 +32,11 @@ const selectedLimit = computed(() =>
 const limitSelectOptions = computed(() =>
   [
     ...props.limitOptions.map((value) => ({
-      label: `${value} / page`,
+      label: `${value} / ${t('common.page').toLowerCase()}`,
       value: String(value),
     })),
     {
-      label: 'Show All',
+      label: t('common.showAll'),
       value: SHOW_ALL_VALUE,
     },
   ],
@@ -76,7 +77,7 @@ function updateLimit(nextLimit: string) {
 <template>
   <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/40 pt-4">
     <p class="text-sm text-ink-500">
-      Page {{ page }} of {{ safeTotalPages }} • {{ total }} data
+      {{ t('common.page') }} {{ page }} {{ t('common.of') }} {{ safeTotalPages }} - {{ total }} {{ t('common.data') }}
     </p>
 
     <div class="flex flex-wrap items-center gap-2">
@@ -84,7 +85,7 @@ function updateLimit(nextLimit: string) {
         <UiSelect
           :model-value="selectedLimit"
           :options="limitSelectOptions"
-          placeholder="Per page"
+          :placeholder="t('common.perPage')"
           :searchable="false"
           :disabled="loading"
           @update:model-value="updateLimit"
@@ -96,7 +97,7 @@ function updateLimit(nextLimit: string) {
         :disabled="loading || !hasPrevPage"
         @click="previousPage"
       >
-        Previous
+        {{ t('common.previous') }}
       </UiButton>
       <UiButton
         size="sm"
@@ -104,7 +105,7 @@ function updateLimit(nextLimit: string) {
         :disabled="loading || !hasNextPage"
         @click="nextPage"
       >
-        Next
+        {{ t('common.next') }}
       </UiButton>
     </div>
   </div>

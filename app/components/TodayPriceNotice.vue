@@ -7,14 +7,15 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  title: 'Harga telur hari ini belum diinput',
-  actionLabel: 'Input harga hari ini',
+  title: '',
+  actionLabel: '',
   showAction: false,
 })
 
 const emit = defineEmits<{
   action: []
 }>()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -26,7 +27,7 @@ const emit = defineEmits<{
             <UiIcon name="alert" class="h-4 w-4" />
           </div>
           <div>
-            <p class="font-semibold text-brand-900">{{ title }}</p>
+            <p class="font-semibold text-brand-900">{{ title || t('notice.todayPriceMissing.title') }}</p>
             <p class="mt-1 text-sm leading-6 text-[#8f4518]">{{ message }}</p>
           </div>
         </div>
@@ -37,7 +38,7 @@ const emit = defineEmits<{
           class="shrink-0"
           @click="emit('action')"
         >
-          {{ actionLabel }}
+          {{ actionLabel || t('notice.todayPriceMissing.action') }}
         </UiButton>
       </div>
     </div>

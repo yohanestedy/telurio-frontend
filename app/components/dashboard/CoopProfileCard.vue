@@ -10,12 +10,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   updatePopulation: [coop: CoopItem]
 }>()
+const { t, locale } = useI18n()
 
 const age = computed(() => {
   if (!props.coop.chickBirthDate) {
     return {
       main: '-',
-      since: 'Tanggal DOC belum diisi',
+      since: t('coopProfile.docMissing'),
       tone: 'text-ink-700',
     }
   }
@@ -26,7 +27,7 @@ const age = computed(() => {
   if (!birthDate.isValid()) {
     return {
       main: '-',
-      since: 'Tanggal DOC tidak valid',
+      since: t('coopProfile.docInvalid'),
       tone: 'text-ink-700',
     }
   }
@@ -36,14 +37,16 @@ const age = computed(() => {
   const days = totalDays % 7
 
   return {
-    main: days > 0 ? `${weeks} minggu ${days} hari` : `${weeks} minggu`,
-    since: `Sejak ${formatDayMonthYearId(props.coop.chickBirthDate)}`,
+    main: days > 0
+      ? `${weeks} ${t('coopProfile.week')} ${days} ${t('coopProfile.day')}`
+      : `${weeks} ${t('coopProfile.week')}`,
+    since: t('coopProfile.since', { date: formatDayMonthYearId(props.coop.chickBirthDate) }),
     tone: weeks >= 1 ? 'text-brand-700' : 'text-ink-900',
   }
 })
 
 const populationLabel = computed(() =>
-  `${props.coop.population.toLocaleString('id-ID')} ekor`,
+  `${props.coop.population.toLocaleString(locale.value === 'id' ? 'id-ID' : 'en-US')} ${t('coopProfile.populationUnit')}`,
 )
 </script>
 
@@ -65,7 +68,7 @@ const populationLabel = computed(() =>
                   : 'border-ink-200 bg-ink-100/70 text-ink-600',
               ]"
             >
-              {{ props.coop.isActive ? 'Aktif' : 'Nonaktif' }}
+              {{ props.coop.isActive ? t('common.active') : t('common.inactive') }}
             </span>
           </div>
         </div>
@@ -73,8 +76,8 @@ const populationLabel = computed(() =>
           v-if="props.canUpdatePopulation"
           type="button"
           class="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-slate-200/80 bg-white/70 text-ink-500 transition hover:bg-white hover:text-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100"
-          title="Update populasi"
-          aria-label="Update populasi"
+          :title="t('coopProfile.updatePopulation')"
+          :aria-label="t('coopProfile.updatePopulation')"
           @click="emit('updatePopulation', props.coop)"
         >
           <UiIcon name="edit" class="h-3.5 w-3.5" />
@@ -89,7 +92,7 @@ const populationLabel = computed(() =>
             <span class="hidden h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700 sm:grid">
               <UiIcon name="productions" class="h-3.5 w-3.5" />
             </span>
-            <p class="text-[11px] text-ink-500">Strain</p>
+            <p class="text-[11px] text-ink-500">{{ t('coopProfile.strain') }}</p>
           </div>
           <p class="mt-2 truncate text-sm font-bold text-ink-900 sm:text-base">
             {{ props.coop.chickenStrain || '-' }}
@@ -101,7 +104,7 @@ const populationLabel = computed(() =>
             <span class="hidden h-7 w-7 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700 sm:grid">
               <UiIcon name="users" class="h-3.5 w-3.5" />
             </span>
-            <p class="text-[11px] text-ink-500">Populasi</p>
+            <p class="text-[11px] text-ink-500">{{ t('coopProfile.population') }}</p>
           </div>
           <p class="mt-2 truncate text-sm font-bold text-ink-900 sm:text-base">
             {{ populationLabel }}
@@ -113,7 +116,7 @@ const populationLabel = computed(() =>
             <span class="hidden h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700 sm:grid">
               <UiIcon name="calendar" class="h-3.5 w-3.5" />
             </span>
-            <p class="text-[11px] text-ink-500">Umur</p>
+            <p class="text-[11px] text-ink-500">{{ t('coopProfile.age') }}</p>
           </div>
           <p class="mt-2 text-sm font-bold leading-tight sm:text-base" :class="age.tone">
             {{ age.main }}
@@ -125,7 +128,7 @@ const populationLabel = computed(() =>
 
     <div class="flex items-center gap-2 border-t border-emerald-100/70 bg-emerald-50/45 px-3.5 py-2.5 text-xs font-semibold text-emerald-700">
       <UiIcon name="arrowUp" class="h-3.5 w-3.5" />
-      <span>Profil kandang aktif</span>
+      <span>{{ t('coopProfile.activeProfile') }}</span>
     </div>
   </article>
 </template>

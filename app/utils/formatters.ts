@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import type { DeliveryStatus, PaymentStatus, Role } from "../types/domain";
+import { getCurrentLanguage, translateMessage } from "./i18n";
 
 export function formatDate(value?: string | null, pattern = "DD MMM YYYY") {
   if (!value) {
@@ -7,7 +8,39 @@ export function formatDate(value?: string | null, pattern = "DD MMM YYYY") {
   }
 
   const parsed = dayjs(value);
-  return parsed.isValid() ? parsed.format(pattern) : "-";
+  if (!parsed.isValid()) {
+    return "-";
+  }
+
+  const language = getCurrentLanguage();
+  const locale = language === "id" ? "id-ID" : "en-US";
+  const date = parsed.toDate();
+
+  if (pattern === "dddd, DD MMM YYYY") {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "long",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  }
+
+  if (pattern === "DD MMM YYYY, HH:mm") {
+    return new Intl.DateTimeFormat(locale, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: language === "id" ? "h23" : "h12",
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 export function formatDateTime(value?: string | null) {
@@ -68,27 +101,15 @@ export function formatRupiah(value?: string | number | bigint | null) {
 }
 
 export function roleLabel(role: Role) {
-  return {
-    ADMIN: "Admin",
-    OWNER: "Owner",
-    OPERATOR: "Operator",
-  }[role];
+  return translateMessage(getCurrentLanguage(), `role.${role}`);
 }
 
 export function deliveryStatusLabel(status: DeliveryStatus) {
-  return {
-    BELUM_DIHANTAR: "Belum Dihantar",
-    SEDANG_DIHANTAR: "Sedang Dihantar",
-    SUDAH_DIHANTAR: "Sudah Dihantar",
-  }[status];
+  return translateMessage(getCurrentLanguage(), `status.delivery.${status}`);
 }
 
 export function paymentStatusLabel(status: PaymentStatus) {
-  return {
-    BELUM_BAYAR: "Belum Bayar",
-    DP: "DP",
-    LUNAS: "Lunas",
-  }[status];
+  return translateMessage(getCurrentLanguage(), `status.payment.${status}`);
 }
 
 export function isoDate(value: string | Date) {

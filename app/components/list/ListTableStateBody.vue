@@ -7,13 +7,14 @@ const props = withDefaults(
     retryLabel?: string
   }>(),
   {
-    retryLabel: 'Coba lagi',
+    retryLabel: '',
   },
 )
 
 const emit = defineEmits<{
   retry: []
 }>()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -28,7 +29,7 @@ const emit = defineEmits<{
           <p class="text-sm text-rose-700">{{ props.message }}</p>
           <div class="mt-3 flex justify-center">
             <UiButton size="sm" icon="refresh" @click="emit('retry')">
-              {{ props.retryLabel }}
+              {{ props.retryLabel || t('common.retry') }}
             </UiButton>
           </div>
         </template>

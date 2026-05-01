@@ -10,6 +10,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   compact: false,
 })
+const { t } = useI18n()
 
 const tone = computed(() => {
   if (props.kind === 'delivery') {
@@ -29,8 +30,8 @@ const tone = computed(() => {
 
 const label = computed(() =>
   props.kind === 'delivery'
-    ? deliveryStatusLabel(props.value as DeliveryStatus)
-    : paymentStatusLabel(props.value as PaymentStatus),
+    ? t(`status.delivery.${props.value}`)
+    : t(`status.payment.${props.value}`),
 )
 </script>
 

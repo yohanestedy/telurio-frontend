@@ -86,6 +86,8 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
+const { t } = useI18n()
+
 function priceLabel(value: string | null) {
   if (!value) {
     return '-'
@@ -196,7 +198,7 @@ const hasOutDetails = computed(() =>
 <template>
   <UiDialog
     :open="props.open"
-    :title="`Detail Pergerakan Telur ${props.coopName}`"
+    :title="t('livestock.detailTitle', { coop: props.coopName })"
     :description="''"
     size="lg"
     @update:open="emit('update:open', $event)"
@@ -218,7 +220,7 @@ const hasOutDetails = computed(() =>
             <UiIcon name="arrowDown" class="h-3 w-3" />
           </span>
           <div>
-            <p class="text-xs text-ink-600">Total Masuk</p>
+            <p class="text-xs text-ink-600">{{ t('livestock.totalIn') }}</p>
             <p class="text-lg font-bold text-emerald-700 sm:text-xl">{{ formatKg(props.summary.totalInKg) }} kg</p>
           </div>
         </div>
@@ -228,7 +230,7 @@ const hasOutDetails = computed(() =>
             <UiIcon name="arrowUp" class="h-3 w-3" />
           </span>
           <div>
-            <p class="text-xs text-ink-600">Total Keluar</p>
+            <p class="text-xs text-ink-600">{{ t('livestock.totalOut') }}</p>
             <p class="text-lg font-bold text-brand-700 sm:text-xl">{{ formatKg(props.summary.totalOutKg) }} kg</p>
           </div>
         </div>
@@ -238,7 +240,7 @@ const hasOutDetails = computed(() =>
             <UiIcon name="layers" class="h-3 w-3" />
           </span>
           <div>
-            <p class="text-xs text-ink-600">Stok Saat Ini</p>
+            <p class="text-xs text-ink-600">{{ t('livestock.currentStock') }}</p>
             <p class="text-lg font-bold text-blue-700 sm:text-xl">{{ formatKg(props.currentStockKg ?? 0) }} kg</p>
           </div>
         </div>
@@ -248,7 +250,7 @@ const hasOutDetails = computed(() =>
             <UiIcon :name="netFlowIcon(props.summary.netFlowKg)" class="h-3 w-3" />
           </span>
           <div>
-            <p class="text-xs text-ink-600">Net Pergerakan</p>
+            <p class="text-xs text-ink-600">{{ t('livestock.netFlow') }}</p>
             <p class="text-lg font-bold sm:text-xl" :class="netFlowToneClass(props.summary.netFlowKg)">
               {{ formatSignedKg(props.summary.netFlowKg) }} kg
             </p>
@@ -262,12 +264,12 @@ const hasOutDetails = computed(() =>
             <span class="grid h-6 w-6 place-items-center rounded-full bg-emerald-100/90 text-emerald-700">
               <UiIcon name="arrowDown" class="h-3 w-3" />
             </span>
-            <p class="text-sm font-semibold text-emerald-700">Telur Masuk</p>
+            <p class="text-sm font-semibold text-emerald-700">{{ t('livestock.eggIn') }}</p>
           </div>
 
           <template v-if="hasInDetails">
           <div v-if="visibleInDetails.productions.length" class="rounded-xl border border-emerald-100/80 bg-white/90 p-2">
-            <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Produksi</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">{{ t('livestock.production') }}</p>
 
             <div class="mt-2 space-y-2">
               <article
@@ -290,11 +292,11 @@ const hasOutDetails = computed(() =>
                 <div class="grid gap-1.5 px-2.5 py-1.5 text-xs text-ink-700 sm:grid-cols-3">
                   <p class="inline-flex items-center gap-1.5">
                     <UiIcon name="layers" class="h-3.5 w-3.5 text-emerald-700" />
-                    {{ item.goodCount ?? '-' }} butir
+                    {{ item.goodCount ?? '-' }} {{ t('livestock.eggsUnit') }}
                   </p>
                   <p class="inline-flex items-center gap-1.5">
                     <UiIcon name="clock" class="h-3.5 w-3.5 text-emerald-700" />
-                    Koleksi: {{ item.collectionTime || '-' }}
+                    {{ t('livestock.collection') }}: {{ item.collectionTime || '-' }}
                   </p>
                   <p class="inline-flex items-center gap-1.5">
                     <UiIcon name="user" class="h-3.5 w-3.5 text-emerald-700" />
@@ -306,7 +308,7 @@ const hasOutDetails = computed(() =>
           </div>
 
           <div v-if="visibleInDetails.allocationReleases.length" class="rounded-xl border border-emerald-100/80 bg-white/90 p-2">
-            <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Rilis Alokasi</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">{{ t('livestock.allocationRelease') }}</p>
 
             <div class="mt-2 space-y-2">
               <article
@@ -326,15 +328,15 @@ const hasOutDetails = computed(() =>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5 border-b border-emerald-100/80 px-2.5 py-1.5 text-[11px] sm:text-xs">
                   <div class="min-w-0">
-                    <p class="text-ink-500">Harga/Kg</p>
+                    <p class="text-ink-500">{{ t('order.pricePerKg') }}</p>
                     <p class="truncate font-semibold text-ink-900">{{ priceLabel(item.pricePerKg) }}</p>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-ink-500">Total</p>
+                    <p class="text-ink-500">{{ t('order.total') }}</p>
                     <p class="truncate font-semibold text-emerald-700">{{ priceLabel(item.totalInvoice) }}</p>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-ink-500">Qty order</p>
+                    <p class="text-ink-500">{{ t('order.quantity') }}</p>
                     <p class="truncate font-semibold text-ink-900">{{ quantityLabel(item.orderQuantityKg) }}</p>
                   </div>
                 </div>
@@ -345,7 +347,7 @@ const hasOutDetails = computed(() =>
                   </p>
                   <p class="inline-flex items-center gap-1">
                     <UiIcon name="calendar" class="h-3 w-3" />
-                    Dicatat {{ formatDate(item.createdAt, 'DD MMM YYYY HH:mm') }}
+                    {{ t('livestock.recordedAt', { date: formatDate(item.createdAt, 'DD MMM YYYY HH:mm') }) }}
                   </p>
                 </div>
               </article>
@@ -353,7 +355,7 @@ const hasOutDetails = computed(() =>
           </div>
 
           <div v-if="visibleInDetails.adjustments.length" class="rounded-xl border border-emerald-100/80 bg-white/90 p-2">
-            <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Penyesuaian (+)</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">{{ t('livestock.adjustmentIn') }}</p>
             <div class="mt-2 space-y-1.5">
               <div
                 v-for="item in visibleInDetails.adjustments"
@@ -371,7 +373,7 @@ const hasOutDetails = computed(() =>
           </template>
 
           <div v-else class="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 px-3 py-2.5 text-xs text-ink-500">
-            Belum ada detail telur masuk hari ini.
+            {{ t('livestock.inDetailEmpty') }}
           </div>
         </section>
 
@@ -380,12 +382,12 @@ const hasOutDetails = computed(() =>
             <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-100/90 text-brand-700">
               <UiIcon name="arrowUp" class="h-3 w-3" />
             </span>
-            <p class="text-sm font-semibold text-brand-700">Telur Keluar</p>
+            <p class="text-sm font-semibold text-brand-700">{{ t('livestock.eggOut') }}</p>
           </div>
 
           <template v-if="hasOutDetails">
           <div v-if="visibleOutDetails.allocations.length" class="rounded-xl border border-brand-100/80 bg-white/90 p-2">
-            <p class="text-xs font-bold uppercase tracking-wide text-brand-700">Alokasi Order</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-brand-700">{{ t('livestock.orderAllocation') }}</p>
 
             <div class="mt-2 space-y-2">
               <article
@@ -410,15 +412,15 @@ const hasOutDetails = computed(() =>
 
                 <div class="grid grid-cols-3 gap-1.5 border-b border-brand-100/80 px-2.5 py-1.5 text-[11px] sm:text-xs">
                   <div class="min-w-0">
-                    <p class="text-ink-500">Harga/Kg</p>
+                    <p class="text-ink-500">{{ t('order.pricePerKg') }}</p>
                     <p class="truncate font-semibold text-ink-900">{{ priceLabel(item.pricePerKg) }}</p>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-ink-500">Total</p>
+                    <p class="text-ink-500">{{ t('order.total') }}</p>
                     <p class="truncate font-semibold text-brand-700">{{ priceLabel(item.totalInvoice) }}</p>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-ink-500">Qty order</p>
+                    <p class="text-ink-500">{{ t('order.quantity') }}</p>
                     <p class="truncate font-semibold text-ink-900">{{ quantityLabel(item.orderQuantityKg) }}</p>
                   </div>
                 </div>
@@ -430,7 +432,7 @@ const hasOutDetails = computed(() =>
                   </p>
                   <p class="inline-flex items-center gap-1">
                     <UiIcon name="calendar" class="h-3 w-3" />
-                    Dicatat {{ formatDate(item.createdAt, 'DD MMM YYYY HH:mm') }}
+                    {{ t('livestock.recordedAt', { date: formatDate(item.createdAt, 'DD MMM YYYY HH:mm') }) }}
                   </p>
                 </div>
               </article>
@@ -438,7 +440,7 @@ const hasOutDetails = computed(() =>
           </div>
 
           <div v-if="visibleOutDetails.adjustments.length" class="rounded-xl border border-brand-100/80 bg-white/90 p-2">
-            <p class="text-xs font-bold uppercase tracking-wide text-brand-700">Penyesuaian (-)</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-brand-700">{{ t('livestock.adjustmentOut') }}</p>
             <div class="mt-2 space-y-1.5">
               <div
                 v-for="item in visibleOutDetails.adjustments"
@@ -456,13 +458,13 @@ const hasOutDetails = computed(() =>
           </template>
 
           <div v-else class="rounded-xl border border-dashed border-brand-200 bg-brand-50/40 px-3 py-2.5 text-xs text-ink-500">
-            Belum ada detail telur keluar hari ini.
+            {{ t('livestock.outDetailEmpty') }}
           </div>
         </section>
       </div>
 
       <div class="rounded-xl border border-white/70 bg-white/85 px-3 py-2.5 text-xs text-ink-500 sm:text-sm">
-        Data pergerakan dapat berubah sesuai transaksi terbaru.
+        {{ t('livestock.dataMayChange') }}
       </div>
     </div>
   </UiDialog>

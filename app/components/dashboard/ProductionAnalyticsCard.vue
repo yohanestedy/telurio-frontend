@@ -18,13 +18,14 @@ const emit = defineEmits<{
   'update:coopId': [value: string]
   navigatePeriod: [direction: 'previous' | 'next']
 }>()
+const { t, locale } = useI18n()
 
-const periodOptions: Array<{ label: string; value: ProductionAnalyticsPeriod }> = [
-  { label: '1 Minggu', value: '1w' },
-  { label: '1 Bulan', value: '1m' },
-  { label: '3 Bulan', value: '3m' },
-  { label: '6 Bulan', value: '6m' },
-]
+const periodOptions = computed<Array<{ label: string; value: ProductionAnalyticsPeriod }>>(() => [
+  { label: t('production.period.1w'), value: '1w' },
+  { label: t('production.period.1m'), value: '1m' },
+  { label: t('production.period.3m'), value: '3m' },
+  { label: t('production.period.6m'), value: '6m' },
+])
 
 const coopOptions = computed(() =>
   props.coops.map((coop) => ({ label: coop.name, value: coop.id })),
@@ -157,26 +158,26 @@ const summaryCards = computed(() => {
 
   return [
     {
-      label: 'Total Produksi',
+      label: t('production.summary.total'),
       value: summary ? formatCount(summary.totalGoodCount) : '-',
-      suffix: 'butir',
+      suffix: t('production.unit.eggs'),
     },
     {
-      label: 'Rata-rata Harian',
+      label: t('production.summary.dailyAverage'),
       value: summary ? formatCount(summary.averageDailyGoodCount) : '-',
-      suffix: 'butir',
+      suffix: t('production.unit.eggs'),
     },
     {
-      label: 'Rata-rata Performa',
+      label: t('production.summary.performanceAverage'),
       value: summary?.averagePerformancePercent !== null && summary?.averagePerformancePercent !== undefined
         ? `${summary.averagePerformancePercent}%`
         : '-',
       suffix: '',
     },
     {
-      label: 'Populasi Rata-rata',
+      label: t('production.summary.populationAverage'),
       value: summary?.averagePopulation ? formatCount(summary.averagePopulation) : '-',
-      suffix: 'ekor',
+      suffix: t('production.unit.chickens'),
     },
   ]
 })
@@ -200,7 +201,7 @@ function navigatePeriod(direction: 'previous' | 'next') {
 }
 
 function formatCount(value: number) {
-  return value.toLocaleString('id-ID')
+  return value.toLocaleString(locale.value === 'id' ? 'id-ID' : 'en-US')
 }
 
 function buildLinePath<T extends { x: number; y: number | null }>(
@@ -250,7 +251,7 @@ function closeTooltip() {
 }
 
 function formatFullDate(value: string) {
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat(locale.value === 'id' ? 'id-ID' : 'en-US', {
     weekday: 'long',
     day: '2-digit',
     month: 'short',
@@ -287,7 +288,7 @@ function formatPerformance(value: number | null) {
         :options="coopOptions"
         :searchable="false"
         class="min-w-0 lg:w-64"
-        placeholder="Semua kandang"
+        :placeholder="t('production.allCoops')"
         @update:model-value="updateCoop"
       />
     </div>
@@ -314,19 +315,19 @@ function formatPerformance(value: number | null) {
           <div class="flex flex-wrap items-center gap-4 text-sm text-ink-700">
             <span class="inline-flex items-center gap-2">
               <span class="h-2.5 w-2.5 rounded-full bg-emerald-600" />
-              Produksi (butir)
+              {{ t('production.chart.production') }}
             </span>
             <span class="inline-flex items-center gap-2">
               <span class="h-2.5 w-2.5 rounded-full bg-brand-500" />
-              Performa (%)
+              {{ t('production.chart.performance') }}
             </span>
           </div>
           <div v-if="analytics" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/70 p-1">
             <button
               type="button"
               class="grid h-7 w-7 place-items-center rounded-lg text-ink-500 transition hover:bg-white hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              title="Periode sebelumnya"
-              aria-label="Periode sebelumnya"
+              :title="t('calendar.previous.' + (period === '1w' ? 'week' : 'month'))"
+              :aria-label="t('calendar.previous.' + (period === '1w' ? 'week' : 'month'))"
               @click="navigatePeriod('previous')"
             >
               <UiIcon name="chevronLeft" class="h-3.5 w-3.5" />
@@ -337,8 +338,8 @@ function formatPerformance(value: number | null) {
             <button
               type="button"
               class="grid h-7 w-7 place-items-center rounded-lg text-ink-500 transition hover:bg-white hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-ink-500"
-              title="Periode berikutnya"
-              aria-label="Periode berikutnya"
+              :title="t('calendar.next.' + (period === '1w' ? 'week' : 'month'))"
+              :aria-label="t('calendar.next.' + (period === '1w' ? 'week' : 'month'))"
               :disabled="!canNavigateNext"
               @click="navigatePeriod('next')"
             >
@@ -348,7 +349,7 @@ function formatPerformance(value: number | null) {
         </div>
 
         <div v-if="!hasData" class="px-4 py-12 text-center text-sm text-ink-500">
-          Belum ada data produksi untuk periode ini.
+          {{ t('production.emptyPeriod') }}
         </div>
 
         <div v-else class="w-full overflow-x-auto px-2 py-4">
@@ -492,24 +493,24 @@ function formatPerformance(value: number | null) {
                 <div class="flex items-center justify-between gap-3">
                   <span class="inline-flex items-center gap-2">
                     <span class="h-2 w-2 rounded-full bg-emerald-600" />
-                    Produksi
+                    {{ t('calendar.marker.production') }}
                   </span>
-                  <span class="font-semibold text-ink-900">{{ formatCount(activeTooltipPoint.goodCount) }} butir</span>
+                  <span class="font-semibold text-ink-900">{{ formatCount(activeTooltipPoint.goodCount) }} {{ t('production.unit.eggs') }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-3">
                   <span class="inline-flex items-center gap-2">
                     <span class="h-2 w-2 rounded-full bg-brand-500" />
-                    Performa
+                    {{ t('production.chart.performance').replace(' (%)', '') }}
                   </span>
                   <span class="font-semibold text-ink-900">{{ formatPerformance(activeTooltipPoint.performancePercent) }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-3">
                   <span class="inline-flex items-center gap-2">
                     <UiIcon name="users" class="h-3.5 w-3.5 text-blue-600" />
-                    Populasi Aktif
+                    {{ t('coopProfile.population') }}
                   </span>
                   <span class="font-semibold text-ink-900">
-                    {{ activeTooltipPoint.averagePopulation ? formatCount(activeTooltipPoint.averagePopulation) : '-' }} ekor
+                    {{ activeTooltipPoint.averagePopulation ? formatCount(activeTooltipPoint.averagePopulation) : '-' }} {{ t('production.unit.chickens') }}
                   </span>
                 </div>
               </div>
@@ -518,8 +519,8 @@ function formatPerformance(value: number | null) {
         </div>
 
         <div class="flex flex-col gap-2 border-t border-slate-200/70 px-4 py-3 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>Performa = jumlah butir / populasi aktif saat produksi dicatat.</p>
-          <p v-if="!hasPerformance">Performa akan tampil untuk produksi baru setelah snapshot populasi tersedia.</p>
+          <p>{{ t('production.performanceFormula') }}</p>
+          <p v-if="!hasPerformance">{{ t('production.performanceSnapshotNote') }}</p>
         </div>
       </div>
     </template>

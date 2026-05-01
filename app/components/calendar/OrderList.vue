@@ -9,9 +9,10 @@ const props = withDefaults(defineProps<{
   orderActions: (order: CalendarOrder) => CalendarOrderAction[]
 }>(), {
   actionSubmittingOrderId: '',
-  emptyMessage: 'Tidak ada order di tanggal ini.',
+  emptyMessage: '',
   dense: false,
 })
+const { t } = useI18n()
 
 const emit = defineEmits<{
   action: [order: CalendarOrder, action: CalendarOrderAction]
@@ -61,11 +62,11 @@ const sortedOrders = computed(() =>
 )
 
 function orderPriceLabel(pricePerKg: string | null) {
-  return pricePerKg ? formatRupiah(pricePerKg) : 'Belum dikunci'
+  return pricePerKg ? formatRupiah(pricePerKg) : t('order.priceUnlocked')
 }
 
 function orderInvoiceLabel(totalInvoice: string | null) {
-  return totalInvoice ? formatRupiah(totalInvoice) : 'Invoice belum dihitung'
+  return totalInvoice ? formatRupiah(totalInvoice) : t('order.invoicePending')
 }
 
 function isCompletedDelivery(order: CalendarOrder) {
@@ -118,7 +119,7 @@ function deliveryAccentClass(order: CalendarOrder) {
           <div class="grid grid-cols-3 gap-2">
             <div class="text-center">
               <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
-                Jumlah
+                {{ t('order.quantity') }}
               </p>
               <div class="mt-1 flex items-end justify-center gap-1">
                 <span :class="[
@@ -135,7 +136,7 @@ function deliveryAccentClass(order: CalendarOrder) {
 
             <div class="min-w-0 text-center">
               <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
-                Harga/Kg
+                {{ t('order.pricePerKg') }}
               </p>
               <p class="mt-1 truncate text-[11px] font-semibold leading-tight text-ink-800 sm:text-[13px]">
                 {{ orderPriceLabel(order.pricePerKg) }}
@@ -144,7 +145,7 @@ function deliveryAccentClass(order: CalendarOrder) {
 
             <div class="min-w-0 text-center">
               <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-400">
-                Total
+                {{ t('order.total') }}
               </p>
               <p class="mt-1 truncate text-[11px] font-black leading-tight text-brand-700 sm:text-[13px]">
                 {{ orderInvoiceLabel(order.totalInvoice) }}
@@ -154,7 +155,7 @@ function deliveryAccentClass(order: CalendarOrder) {
         </div>
 
         <div :class="props.dense ? 'mt-2.5 flex items-center gap-2' : 'mt-3 flex items-center gap-2'">
-          <span class="text-[11px] font-medium text-ink-500">Pembayaran:</span>
+          <span class="text-[11px] font-medium text-ink-500">{{ t('order.payment') }}:</span>
           <StatusChip compact kind="payment" :value="order.paymentStatus" />
         </div>
 
@@ -166,7 +167,7 @@ function deliveryAccentClass(order: CalendarOrder) {
             class="flex min-w-[130px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-700"
           >
             <span>✓</span>
-            <span>Terhantar</span>
+            <span>{{ t('status.delivery.completedShort') }}</span>
           </div>
 
           <UiButton
@@ -198,7 +199,7 @@ function deliveryAccentClass(order: CalendarOrder) {
   </TransitionGroup>
 
   <p v-else :class="props.dense ? 'p-3 text-xs text-ink-500' : 'p-4 text-sm text-ink-500 sm:p-5'">
-    {{ props.emptyMessage }}
+    {{ props.emptyMessage || t('order.emptyForDate') }}
   </p>
 </template>
 

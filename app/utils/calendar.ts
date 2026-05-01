@@ -1,30 +1,14 @@
 import dayjs from 'dayjs'
+import { getCurrentLanguage } from './i18n'
 
 const weekdayShortLabelsId = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'] as const
 const weekdayLongLabelsId = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as const
+const weekdayShortLabelsEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+const weekdayLongLabelsEn = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const
 
-const dayMonthFormatterId = new Intl.DateTimeFormat('id-ID', {
-  day: '2-digit',
-  month: 'short',
-})
-
-const dayMonthYearFormatterId = new Intl.DateTimeFormat('id-ID', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-})
-
-const weekdayDayMonthYearFormatterId = new Intl.DateTimeFormat('id-ID', {
-  weekday: 'long',
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-})
-
-const monthYearFormatterId = new Intl.DateTimeFormat('id-ID', {
-  month: 'long',
-  year: 'numeric',
-})
+function locale() {
+  return getCurrentLanguage() === 'id' ? 'id-ID' : 'en-US'
+}
 
 function toDate(value: string | Date) {
   return dayjs(value).toDate()
@@ -43,25 +27,42 @@ export function endOfWeekMonday(value: string | Date) {
 }
 
 export function weekdayShortLabelId(value: string | Date) {
-  return weekdayShortLabelsId[dayjs(value).day()]
+  const labels = getCurrentLanguage() === 'id' ? weekdayShortLabelsId : weekdayShortLabelsEn
+  return labels[dayjs(value).day()]
 }
 
 export function weekdayLongLabelId(value: string | Date) {
-  return weekdayLongLabelsId[dayjs(value).day()]
+  const labels = getCurrentLanguage() === 'id' ? weekdayLongLabelsId : weekdayLongLabelsEn
+  return labels[dayjs(value).day()]
 }
 
 export function formatDayMonthId(value: string | Date) {
-  return dayMonthFormatterId.format(toDate(value))
+  return new Intl.DateTimeFormat(locale(), {
+    day: '2-digit',
+    month: 'short',
+  }).format(toDate(value))
 }
 
 export function formatDayMonthYearId(value: string | Date) {
-  return dayMonthYearFormatterId.format(toDate(value))
+  return new Intl.DateTimeFormat(locale(), {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(toDate(value))
 }
 
 export function formatWeekdayDayMonthYearId(value: string | Date) {
-  return weekdayDayMonthYearFormatterId.format(toDate(value))
+  return new Intl.DateTimeFormat(locale(), {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(toDate(value))
 }
 
 export function formatMonthYearId(value: string | Date) {
-  return monthYearFormatterId.format(toDate(value))
+  return new Intl.DateTimeFormat(locale(), {
+    month: 'long',
+    year: 'numeric',
+  }).format(toDate(value))
 }

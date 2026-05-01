@@ -25,6 +25,7 @@ const auth = useAuthStore()
 const toast = useToast()
 const { can } = useAuth()
 const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -170,27 +171,34 @@ function shiftProductionAnalyticsPeriod(direction: 'previous' | 'next') {
 
 const dashboardCards = computed(() => [
   {
-    label: 'Stok Live Gabungan',
+    label: t('dashboard.metric.combinedStock'),
+    key: 'stock',
     value: `${formatKg(liveStock.value?.combinedAvailableKg ?? 0)} kg`,
-    helper: `Masuk ${formatKg(liveStock.value?.combinedTodayInKg ?? 0)} kg • Keluar ${formatKg(liveStock.value?.combinedTodayOutKg ?? 0)} kg`,
+    helper: t('dashboard.metric.stockHelper', {
+      inKg: formatKg(liveStock.value?.combinedTodayInKg ?? 0),
+      outKg: formatKg(liveStock.value?.combinedTodayOutKg ?? 0),
+    }),
   },
   {
-    label: 'Harga Aktif',
+    label: t('dashboard.metric.activePrice'),
+    key: 'price',
     value: currentPrice.value ? formatRupiah(currentPrice.value.pricePerKg) : '-',
-    helper: currentPrice.value ? formatDate(currentPrice.value.effectiveDate) : 'Harga hari ini belum diinput',
+    helper: currentPrice.value ? formatDate(currentPrice.value.effectiveDate) : t('dashboard.metric.missingPrice'),
   },
   {
-    label: 'Order Hari Ini',
+    label: t('dashboard.metric.todayOrders'),
+    key: 'orders',
     value: String(todayCalendar.value?.events.orders.length ?? 0),
-    helper: 'Pesanan pada tanggal hari ini',
+    helper: t('dashboard.metric.todayOrderHelper'),
   },
   {
-    label: auth.role === 'OWNER' ? 'Bagi Hasil Bulan Ini' : 'Gross Income',
+    label: auth.role === 'OWNER' ? t('dashboard.metric.ownerShare') : t('dashboard.metric.grossIncome'),
+    key: 'income',
     value:
       auth.role === 'OWNER' && monthlySummary.value
         ? formatRupiah(monthlySummary.value.totalOwnerShare)
         : formatRupiah(grossIncome.value.reduce((sum, item) => sum + Number(item.grossIncome), 0)),
-    helper: 'Ringkasan cepat untuk monitoring',
+    helper: t('dashboard.metric.grossHelper'),
   },
 ])
 
@@ -516,13 +524,13 @@ const activeOrderIsTodayDelivery = computed(() =>
 )
 
 const allocationDialogTitle = computed(() =>
-  allocationModalMode.value === 'edit' ? 'Ubah Alokasi Pengantaran' : 'Start Delivery',
+  allocationModalMode.value === 'edit' ? t('dialog.allocation.editTitle') : t('dialog.allocation.startTitle'),
 )
 
 const allocationDialogDescription = computed(() =>
   allocationModalMode.value === 'edit'
-    ? 'Koreksi alokasi kandang. Sistem akan menyesuaikan live stock secara otomatis.'
-    : 'Masukkan alokasi kandang hingga totalnya sama dengan quantity order.',
+    ? t('dialog.allocation.editDescription')
+    : t('dialog.allocation.startDescription'),
 )
 
 async function loadOrderForAction(orderId: string) {
@@ -550,7 +558,7 @@ async function openAllocationModal(orderId: string, mode: 'start' | 'edit') {
     activeAllocations.value = allocationList
     startDeliveryOpen.value = true
   } catch (caught) {
-    toast.error('Gagal menyiapkan modal pengantaran', api.mapError(caught).message)
+    toast.error(t('toast.delivery.prepareFailed'), api.mapError(caught).message)
   } finally {
     allocationModalLoading.value = false
   }
@@ -563,7 +571,7 @@ async function openPaymentModal(orderId: string) {
     activeOrder.value = await loadOrderForAction(orderId)
     paymentOpen.value = true
   } catch (caught) {
-    toast.error('Gagal menyiapkan modal pembayaran', api.mapError(caught).message)
+    toast.error(t('toast.payment.prepareFailed'), api.mapError(caught).message)
   } finally {
     paymentModalLoading.value = false
   }
@@ -575,7 +583,7 @@ function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
   if (auth.role === 'OPERATOR' && order.deliveryStatus === 'BELUM_DIHANTAR') {
     actions.push({
       id: 'start-delivery',
-      label: 'Mulai Hantar',
+      label: t('order.action.startDelivery'),
       icon: 'package',
       variant: 'primary',
       prominent: true,
@@ -585,7 +593,7 @@ function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
   if (auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR') {
     actions.push({
       id: 'complete-delivery',
-      label: 'Selesai Hantar',
+      label: t('order.action.completeDelivery'),
       icon: 'chevronRight',
       variant: 'primary',
       prominent: true,
@@ -593,7 +601,7 @@ function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
 
     actions.push({
       id: 'edit-allocation',
-      label: 'Ubah Alokasi',
+      label: t('order.action.editAllocation'),
       icon: 'edit',
       variant: 'ghost',
     })
@@ -602,7 +610,7 @@ function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
   if (can('orders.pay') && order.paymentStatus !== 'LUNAS') {
     actions.push({
       id: 'payment-update',
-      label: 'Update Bayar',
+      label: t('order.action.updatePayment'),
       icon: 'money',
       variant: 'ghost',
     })
@@ -610,7 +618,7 @@ function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
 
   actions.push({
     id: 'open-detail',
-    label: 'Lihat Detail',
+    label: t('order.action.viewDetail'),
     icon: 'search',
     variant: 'ghost',
     iconOnly: true,
@@ -624,10 +632,10 @@ async function handleDashboardOrderAction(order: CalendarOrder, action: Calendar
     actionSubmittingOrderId.value = order.orderId
     try {
       await api.post(`/orders/${order.orderId}/complete-delivery`)
-      toast.success('Pengantaran berhasil diselesaikan')
+      toast.success(t('toast.delivery.completed'))
       await loadDashboard()
     } catch (caught) {
-      toast.error('Gagal menyelesaikan pengantaran', api.mapError(caught).message)
+      toast.error(t('toast.delivery.completeFailed'), api.mapError(caught).message)
     } finally {
       actionSubmittingOrderId.value = ''
     }
@@ -665,10 +673,10 @@ async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: 
       await api.patch(`/orders/${activeOrder.value.id}/allocations`, {
         allocations: payload.allocations,
       })
-      toast.success('Alokasi pengantaran berhasil diperbarui')
+      toast.success(t('toast.allocation.updated'))
     } else {
       await api.post(`/orders/${activeOrder.value.id}/start-delivery`, payload)
-      toast.success('Pengantaran berhasil dimulai')
+      toast.success(t('toast.delivery.started'))
     }
 
     startDeliveryOpen.value = false
@@ -676,8 +684,8 @@ async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: 
   } catch (caught) {
     toast.error(
       allocationModalMode.value === 'edit'
-        ? 'Gagal mengubah alokasi'
-        : 'Gagal memulai pengantaran',
+        ? t('toast.allocation.updateFailed')
+        : t('toast.delivery.startFailed'),
       api.mapError(caught).message,
     )
   } finally {
@@ -693,11 +701,11 @@ async function submitPaymentUpdate(payload: Record<string, unknown>) {
   modalSubmitting.value = true
   try {
     await api.post(`/orders/${activeOrder.value.id}/payment-updates`, payload)
-    toast.success('Pembayaran berhasil diperbarui')
+    toast.success(t('toast.payment.updated'))
     paymentOpen.value = false
     await loadDashboard()
   } catch (caught) {
-    toast.error('Gagal update pembayaran', api.mapError(caught).message)
+    toast.error(t('toast.payment.updateFailed'), api.mapError(caught).message)
   } finally {
     modalSubmitting.value = false
   }
@@ -716,12 +724,12 @@ async function submitPopulationUpdate(payload: { population: number; populationC
   modalSubmitting.value = true
   try {
     await api.patch(`/coops/${activePopulationCoop.value.id}`, payload)
-    toast.success('Populasi kandang berhasil diperbarui')
+    toast.success(t('toast.population.updated'))
     populationOpen.value = false
     activePopulationCoop.value = null
     await loadDashboard()
   } catch (caught) {
-    toast.error('Gagal update populasi', api.mapError(caught).message)
+    toast.error(t('toast.population.updateFailed'), api.mapError(caught).message)
   } finally {
     modalSubmitting.value = false
   }
@@ -734,15 +742,15 @@ async function submitPopulationUpdate(payload: { population: number; populationC
       <LoadingSkeleton v-for="index in 3" :key="index" :lines="4" />
     </div>
     <ErrorState v-else-if="error" :message="error">
-      <UiButton icon="refresh" @click="loadDashboard">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadDashboard">{{ t('common.retry') }}</UiButton>
     </ErrorState>
     <template v-else>
       <TodayPriceNotice
         v-if="todayPriceMissing"
-        title="Harga telur hari ini belum diinput"
+        :title="t('notice.todayPriceMissing.title')"
         :message="auth.role === 'ADMIN'
-          ? 'Input harga untuk hari ini agar order dengan tanggal kirim hari ini bisa langsung mengunci harga dan siap diproses.'
-          : 'Order dengan tanggal kirim hari ini akan tertahan sampai admin menginput harga telur untuk hari ini.'"
+          ? t('notice.todayPriceMissing.admin')
+          : t('notice.todayPriceMissing.user')"
         :show-action="auth.role === 'ADMIN'"
         @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
       />
@@ -754,15 +762,15 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           :label="card.label"
           :value="card.value"
           :helper="card.helper"
-          :icon="card.label === 'Stok Live Gabungan'
+          :icon="card.key === 'stock'
             ? 'layers'
-            : card.label === 'Harga Aktif'
+            : card.key === 'price'
               ? 'prices'
-              : card.label === 'Order Hari Ini'
+              : card.key === 'orders'
                 ? 'orders'
                 : 'reports'"
         >
-          <template v-if="card.label === 'Harga Aktif'" #action>
+          <template v-if="card.key === 'price'" #action>
             <PublicPriceShareMenu
               icon-only
               :effective-date="currentPrice?.effectiveDate ?? null"
@@ -774,8 +782,8 @@ async function submitPopulationUpdate(payload: { population: number; populationC
 
       <div class="grid gap-6 min-[1024px]:grid-cols-10 min-[1024px]:items-stretch min-[1866px]:grid-cols-12">
         <TableCard
-          title="Live Stock Per Kandang"
-          description="Stok aktif + breakdown pergerakan telur hari ini per kandang."
+          :title="t('dashboard.card.liveStock.title')"
+          :description="t('dashboard.card.liveStock.description')"
           icon="layers"
           class="min-[1024px]:order-1 min-[1024px]:col-span-6 min-[1024px]:h-full min-[1866px]:col-span-4"
         >
@@ -788,19 +796,19 @@ async function submitPopulationUpdate(payload: { population: number; populationC
               @show-detail="openCoopFlowDetail(item)"
             />
           </div>
-          <p v-else class="text-sm text-ink-500">Belum ada stok kandang dalam scope akses Anda.</p>
+          <p v-else class="text-sm text-ink-500">{{ t('dashboard.card.liveStock.empty') }}</p>
         </TableCard>
 
         <TableCard
-          title="Pesanan Terjadwal"
-          description="Pesanan hari ini dan besok yang perlu ditangani."
+          :title="t('dashboard.card.scheduledOrders.title')"
+          :description="t('dashboard.card.scheduledOrders.description')"
           icon="orders"
           class="min-[1024px]:order-2 min-[1024px]:col-span-4 min-[1024px]:h-full min-[1866px]:col-span-3"
         >
           <div class="space-y-4 min-[1024px]:max-h-[37rem] min-[1024px]:overflow-y-auto min-[1024px]:pr-1">
             <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
               <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
-                <p class="text-base font-bold text-ink-900 sm:text-lg">Hari Ini</p>
+                <p class="text-base font-bold text-ink-900 sm:text-lg">{{ t('common.today') }}</p>
                 <span class="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-ink-600 sm:text-xs">
                   {{ formatWeekdayDayMonthYearId(todayDate) }}
                 </span>
@@ -810,14 +818,14 @@ async function submitPopulationUpdate(payload: { population: number; populationC
                 :orders="todayCalendar?.events.orders ?? []"
                 :order-actions="dashboardOrderActions"
                 :action-submitting-order-id="actionSubmittingOrderId"
-                empty-message="Tidak ada pesanan untuk hari ini."
+                :empty-message="t('dashboard.card.scheduledOrders.emptyToday')"
                 @action="handleDashboardOrderAction"
               />
             </section>
 
             <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
               <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
-                <p class="text-base font-bold text-ink-900 sm:text-lg">Besok</p>
+                <p class="text-base font-bold text-ink-900 sm:text-lg">{{ t('common.tomorrow') }}</p>
                 <span class="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-ink-600 sm:text-xs">
                   {{ formatWeekdayDayMonthYearId(tomorrowDate) }}
                 </span>
@@ -827,7 +835,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
                 :orders="tomorrowCalendar?.events.orders ?? []"
                 :order-actions="dashboardOrderActions"
                 :action-submitting-order-id="actionSubmittingOrderId"
-                empty-message="Tidak ada pesanan untuk besok."
+                :empty-message="t('dashboard.card.scheduledOrders.emptyTomorrow')"
                 @action="handleDashboardOrderAction"
               />
             </section>
@@ -835,8 +843,8 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         </TableCard>
 
         <TableCard
-          title="Produksi Telur"
-          description="Produksi butir dan performa berdasarkan periode."
+          :title="t('dashboard.card.production.title')"
+          :description="t('dashboard.card.production.description')"
           icon="productions"
           class="min-[1024px]:order-3 min-[1024px]:col-span-10 min-[1581px]:col-span-6 min-[1024px]:h-full min-[1866px]:col-span-5"
         >
@@ -852,8 +860,8 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         </TableCard>
 
         <TableCard
-          title="Profil Kandang"
-          description="Strain ayam, populasi, dan umur ayam aktif per kandang."
+          :title="t('dashboard.card.coopProfile.title')"
+          :description="t('dashboard.card.coopProfile.description')"
           icon="coops"
           class="min-[1024px]:order-4 min-[1024px]:col-span-10 min-[1581px]:col-span-4 min-[1866px]:col-span-12"
         >
@@ -866,7 +874,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
               @update-population="openPopulationModal"
             />
           </div>
-          <p v-else class="text-sm text-ink-500">Belum ada kandang aktif dalam scope akses Anda.</p>
+          <p v-else class="text-sm text-ink-500">{{ t('dashboard.card.coopProfile.empty') }}</p>
         </TableCard>
       </div>
 
@@ -900,7 +908,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         :initial-allocations="allocationModalMode === 'edit' ? activeAllocations : []"
         :combined-available-kg="activeLiveStock?.combinedAvailableKg ?? null"
         :coop-stocks="activeLiveStock?.coops ?? []"
-        :submit-label="allocationModalMode === 'edit' ? 'Simpan perubahan alokasi' : 'Mulai pengantaran'"
+        :submit-label="allocationModalMode === 'edit' ? t('order.action.saveAllocation') : t('order.action.startDelivery')"
         :submitting="modalSubmitting"
         @submit="submitDeliveryAllocation"
       />
@@ -908,8 +916,8 @@ async function submitPopulationUpdate(payload: { population: number; populationC
 
     <UiDialog
       v-model:open="paymentOpen"
-      title="Payment Update"
-      description="Semua update pembayaran akan masuk ke payment history."
+      :title="t('dialog.payment.title')"
+      :description="t('dialog.payment.description')"
     >
       <LoadingSkeleton v-if="paymentModalLoading" :lines="5" />
       <FormsPaymentUpdateForm
@@ -924,8 +932,8 @@ async function submitPopulationUpdate(payload: { population: number; populationC
 
     <UiDialog
       v-model:open="populationOpen"
-      title="Update Populasi"
-      description="Perubahan akan disimpan sebagai histori populasi kandang."
+      :title="t('dialog.population.title')"
+      :description="t('dialog.population.description')"
       size="md"
     >
       <FormsCoopPopulationForm

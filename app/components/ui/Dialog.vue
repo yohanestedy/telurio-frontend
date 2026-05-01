@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'lg',
   closable: true,
 })
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -50,7 +51,9 @@ function close() {
               <h3 class="text-lg font-semibold text-ink-900">{{ title }}</h3>
               <p v-if="description" class="mt-1 text-sm text-ink-600">{{ description }}</p>
             </div>
-            <UiButton v-if="props.closable" variant="ghost" size="sm" icon="close" @click="close">Tutup</UiButton>
+            <UiButton v-if="props.closable" variant="ghost" size="sm" icon="close" @click="close">
+              {{ t('common.close') }}
+            </UiButton>
           </div>
           <slot />
         </div>

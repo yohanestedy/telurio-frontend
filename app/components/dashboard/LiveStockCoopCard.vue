@@ -21,6 +21,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'show-detail': []
 }>()
+const { t } = useI18n()
 
 function formatSignedKg(value: number) {
   const normalized = Number(value.toFixed(3))
@@ -60,17 +61,17 @@ const isActive = computed(() => Number(props.item.availableKg) > 0)
 
 const inFlowRows = computed(() => [
   {
-    label: 'Produksi',
+    label: t('livestock.production'),
     value: props.summary.productionInKg,
     icon: 'productions' as const,
   },
   {
-    label: 'Rilis alokasi',
+    label: t('livestock.allocationRelease'),
     value: props.summary.allocationReleaseInKg,
     icon: 'layers' as const,
   },
   {
-    label: 'Penyesuaian (+)',
+    label: t('livestock.adjustmentIn'),
     value: props.summary.adjustmentInKg,
     icon: 'plus' as const,
   },
@@ -78,12 +79,12 @@ const inFlowRows = computed(() => [
 
 const outFlowRows = computed(() => [
   {
-    label: 'Alokasi order',
+    label: t('livestock.orderAllocation'),
     value: props.summary.allocationOutKg,
     icon: 'orders' as const,
   },
   {
-    label: 'Penyesuaian (-)',
+    label: t('livestock.adjustmentOut'),
     value: props.summary.adjustmentOutKg,
     icon: 'minus' as const,
   },
@@ -118,7 +119,7 @@ const visibleOutFlowRows = computed(() =>
                   : 'border-ink-200 bg-ink-100/70 text-ink-600',
               ]"
             >
-              {{ isActive ? 'Aktif' : 'Kosong' }}
+              {{ isActive ? t('common.active') : t('common.empty') }}
             </span>
           </div>
         </div>
@@ -127,7 +128,7 @@ const visibleOutFlowRows = computed(() =>
       <div class="text-left md:text-right">
         <p class="text-lg font-bold tracking-tight text-ink-900 sm:text-xl">{{ formatKg(props.item.availableKg) }} kg</p>
         <p class="mt-1 inline-flex items-center gap-1 text-xs font-semibold" :class="netFlowToneClass(props.summary.netFlowKg)">
-          <span class="text-ink-500">Net pergerakan</span>
+          <span class="text-ink-500">{{ t('livestock.netFlow') }}</span>
           <UiIcon :name="netFlowIcon(props.summary.netFlowKg)" class="h-3.5 w-3.5" />
           <span>{{ formatSignedKg(props.summary.netFlowKg) }} kg</span>
         </p>
@@ -140,7 +141,7 @@ const visibleOutFlowRows = computed(() =>
           <span class="grid h-6 w-6 place-items-center rounded-full bg-emerald-100/90 text-emerald-700">
             <UiIcon name="arrowDown" class="h-3 w-3" />
           </span>
-          <p class="text-sm font-semibold text-emerald-700">Telur Masuk</p>
+          <p class="text-sm font-semibold text-emerald-700">{{ t('livestock.eggIn') }}</p>
         </div>
         <div class="flex-1 space-y-1.5 px-2.5 py-2">
           <div
@@ -155,11 +156,11 @@ const visibleOutFlowRows = computed(() =>
             <span class="font-medium text-ink-900">{{ formatKg(row.value) }} kg</span>
           </div>
           <p v-if="!visibleInFlowRows.length" class="text-xs text-ink-500">
-            Belum ada telur masuk hari ini.
+            {{ t('livestock.noEggIn') }}
           </p>
         </div>
         <div class="flex items-center justify-between border-t border-emerald-100/80 px-2.5 py-2 text-emerald-700">
-          <span class="text-sm font-semibold">Total Masuk</span>
+          <span class="text-sm font-semibold">{{ t('livestock.totalIn') }}</span>
           <span class="text-lg font-bold">{{ formatKg(props.summary.totalInKg) }} kg</span>
         </div>
       </section>
@@ -169,7 +170,7 @@ const visibleOutFlowRows = computed(() =>
           <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-100/90 text-brand-700">
             <UiIcon name="arrowUp" class="h-3 w-3" />
           </span>
-          <p class="text-sm font-semibold text-brand-700">Telur Keluar</p>
+          <p class="text-sm font-semibold text-brand-700">{{ t('livestock.eggOut') }}</p>
         </div>
         <div class="flex-1 space-y-1.5 px-2.5 py-2">
           <div
@@ -184,11 +185,11 @@ const visibleOutFlowRows = computed(() =>
             <span class="font-medium text-ink-900">{{ formatKg(row.value) }} kg</span>
           </div>
           <p v-if="!visibleOutFlowRows.length" class="text-xs text-ink-500">
-            Belum ada telur keluar hari ini.
+            {{ t('livestock.noEggOut') }}
           </p>
         </div>
         <div class="flex items-center justify-between border-t border-brand-100/80 px-2.5 py-2 text-brand-700">
-          <span class="text-sm font-semibold">Total Keluar</span>
+          <span class="text-sm font-semibold">{{ t('livestock.totalOut') }}</span>
           <span class="text-lg font-bold">{{ formatKg(props.summary.totalOutKg) }} kg</span>
         </div>
       </section>
@@ -197,7 +198,7 @@ const visibleOutFlowRows = computed(() =>
     <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-white/90 pt-2">
       <p class="inline-flex items-center gap-1.5 text-xs text-ink-500">
         <UiIcon name="clock" class="h-3.5 w-3.5" />
-        Update terakhir {{ props.item.updatedAt ? formatDateTime(props.item.updatedAt) : '-' }}
+        {{ t('livestock.lastUpdate') }} {{ props.item.updatedAt ? formatDateTime(props.item.updatedAt) : '-' }}
       </p>
       <UiButton
         variant="ghost"
@@ -205,7 +206,7 @@ const visibleOutFlowRows = computed(() =>
         trailing-icon="chevronRight"
         @click="emit('show-detail')"
       >
-        Lihat Detail
+        {{ t('livestock.detail') }}
       </UiButton>
     </div>
   </article>

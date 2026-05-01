@@ -11,6 +11,7 @@ import {
   weekdayLongLabelId,
 } from '../utils/calendar'
 import { formatRupiah } from '../utils/formatters'
+const { t } = useI18n()
 
 const props = defineProps<{
   markerDays: CalendarMarkerDay[]
@@ -28,17 +29,20 @@ const emit = defineEmits<{
   modeChange: [mode: 'month' | 'week' | 'day']
 }>()
 
-const weekDays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
-const viewOptions = [
-  { label: 'Harian', value: 'day' as const },
-  { label: 'Mingguan', value: 'week' as const },
-  { label: 'Bulanan', value: 'month' as const },
-]
-const markerLegend = [
-  { label: 'Order', className: 'bg-brand-500' },
-  { label: 'Produksi', className: 'bg-emerald-500' },
-  { label: 'Pengeluaran', className: 'bg-slate-500' },
-]
+const weekDays = computed(() => {
+  const start = startOfWeekMonday(props.focusDate)
+  return Array.from({ length: 7 }, (_, index) => weekdayShortLabelId(start.add(index, 'day').toDate()))
+})
+const viewOptions = computed(() => [
+  { label: t('calendar.view.day'), value: 'day' as const },
+  { label: t('calendar.view.week'), value: 'week' as const },
+  { label: t('calendar.view.month'), value: 'month' as const },
+])
+const markerLegend = computed(() => [
+  { label: t('calendar.marker.order'), className: 'bg-brand-500' },
+  { label: t('calendar.marker.production'), className: 'bg-emerald-500' },
+  { label: t('calendar.marker.expense'), className: 'bg-slate-500' },
+])
 
 const markerMap = computed(() => new Map(props.markerDays.map((day) => [day.date, day.markers])))
 const focus = computed(() => dayjs(props.focusDate))
@@ -87,7 +91,7 @@ function buildMarkers(date: string): CalendarMarker[] {
   if (orderCount > 0) {
     markers.push({
       key: 'orders',
-      label: 'Order',
+      label: t('calendar.marker.order'),
       count: orderCount,
       className: 'bg-brand-500',
     })
@@ -96,7 +100,7 @@ function buildMarkers(date: string): CalendarMarker[] {
   if (productionCount > 0) {
     markers.push({
       key: 'productions',
-      label: 'Produksi',
+      label: t('calendar.marker.production'),
       count: productionCount,
       className: 'bg-emerald-500',
     })
@@ -105,7 +109,7 @@ function buildMarkers(date: string): CalendarMarker[] {
   if (expenseCount > 0) {
     markers.push({
       key: 'expenses',
-      label: 'Pengeluaran',
+      label: t('calendar.marker.expense'),
       count: expenseCount,
       className: 'bg-slate-500',
     })
@@ -160,17 +164,17 @@ const gridClass = computed(() =>
 )
 const previousAriaLabel = computed(() =>
   props.mode === 'month'
-    ? 'Bulan sebelumnya'
+    ? t('calendar.previous.month')
     : props.mode === 'week'
-      ? 'Minggu sebelumnya'
-      : 'Hari sebelumnya',
+      ? t('calendar.previous.week')
+      : t('calendar.previous.day'),
 )
 const nextAriaLabel = computed(() =>
   props.mode === 'month'
-    ? 'Bulan berikutnya'
+    ? t('calendar.next.month')
     : props.mode === 'week'
-      ? 'Minggu berikutnya'
-      : 'Hari berikutnya',
+      ? t('calendar.next.week')
+      : t('calendar.next.day'),
 )
 
 function selectDay(date: string) {
@@ -268,7 +272,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="min-w-0 flex-1">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">Harga aktif</p>
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">{{ t('calendar.activePrice') }}</p>
 
               <div v-if="props.selectedPriceLoading" class="mt-1.5 flex items-center gap-2">
                 <div class="h-4 w-24 animate-pulse rounded-md bg-slate-200/70" />
@@ -283,12 +287,12 @@ onBeforeUnmount(() => {
               </template>
 
               <p v-else class="mt-1 text-xs font-medium text-ink-600">
-                {{ props.selectedPriceError ? 'Harga belum bisa dimuat' : 'Belum tersedia' }}
+                {{ props.selectedPriceError ? t('calendar.priceLoadError') : t('common.unavailable') }}
               </p>
             </div>
 
             <div class="shrink-0 text-right">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-400">Terpilih</p>
+              <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-400">{{ t('common.selected') }}</p>
               <p class="mt-1 text-xs font-medium leading-tight text-ink-700">
                 {{ selectedDateCompactLabel }}
               </p>

@@ -34,6 +34,7 @@ const sortMenuRef = ref<HTMLElement | null>(null)
 const filterMenuRef = ref<HTMLElement | null>(null)
 const perPageMenuOpen = ref(false)
 const perPageMenuRef = ref<HTMLElement | null>(null)
+const { t } = useI18n()
 
 function toggleMenu(menu: 'sort' | 'filter') {
   activeMenu.value = activeMenu.value === menu ? null : menu
@@ -87,7 +88,8 @@ onClickOutside(perPageMenuRef, () => {
       <div class="flex items-center gap-2">
         <button
           type="button"
-          title="Urutkan data"
+          :title="t('common.sort')"
+          :aria-label="t('common.sort')"
           class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
           :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeMenu === 'sort' }"
           @click="toggleMenu('sort')"
@@ -96,7 +98,8 @@ onClickOutside(perPageMenuRef, () => {
         </button>
         <button
           type="button"
-          title="Filter data"
+          :title="t('common.filter')"
+          :aria-label="t('common.filter')"
           class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
           :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeMenu === 'filter' || filterApplied }"
           @click="toggleMenu('filter')"
@@ -109,7 +112,8 @@ onClickOutside(perPageMenuRef, () => {
         <div class="h-6 w-px bg-slate-200" />
         <button
           type="button"
-          title="Ubah jumlah data per halaman"
+          :title="t('common.perPage')"
+          :aria-label="t('common.perPage')"
           class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
           :class="{ 'border-brand-300 bg-brand-50 text-brand-700': perPageMenuOpen }"
           @click="togglePerPageMenu"
@@ -147,7 +151,7 @@ onClickOutside(perPageMenuRef, () => {
             :class="currentLimit === size ? 'bg-brand-100/70 text-brand-800' : 'text-ink-700 hover:bg-slate-100/80'"
             @click="selectLimit(size)"
           >
-            {{ size }} Item
+            {{ size }} {{ t('common.data') }}
           </button>
         </div>
       </div>

@@ -38,19 +38,22 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   label: '',
-  placeholder: 'Pilih tanggal',
+  placeholder: '',
   error: '',
   help: '',
   disabled: false,
   min: undefined,
   max: undefined,
 })
+const ui = useUiStore()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const formatter = new DateFormatter('id-ID', { dateStyle: 'long' })
+const locale = computed(() => ui.language === 'id' ? 'id-ID' : 'en-US')
+const formatter = computed(() => new DateFormatter(locale.value, { dateStyle: 'long' }))
 const value = ref<DateValue>()
 
 function parseDateString(input?: string | null) {
@@ -94,10 +97,10 @@ watch(value, (nextValue) => {
 
 const displayValue = computed(() => {
   if (!value.value) {
-    return props.placeholder
+    return props.placeholder || t('date.placeholder')
   }
 
-  return formatter.format(value.value.toDate(getLocalTimeZone()))
+  return formatter.value.format(value.value.toDate(getLocalTimeZone()))
 })
 
 const todayValue = computed(() => today(getLocalTimeZone()))
@@ -150,7 +153,7 @@ function selectTomorrow() {
 
     <DatePickerRoot
       v-model="value"
-      locale="id-ID"
+      :locale="locale"
       :disabled="disabled"
       :min-value="minValue"
       :max-value="maxValue"
@@ -252,7 +255,7 @@ function selectTomorrow() {
               :disabled="!canSelectTomorrow"
               @click="selectTomorrow"
             >
-              Besok
+              {{ t('common.tomorrow') }}
             </button>
             <button
               type="button"
@@ -260,7 +263,7 @@ function selectTomorrow() {
               :disabled="!canSelectToday"
               @click="selectToday"
             >
-              Hari ini
+              {{ t('common.today') }}
             </button>
           </div>
         </DatePickerCalendar>

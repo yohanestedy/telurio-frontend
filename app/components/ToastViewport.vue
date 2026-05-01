@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { toasts, remove } = useToast()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -17,7 +18,7 @@ const { toasts, remove } = useToast()
               {{ toast.description }}
             </p>
           </div>
-          <button class="text-xs text-ink-500" @click="remove(toast.id)">Tutup</button>
+          <button class="text-xs text-ink-500" @click="remove(toast.id)">{{ t('common.close') }}</button>
         </div>
       </div>
     </transition-group>

@@ -29,6 +29,7 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const { can } = useAuth()
 const { currentPrice, loadTodayPriceStatus } = useTodayPriceStatus()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -82,13 +83,13 @@ const activeOrderIsTodayDelivery = computed(() => {
 })
 
 const allocationDialogTitle = computed(() =>
-  allocationModalMode.value === 'edit' ? 'Ubah Alokasi Pengantaran' : 'Start Delivery',
+  allocationModalMode.value === 'edit' ? t('dialog.allocation.editTitle') : t('dialog.allocation.startTitle'),
 )
 
 const allocationDialogDescription = computed(() =>
   allocationModalMode.value === 'edit'
-    ? 'Koreksi alokasi kandang. Sistem akan menyesuaikan live stock secara otomatis.'
-    : 'Masukkan alokasi kandang hingga totalnya sama dengan quantity order.',
+    ? t('dialog.allocation.editDescription')
+    : t('dialog.allocation.startDescription'),
 )
 
 async function loadCalendar() {
@@ -227,7 +228,7 @@ async function openAllocationModal(orderId: string, mode: 'start' | 'edit') {
     activeAllocations.value = allocationList
     startDeliveryOpen.value = true
   } catch (caught) {
-    toast.error('Gagal menyiapkan modal pengantaran', api.mapError(caught).message)
+    toast.error(t('toast.delivery.prepareFailed'), api.mapError(caught).message)
   } finally {
     allocationModalLoading.value = false
   }
@@ -240,7 +241,7 @@ async function openPaymentModal(orderId: string) {
     activeOrder.value = await loadOrderForAction(orderId)
     paymentOpen.value = true
   } catch (caught) {
-    toast.error('Gagal menyiapkan modal pembayaran', api.mapError(caught).message)
+    toast.error(t('toast.payment.prepareFailed'), api.mapError(caught).message)
   } finally {
     paymentModalLoading.value = false
   }
@@ -266,10 +267,10 @@ async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: 
       await api.patch(`/orders/${activeOrder.value.id}/allocations`, {
         allocations: payload.allocations,
       })
-      toast.success('Alokasi pengantaran berhasil diperbarui')
+      toast.success(t('toast.allocation.updated'))
     } else {
       await api.post(`/orders/${activeOrder.value.id}/start-delivery`, payload)
-      toast.success('Pengantaran berhasil dimulai')
+      toast.success(t('toast.delivery.started'))
     }
 
     startDeliveryOpen.value = false
@@ -277,8 +278,8 @@ async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: 
   } catch (caught) {
     toast.error(
       allocationModalMode.value === 'edit'
-        ? 'Gagal mengubah alokasi'
-        : 'Gagal memulai pengantaran',
+        ? t('toast.allocation.updateFailed')
+        : t('toast.delivery.startFailed'),
       api.mapError(caught).message,
     )
   } finally {
@@ -294,11 +295,11 @@ async function submitPaymentUpdate(payload: Record<string, unknown>) {
   modalSubmitting.value = true
   try {
     await api.post(`/orders/${activeOrder.value.id}/payment-updates`, payload)
-    toast.success('Pembayaran berhasil diperbarui')
+    toast.success(t('toast.payment.updated'))
     paymentOpen.value = false
     await refreshCalendarDetailAfterAction()
   } catch (caught) {
-    toast.error('Gagal update pembayaran', api.mapError(caught).message)
+    toast.error(t('toast.payment.updateFailed'), api.mapError(caught).message)
   } finally {
     modalSubmitting.value = false
   }
@@ -322,7 +323,7 @@ function orderActions(order: CalendarOrder): CalendarOrderAction[] {
   if (auth.role === 'OPERATOR' && order.deliveryStatus === 'BELUM_DIHANTAR') {
     actions.push({
       id: 'start-delivery',
-      label: 'Mulai Hantar',
+      label: t('order.action.startDelivery'),
       icon: 'package',
       variant: 'primary',
       prominent: true,
@@ -332,7 +333,7 @@ function orderActions(order: CalendarOrder): CalendarOrderAction[] {
   if (auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR') {
     actions.push({
       id: 'complete-delivery',
-      label: 'Selesai Hantar',
+      label: t('order.action.completeDelivery'),
       icon: 'chevronRight',
       variant: 'primary',
       prominent: true,
@@ -340,7 +341,7 @@ function orderActions(order: CalendarOrder): CalendarOrderAction[] {
 
     actions.push({
       id: 'edit-allocation',
-      label: 'Ubah Alokasi',
+      label: t('order.action.editAllocation'),
       icon: 'edit',
       variant: 'ghost',
     })
@@ -349,7 +350,7 @@ function orderActions(order: CalendarOrder): CalendarOrderAction[] {
   if (can('orders.pay') && order.paymentStatus !== 'LUNAS') {
     actions.push({
       id: 'payment-update',
-      label: 'Update Bayar',
+      label: t('order.action.updatePayment'),
       icon: 'money',
       variant: 'ghost',
     })
@@ -357,7 +358,7 @@ function orderActions(order: CalendarOrder): CalendarOrderAction[] {
 
   actions.push({
     id: 'open-detail',
-    label: 'Lihat Detail',
+    label: t('order.action.viewDetail'),
     icon: 'search',
     variant: 'ghost',
     iconOnly: true,
@@ -371,10 +372,10 @@ async function handleOrderAction(order: CalendarOrder, action: CalendarOrderActi
     actionSubmittingOrderId.value = order.orderId
     try {
       await api.post(`/orders/${order.orderId}/complete-delivery`)
-      toast.success('Pengantaran berhasil diselesaikan')
+      toast.success(t('toast.delivery.completed'))
       await refreshCalendarDetailAfterAction()
     } catch (caught) {
-      toast.error('Gagal menyelesaikan pengantaran', api.mapError(caught).message)
+      toast.error(t('toast.delivery.completeFailed'), api.mapError(caught).message)
     } finally {
       actionSubmittingOrderId.value = ''
     }
@@ -413,7 +414,7 @@ onMounted(() => {
   <div class="space-y-4 lg:space-y-6">
     <CalendarPageSkeleton v-if="loading" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton icon="refresh" @click="syncCalendarPanel">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="syncCalendarPanel">{{ t('common.retry') }}</UiButton>
     </ErrorState>
     <div v-else class="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_minmax(0,1fr)] xl:gap-6">
       <div class="space-y-4">
@@ -438,7 +439,7 @@ onMounted(() => {
         <GlassCard class="overflow-hidden">
           <div class="flex items-center justify-between gap-2 border-b border-white/70 px-4 py-3.5 sm:px-5 sm:py-4">
             <div>
-              <p class="text-base font-semibold text-ink-900">{{ orderCountLabel }} Pesanan</p>
+              <p class="text-base font-semibold text-ink-900">{{ t('calendar.ordersCount', { count: orderCountLabel }) }}</p>
             </div>
             <span class="rounded-full border border-white/70 bg-white/80 px-2 py-1 text-xs text-ink-600">
               {{ selectedDateLabel }}
@@ -454,11 +455,11 @@ onMounted(() => {
         </GlassCard>
 
         <GlassCard class="p-4 sm:p-5">
-          <p class="text-base font-semibold text-ink-900">Produksi & Pengeluaran</p>
+          <p class="text-base font-semibold text-ink-900">{{ t('calendar.productionExpense') }}</p>
 
           <div class="mt-3 space-y-2 text-sm text-ink-700">
             <div class="rounded-2xl border border-white/70 bg-white/80 p-3">
-              <p class="text-xs uppercase tracking-wide text-ink-500">Produksi</p>
+              <p class="text-xs uppercase tracking-wide text-ink-500">{{ t('calendar.marker.production') }}</p>
               <div v-if="selectedDay.events.productions.length" class="mt-2 space-y-1.5">
                 <div
                   v-for="production in selectedDay.events.productions"
@@ -469,11 +470,11 @@ onMounted(() => {
                   <span>{{ formatKg(production.totalGoodKg) }} kg</span>
                 </div>
               </div>
-              <p v-else class="mt-2 text-ink-500">Tidak ada produksi.</p>
+              <p v-else class="mt-2 text-ink-500">{{ t('calendar.noProduction') }}</p>
             </div>
 
             <div class="rounded-2xl border border-white/70 bg-white/80 p-3">
-              <p class="text-xs uppercase tracking-wide text-ink-500">Pengeluaran</p>
+              <p class="text-xs uppercase tracking-wide text-ink-500">{{ t('calendar.marker.expense') }}</p>
               <div v-if="selectedDay.events.expenses.length" class="mt-2 space-y-1.5">
                 <div
                   v-for="expense in selectedDay.events.expenses"
@@ -484,7 +485,7 @@ onMounted(() => {
                   <span>{{ formatRupiah(expense.totalAmount) }}</span>
                 </div>
               </div>
-              <p v-else class="mt-2 text-ink-500">Tidak ada pengeluaran.</p>
+              <p v-else class="mt-2 text-ink-500">{{ t('calendar.noExpense') }}</p>
             </div>
           </div>
         </GlassCard>
@@ -509,7 +510,7 @@ onMounted(() => {
         :initial-allocations="allocationModalMode === 'edit' ? activeAllocations : []"
         :combined-available-kg="activeLiveStock?.combinedAvailableKg ?? null"
         :coop-stocks="activeLiveStock?.coops ?? []"
-        :submit-label="allocationModalMode === 'edit' ? 'Simpan perubahan alokasi' : 'Mulai pengantaran'"
+        :submit-label="allocationModalMode === 'edit' ? t('order.action.saveAllocation') : t('order.action.startDelivery')"
         :submitting="modalSubmitting"
         @submit="submitDeliveryAllocation"
       />
@@ -517,8 +518,8 @@ onMounted(() => {
 
     <UiDialog
       v-model:open="paymentOpen"
-      title="Payment Update"
-      description="Semua update pembayaran akan masuk ke payment history."
+      :title="t('dialog.payment.title')"
+      :description="t('dialog.payment.description')"
     >
       <LoadingSkeleton v-if="paymentModalLoading" :lines="5" />
       <FormsPaymentUpdateForm
