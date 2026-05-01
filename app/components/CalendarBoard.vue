@@ -39,9 +39,9 @@ const viewOptions = computed(() => [
   { label: t('calendar.view.month'), value: 'month' as const },
 ])
 const markerLegend = computed(() => [
-  { label: t('calendar.marker.order'), className: 'bg-brand-500' },
-  { label: t('calendar.marker.production'), className: 'bg-emerald-500' },
-  { label: t('calendar.marker.expense'), className: 'bg-slate-500' },
+  { label: t('calendar.marker.order'), className: 'bg-brand-500 dark:!bg-brand-300' },
+  { label: t('calendar.marker.production'), className: 'bg-emerald-500 dark:!bg-emerald-300' },
+  { label: t('calendar.marker.expense'), className: 'bg-slate-500 dark:!bg-slate-300' },
 ])
 
 const markerMap = computed(() => new Map(props.markerDays.map((day) => [day.date, day.markers])))
@@ -93,7 +93,7 @@ function buildMarkers(date: string): CalendarMarker[] {
       key: 'orders',
       label: t('calendar.marker.order'),
       count: orderCount,
-      className: 'bg-brand-500',
+      className: 'bg-brand-500 dark:!bg-brand-300',
     })
   }
 
@@ -102,7 +102,7 @@ function buildMarkers(date: string): CalendarMarker[] {
       key: 'productions',
       label: t('calendar.marker.production'),
       count: productionCount,
-      className: 'bg-emerald-500',
+      className: 'bg-emerald-500 dark:!bg-emerald-300',
     })
   }
 
@@ -111,7 +111,7 @@ function buildMarkers(date: string): CalendarMarker[] {
       key: 'expenses',
       label: t('calendar.marker.expense'),
       count: expenseCount,
-      className: 'bg-slate-500',
+      className: 'bg-slate-500 dark:!bg-slate-300',
     })
   }
 
@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex flex-col gap-3 md:flex-row md:items-center">
-        <div class="flex w-full items-center rounded-2xl border border-white/80 bg-white/80 p-1 md:flex-1">
+        <div class="flex w-full items-center rounded-2xl border border-white/80 bg-white/80 p-1 md:flex-1 dark:!border-white/10 dark:!bg-white/[0.04]">
           <button
             v-for="option in viewOptions"
             :key="option.value"
@@ -256,8 +256,8 @@ onBeforeUnmount(() => {
             :class="[
               'flex-1 rounded-xl px-3 py-2 text-sm font-medium transition',
               props.mode === option.value
-                ? 'bg-brand-500 text-white shadow-[0_8px_18px_rgba(243,95,16,0.26)]'
-                : 'text-ink-600 hover:bg-white',
+                ? 'bg-brand-500 text-white shadow-[0_8px_18px_rgba(243,95,16,0.26)] dark:!bg-brand-500 dark:!text-white dark:shadow-[0_8px_18px_rgba(255,116,32,0.22)]'
+                : 'text-ink-600 hover:bg-white dark:!text-ink-300 dark:hover:!bg-white/[0.08] dark:hover:!text-white',
             ]"
             @click="changeMode(option.value)"
           >
@@ -347,7 +347,7 @@ onBeforeUnmount(() => {
               :key="`${cell.date}-${marker.key}`"
               :title="`${marker.label}: ${marker.count}`"
               :class="[
-                'rounded-full',
+                'rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.75)] dark:shadow-[0_0_0_1px_rgba(18,14,11,0.95),0_0_8px_rgba(255,255,255,0.10)]',
                 props.mode === 'day' ? 'h-2 w-2' : 'h-1.5 w-1.5',
                 marker.className,
               ]"
@@ -363,14 +363,19 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <div class="border-t border-white/70 pt-3">
+      <div class="border-t border-white/70 pt-3 dark:!border-white/10">
         <div class="flex flex-wrap items-center gap-3 text-xs text-ink-600">
           <span
             v-for="item in markerLegend"
             :key="item.label"
-            class="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-2.5 py-1"
+            class="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 dark:!border-white/10 dark:!bg-white/[0.04] dark:!text-ink-300"
           >
-            <span :class="['h-2 w-2 rounded-full', item.className]" />
+            <span
+              :class="[
+                'h-2 w-2 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.75)] dark:shadow-[0_0_0_1px_rgba(18,14,11,0.95),0_0_8px_rgba(255,255,255,0.10)]',
+                item.className,
+              ]"
+            />
             {{ item.label }}
           </span>
         </div>
