@@ -3,12 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  name: z.string().min(2, 'Nama minimal 2 karakter'),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-})
-
 type FormValues = {
   name: string
   address: string
@@ -23,6 +17,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [{ name: string; address?: string; phone?: string }]
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
   initialValues: {
@@ -52,6 +48,11 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    name: z.string().min(2, t('validation.nameMin', { min: '2' })),
+    address: z.string().optional(),
+    phone: z.string().optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -68,12 +69,12 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="grid gap-4" @submit.prevent="onSubmit">
-    <UiInput v-model="name" label="Nama pelanggan" :error="errors.name" />
-    <UiInput v-model="phone" label="Nomor telepon" :error="errors.phone" />
-    <UiTextarea v-model="address" label="Alamat" :error="errors.address" />
+    <UiInput v-model="name" :label="t('form.customer.name')" :error="errors.name" />
+    <UiInput v-model="phone" :label="t('form.customer.phone')" :error="errors.phone" />
+    <UiTextarea v-model="address" :label="t('common.address')" :error="errors.address" />
     <div class="flex justify-end">
       <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan pelanggan' }}
+        {{ submitting ? t('common.saving') : t('form.customer.save') }}
       </UiButton>
     </div>
   </form>

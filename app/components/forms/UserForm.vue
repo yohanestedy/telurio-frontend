@@ -4,14 +4,6 @@ import { z } from 'zod'
 import { roles } from '../../types/domain'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  name: z.string().min(2, 'Nama minimal 2 karakter'),
-  username: z.string().min(3, 'Username minimal 3 karakter').optional(),
-  password: z.string().min(8, 'Password minimal 8 karakter').optional(),
-  role: z.enum(roles).optional(),
-  isActive: z.boolean().optional(),
-})
-
 type FormValues = {
   name: string
   username: string
@@ -50,6 +42,7 @@ const emit = defineEmits<{
 
 const selectedCoopIds = ref<string[]>([])
 const shareByCoop = ref<Record<string, string>>({})
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
   initialValues: {
@@ -95,6 +88,13 @@ function toggleCoop(coopId: string, checked: boolean) {
 }
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    name: z.string().min(2, t('validation.nameMin', { min: '2' })),
+    username: z.string().min(3, t('validation.usernameMin', { min: '3' })).optional(),
+    password: z.string().min(8, t('validation.passwordMin', { min: '8' })).optional(),
+    role: z.enum(roles).optional(),
+    isActive: z.boolean().optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -128,7 +128,7 @@ const onSubmit = handleSubmit((values) => {
 <template>
   <form class="space-y-4" @submit.prevent="onSubmit">
     <div class="grid gap-4 md:grid-cols-2">
-      <UiInput v-model="name" label="Nama" :error="errors.name" />
+      <UiInput v-model="name" :label="t('common.name')" :error="errors.name" />
       <UiSelect
         v-if="!isEdit"
         v-model="role"
@@ -144,7 +144,7 @@ const onSubmit = handleSubmit((values) => {
     </div>
 
     <div class="rounded-[24px] border border-white/40 bg-white/55 p-4">
-      <p class="text-sm font-semibold text-ink-900">Akses kandang</p>
+      <p class="text-sm font-semibold text-ink-900">{{ t('user.accessScope') }}</p>
       <div class="mt-4 grid gap-3">
         <label
           v-for="coop in coopOptions"
@@ -173,11 +173,11 @@ const onSubmit = handleSubmit((values) => {
       </div>
     </div>
 
-    <UiCheckbox v-if="isEdit" v-model="isActive" label="User aktif" />
+    <UiCheckbox v-if="isEdit" v-model="isActive" :label="t('user.active')" />
 
     <div class="flex justify-end">
       <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan user' }}
+        {{ submitting ? t('common.saving') : t('user.save') }}
       </UiButton>
     </div>
   </form>

@@ -22,6 +22,7 @@ const api = useApi()
 const toast = useToast()
 const { can } = useAuth()
 const pagination = usePagination()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -40,12 +41,12 @@ const endDateFilter = ref('')
 const sortBy = ref<'movementDate' | 'createdAt' | 'quantityKg' | 'movementType'>('movementDate')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
-const orderByOptions = [
-  { label: 'Tanggal movement', value: 'movementDate', kind: 'date' as const },
-  { label: 'Waktu dicatat', value: 'createdAt', kind: 'date' as const },
-  { label: 'Jumlah kg', value: 'quantityKg', kind: 'number' as const },
-  { label: 'Jenis movement', value: 'movementType', kind: 'text' as const },
-]
+const orderByOptions = computed(() => [
+  { label: t('stock.movementDate'), value: 'movementDate', kind: 'date' as const },
+  { label: t('stock.recordedAt'), value: 'createdAt', kind: 'date' as const },
+  { label: t('stock.quantityKg'), value: 'quantityKg', kind: 'number' as const },
+  { label: t('stock.movementType'), value: 'movementType', kind: 'text' as const },
+])
 const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
@@ -58,14 +59,14 @@ const skeletonCells = [
   { lines: [{ class: 'w-20 rounded-xl' }] },
 ]
 
-const directionOptions = stockMovementDirections.map((item) => ({
+const directionOptions = computed(() => stockMovementDirections.map((item) => ({
   label: directionLabel(item),
   value: item,
-}))
-const movementTypeOptions = stockMovementTypes.map((item) => ({
+})))
+const movementTypeOptions = computed(() => stockMovementTypes.map((item) => ({
   label: movementTypeLabel(item),
   value: item,
-}))
+})))
 const coopOptions = computed(() =>
   coops.value.map((item) => ({ label: item.name, value: item.id })),
 )
@@ -138,11 +139,11 @@ async function submitManualAdjustment(payload: {
 
   try {
     await api.post('/stocks/manual-adjustments', payload)
-    toast.success('Penyesuaian stok berhasil disimpan')
+    toast.success(t('toast.stock.adjustmentSaved'))
     manualAdjustOpen.value = false
     await refreshData()
   } catch (caught) {
-    toast.error('Gagal menyimpan penyesuaian stok', api.mapError(caught).message)
+    toast.error(t('toast.stock.adjustmentSaveFailed'), api.mapError(caught).message)
   } finally {
     submittingManualAdjust.value = false
   }
@@ -175,30 +176,18 @@ async function onLimitChange(nextLimit: number) {
 
 function directionLabel(value: StockMovementDirection) {
   if (value === 'IN') {
-    return 'Masuk'
+    return t('stock.in')
   }
 
-  return 'Keluar'
+  return t('stock.out')
 }
 
 function movementTypeLabel(value: StockMovementType) {
-  return {
-    PRODUCTION_IN: 'Produksi Masuk',
-    PRODUCTION_CORRECTION_IN: 'Koreksi Produksi (+)',
-    PRODUCTION_CORRECTION_OUT: 'Koreksi Produksi (-)',
-    ALLOCATION_OUT: 'Alokasi Keluar',
-    ALLOCATION_RELEASE: 'Alokasi Dikembalikan',
-    MANUAL_ADJUST_IN: 'Penyesuaian Manual (+)',
-    MANUAL_ADJUST_OUT: 'Penyesuaian Manual (-)',
-  }[value]
+  return t(`stock.type.${value}`)
 }
 
 function sourceLabel(value: StockMovementItem['sourceType']) {
-  return {
-    PRODUCTION_RECORD: 'Produksi',
-    ORDER_ALLOCATION: 'Alokasi Order',
-    MANUAL_ADJUSTMENT: 'Manual',
-  }[value]
+  return t(`stock.source.${value}`)
 }
 
 onMounted(async () => {
@@ -217,8 +206,8 @@ watch([sortBy, sortOrder], () => {
   <div class="space-y-4">
     <ListHeaderCard
       icon="layers"
-      title="Ledger Stock"
-      description="Riwayat pergerakan stok masuk dan keluar per kandang."
+      :title="t('stock.listTitle')"
+      :description="t('stock.listDescription')"
     >
       <template #actions>
         <UiButton
@@ -226,13 +215,13 @@ watch([sortBy, sortOrder], () => {
           icon="plus"
           @click="manualAdjustOpen = true"
         >
-          Tambah
+          {{ t('stock.addAdjustment') }}
         </UiButton>
         <UiButton
           variant="secondary"
           icon="refresh"
-          title="Refresh"
-          aria-label="Refresh"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
           @click="refreshData"
         />
       </template>
@@ -252,7 +241,7 @@ watch([sortBy, sortOrder], () => {
       @change-limit="onLimitChange"
     >
       <template #sort-menu>
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.sort') }}</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
             <select
               :value="sortBy"
@@ -278,21 +267,21 @@ watch([sortBy, sortOrder], () => {
       <template #filter-menu>
           <div class="mb-3 flex items-center gap-2">
             <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.dataFilter') }}</p>
           </div>
 
           <div class="space-y-3">
             <div class="space-y-1.5">
               <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
                 <UiIcon name="coops" class="h-3.5 w-3.5 text-ink-500" />
-                <span>Kandang</span>
+                <span>{{ t('common.coop') }}</span>
               </p>
               <select
                 :value="draftFilters.coopId"
                 class="field-shell py-2.5"
                 @change="draftFilters.coopId = ($event.target as HTMLSelectElement).value"
               >
-                <option value="">Semua kandang</option>
+                <option value="">{{ t('stock.allCoops') }}</option>
                 <option v-for="item in coopOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </option>
@@ -301,26 +290,26 @@ watch([sortBy, sortOrder], () => {
 
             <div class="grid gap-3 sm:grid-cols-2">
               <div class="space-y-1.5">
-                <p class="text-xs font-medium text-ink-600">Arah movement</p>
+                <p class="text-xs font-medium text-ink-600">{{ t('stock.directionMovement') }}</p>
                 <select
                   :value="draftFilters.direction"
                   class="field-shell py-2.5"
                   @change="draftFilters.direction = ($event.target as HTMLSelectElement).value"
                 >
-                  <option value="">Semua arah</option>
+                  <option value="">{{ t('stock.allDirections') }}</option>
                   <option v-for="item in directionOptions" :key="item.value" :value="item.value">
                     {{ item.label }}
                   </option>
                 </select>
               </div>
               <div class="space-y-1.5">
-                <p class="text-xs font-medium text-ink-600">Jenis movement</p>
+                <p class="text-xs font-medium text-ink-600">{{ t('stock.movementType') }}</p>
                 <select
                   :value="draftFilters.movementType"
                   class="field-shell py-2.5"
                   @change="draftFilters.movementType = ($event.target as HTMLSelectElement).value"
                 >
-                  <option value="">Semua jenis</option>
+                  <option value="">{{ t('stock.allTypes') }}</option>
                   <option v-for="item in movementTypeOptions" :key="item.value" :value="item.value">
                     {{ item.label }}
                   </option>
@@ -331,23 +320,23 @@ watch([sortBy, sortOrder], () => {
             <div class="grid gap-3 sm:grid-cols-2">
               <UiDatePicker
                 v-model="draftFilters.startDate"
-                label="Dari tanggal"
-                placeholder="Pilih tanggal awal"
+                :label="t('date.start')"
+                :placeholder="t('date.pickStart')"
               />
               <UiDatePicker
                 v-model="draftFilters.endDate"
-                label="Sampai tanggal"
-                placeholder="Pilih tanggal akhir"
+                :label="t('date.end')"
+                :placeholder="t('date.pickEnd')"
               />
             </div>
           </div>
 
           <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
             <UiButton size="sm" variant="ghost" icon="refresh" @click="resetFilters">
-              Reset
+              {{ t('common.reset') }}
             </UiButton>
             <UiButton size="sm" icon="filter" @click="applyFilters">
-              Terapkan
+              {{ t('common.apply') }}
             </UiButton>
           </div>
       </template>
@@ -356,14 +345,14 @@ watch([sortBy, sortOrder], () => {
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
-              <th class="px-4 py-3 pr-4">Tanggal</th>
-              <th class="px-4 py-3 pr-4">Kandang</th>
-              <th class="px-4 py-3 pr-4">Jenis</th>
-              <th class="px-4 py-3 pr-4">Arah</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.date') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.coop') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.type') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('stock.direction') }}</th>
               <th class="px-4 py-3 pr-4">Kg</th>
-              <th class="px-4 py-3 pr-4">Sumber</th>
-              <th class="px-4 py-3 pr-4">Dicatat</th>
-              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.source') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.recorded') }}</th>
+              <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -405,7 +394,7 @@ watch([sortBy, sortOrder], () => {
                   icon="search"
                   @click="openMovementDetail(item)"
                 >
-                  Detail
+                  {{ t('common.detail') }}
                 </UiButton>
               </td>
             </tr>
@@ -414,7 +403,7 @@ watch([sortBy, sortOrder], () => {
             v-else
             mode="empty"
             :colspan="8"
-            message="Belum ada data movement stok untuk filter saat ini."
+            :message="t('stock.emptyFiltered')"
           />
         </table>
       </template>
@@ -422,8 +411,8 @@ watch([sortBy, sortOrder], () => {
 
     <UiDialog
       v-model:open="manualAdjustOpen"
-      title="Penyesuaian Manual Stok"
-      description="Koreksi stok langsung untuk kondisi khusus operasional."
+      :title="t('stock.adjustmentTitle')"
+      :description="t('stock.adjustmentDescription')"
     >
       <FormsStockManualAdjustmentForm
         :coop-options="coopOptions"
@@ -434,30 +423,30 @@ watch([sortBy, sortOrder], () => {
 
     <UiDialog
       v-model:open="movementDetailOpen"
-      title="Detail Movement"
-      description="Rincian lengkap transaksi pergerakan stok."
+      :title="t('stock.detailTitle')"
+      :description="t('stock.detailDescription')"
       size="md"
     >
       <div v-if="selectedMovement" class="space-y-3 text-sm text-ink-700">
         <div class="grid gap-2 sm:grid-cols-2">
-          <p><span class="font-medium text-ink-900">Kandang:</span> {{ selectedMovement.coopName }}</p>
-          <p><span class="font-medium text-ink-900">Tanggal:</span> {{ formatDate(selectedMovement.movementDate) }}</p>
-          <p><span class="font-medium text-ink-900">Arah:</span> {{ directionLabel(selectedMovement.direction) }}</p>
-          <p><span class="font-medium text-ink-900">Jenis:</span> {{ movementTypeLabel(selectedMovement.movementType) }}</p>
-          <p><span class="font-medium text-ink-900">Jumlah:</span> {{ formatKg(selectedMovement.quantityKg) }} kg</p>
-          <p><span class="font-medium text-ink-900">Sumber:</span> {{ sourceLabel(selectedMovement.sourceType) }}</p>
+          <p><span class="font-medium text-ink-900">{{ t('common.coop') }}:</span> {{ selectedMovement.coopName }}</p>
+          <p><span class="font-medium text-ink-900">{{ t('common.date') }}:</span> {{ formatDate(selectedMovement.movementDate) }}</p>
+          <p><span class="font-medium text-ink-900">{{ t('stock.direction') }}:</span> {{ directionLabel(selectedMovement.direction) }}</p>
+          <p><span class="font-medium text-ink-900">{{ t('common.type') }}:</span> {{ movementTypeLabel(selectedMovement.movementType) }}</p>
+          <p><span class="font-medium text-ink-900">{{ t('order.quantity') }}:</span> {{ formatKg(selectedMovement.quantityKg) }} kg</p>
+          <p><span class="font-medium text-ink-900">{{ t('common.source') }}:</span> {{ sourceLabel(selectedMovement.sourceType) }}</p>
           <p><span class="font-medium text-ink-900">Order ID:</span> {{ selectedMovement.orderId || '-' }}</p>
           <p><span class="font-medium text-ink-900">Source ID:</span> {{ selectedMovement.sourceId }}</p>
         </div>
 
         <div class="rounded-2xl border border-white/40 bg-white/60 p-3">
-          <p class="font-medium text-ink-900">Catatan</p>
+          <p class="font-medium text-ink-900">{{ t('common.notes') }}</p>
           <p class="mt-1 text-ink-700">{{ selectedMovement.notes || '-' }}</p>
         </div>
 
         <div class="rounded-2xl border border-white/40 bg-white/60 p-3 text-xs text-ink-600">
-          <p>Dicatat: {{ formatDateTime(selectedMovement.createdAt) }}</p>
-          <p>Oleh: {{ selectedMovement.createdByName || '-' }}</p>
+          <p>{{ t('common.recorded') }}: {{ formatDateTime(selectedMovement.createdAt) }}</p>
+          <p>{{ t('common.by') }}: {{ selectedMovement.createdByName || '-' }}</p>
         </div>
 
         <div class="flex justify-end">
@@ -467,7 +456,7 @@ watch([sortBy, sortOrder], () => {
             icon="orders"
             @click="openLinkedOrder"
           >
-            Buka Order
+            {{ t('stock.openOrder') }}
           </UiButton>
         </div>
       </div>

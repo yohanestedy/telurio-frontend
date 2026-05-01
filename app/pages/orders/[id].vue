@@ -18,6 +18,7 @@ const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
 const { can } = useAuth()
+const { t } = useI18n()
 const { currentPrice, loadTodayPriceStatus } = useTodayPriceStatus()
 
 const loading = ref(true)
@@ -89,13 +90,13 @@ const isTodayDelivery = computed(() => {
 })
 
 const allocationDialogTitle = computed(() =>
-  allocationModalMode.value === 'edit' ? 'Ubah Alokasi Pengantaran' : 'Start Delivery',
+  allocationModalMode.value === 'edit' ? t('dialog.allocation.editTitle') : t('dialog.allocation.startTitle'),
 )
 
 const allocationDialogDescription = computed(() =>
   allocationModalMode.value === 'edit'
-    ? 'Koreksi alokasi kandang. Sistem akan menyesuaikan live stock secara otomatis.'
-    : 'Masukkan alokasi kandang hingga totalnya sama dengan quantity order.',
+    ? t('dialog.allocation.editDescription')
+    : t('dialog.allocation.startDescription'),
 )
 
 async function loadOrder() {
@@ -145,7 +146,7 @@ async function openAllocationModal(mode: 'start' | 'edit') {
     allocationModalMode.value = mode
     startDeliveryOpen.value = true
   } catch (caught) {
-    toast.error('Gagal menyiapkan modal alokasi', api.mapError(caught).message)
+    toast.error(t('toast.allocation.prepareFailed'), api.mapError(caught).message)
   } finally {
     allocationModalLoading.value = false
   }
@@ -158,10 +159,10 @@ async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: 
       await api.patch(`/orders/${route.params.id}/allocations`, {
         allocations: payload.allocations,
       })
-      toast.success('Alokasi pengantaran berhasil diperbarui')
+      toast.success(t('toast.allocation.updated'))
     } else {
       await api.post(`/orders/${route.params.id}/start-delivery`, payload)
-      toast.success('Pengantaran berhasil dimulai')
+      toast.success(t('toast.delivery.started'))
     }
 
     startDeliveryOpen.value = false
@@ -169,8 +170,8 @@ async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: 
   } catch (caught) {
     toast.error(
       allocationModalMode.value === 'edit'
-        ? 'Gagal mengubah alokasi'
-        : 'Gagal memulai pengantaran',
+        ? t('toast.allocation.updateFailed')
+        : t('toast.delivery.startFailed'),
       api.mapError(caught).message,
     )
   } finally {
@@ -182,10 +183,10 @@ async function completeDelivery() {
   submitting.value = true
   try {
     await api.post(`/orders/${route.params.id}/complete-delivery`)
-    toast.success('Pengantaran selesai')
+    toast.success(t('toast.delivery.completed'))
     await loadOrder()
   } catch (caught) {
-    toast.error('Gagal menyelesaikan pengantaran', api.mapError(caught).message)
+    toast.error(t('toast.delivery.completeFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -195,11 +196,11 @@ async function updatePayment(payload: Record<string, unknown>) {
   submitting.value = true
   try {
     await api.post(`/orders/${route.params.id}/payment-updates`, payload)
-    toast.success('Pembayaran berhasil diperbarui')
+    toast.success(t('toast.payment.updated'))
     paymentOpen.value = false
     await loadOrder()
   } catch (caught) {
-    toast.error('Gagal update pembayaran', api.mapError(caught).message)
+    toast.error(t('toast.payment.updateFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -209,11 +210,11 @@ async function cancelOrder(payload: Record<string, unknown>) {
   submitting.value = true
   try {
     await api.post(`/orders/${route.params.id}/cancel`, payload)
-    toast.success('Order berhasil dibatalkan')
+    toast.success(t('toast.order.cancelled'))
     cancelOpen.value = false
     await loadOrder()
   } catch (caught) {
-    toast.error('Gagal membatalkan order', api.mapError(caught).message)
+    toast.error(t('toast.order.cancelFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -237,16 +238,16 @@ watch(
   <div class="space-y-6">
     <LoadingSkeleton v-if="loading" :lines="10" />
     <ErrorState v-else-if="error" :message="error">
-      <UiButton icon="refresh" @click="loadOrder">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadOrder">{{ t('common.retry') }}</UiButton>
     </ErrorState>
     <template v-else-if="order">
       <GlassCard>
         <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Order</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{{ t('page.title.Orders') }}</p>
             <h2 class="mt-2 text-2xl font-semibold text-ink-900">{{ order.customer.name }}</h2>
             <p class="mt-2 text-sm text-ink-600">
-              {{ formatKg(order.quantityKg) }} kg • {{ formatDate(order.deliveryDate) }} • dibuat oleh {{ order.createdByName || '-' }}
+              {{ formatKg(order.quantityKg) }} kg • {{ formatDate(order.deliveryDate) }} • {{ t('common.createdBy', { name: order.createdByName || '-' }) }}
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -255,7 +256,7 @@ watch(
               icon="package"
               @click="openAllocationModal('start')"
             >
-              Start Delivery
+              {{ t('order.action.startDelivery') }}
             </UiButton>
             <UiButton
               v-if="auth.role === 'OPERATOR' && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'SEDANG_DIHANTAR'"
@@ -263,7 +264,7 @@ watch(
               icon="edit"
               @click="openAllocationModal('edit')"
             >
-              Edit Allocation
+              {{ t('order.action.editAllocation') }}
             </UiButton>
             <UiButton
               v-if="auth.role === 'OPERATOR' && order.deliveryStatus === 'SEDANG_DIHANTAR'"
@@ -271,7 +272,7 @@ watch(
               icon="chevronRight"
               @click="completeDelivery"
             >
-              Complete Delivery
+              {{ t('order.action.completeDelivery') }}
             </UiButton>
             <UiButton
               v-if="can('orders.pay') && order.paymentStatus !== 'LUNAS'"
@@ -279,7 +280,7 @@ watch(
               icon="money"
               @click="paymentOpen = true"
             >
-              Payment Update
+              {{ t('order.action.updatePayment') }}
             </UiButton>
             <UiButton
               v-if="can('orders.cancel') && order.lifecycleStatus === 'ACTIVE' && order.deliveryStatus === 'BELUM_DIHANTAR'"
@@ -287,26 +288,26 @@ watch(
               icon="delete"
               @click="cancelOpen = true"
             >
-              Cancel Order
+              {{ t('order.action.cancel') }}
             </UiButton>
           </div>
         </div>
       </GlassCard>
 
       <div class="flex flex-wrap gap-2">
-        <UiButton :variant="activeTab === 'summary' ? 'primary' : 'secondary'" icon="dashboard" @click="activeTab = 'summary'">Summary</UiButton>
-        <UiButton :variant="activeTab === 'allocations' ? 'primary' : 'secondary'" icon="package" @click="activeTab = 'allocations'">Allocations</UiButton>
-        <UiButton :variant="activeTab === 'payments' ? 'primary' : 'secondary'" icon="money" @click="activeTab = 'payments'">Payment History</UiButton>
+        <UiButton :variant="activeTab === 'summary' ? 'primary' : 'secondary'" icon="dashboard" @click="activeTab = 'summary'">{{ t('order.summary') }}</UiButton>
+        <UiButton :variant="activeTab === 'allocations' ? 'primary' : 'secondary'" icon="package" @click="activeTab = 'allocations'">{{ t('order.sourceAllocations') }}</UiButton>
+        <UiButton :variant="activeTab === 'payments' ? 'primary' : 'secondary'" icon="money" @click="activeTab = 'payments'">{{ t('order.paymentHistory') }}</UiButton>
       </div>
 
-      <TableCard v-if="activeTab === 'summary'" title="Ringkasan Order" description="Ikhtisar status delivery dan pembayaran." icon="orders">
+      <TableCard v-if="activeTab === 'summary'" :title="t('order.summary')" :description="t('order.summaryDescription')" icon="orders">
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Delivery" :value="deliveryStatusLabel(order.deliveryStatus)" icon="package" />
-          <MetricCard label="Payment" :value="paymentStatusLabel(order.paymentStatus)" icon="money" />
+          <MetricCard :label="t('order.delivery')" :value="deliveryStatusLabel(order.deliveryStatus)" icon="package" />
+          <MetricCard :label="t('order.payment')" :value="paymentStatusLabel(order.paymentStatus)" icon="money" />
           <MetricCard
-            label="Harga/kg"
+            :label="t('order.pricePerKg')"
             :value="formatRupiah(order.pricePerKg)"
-            :helper="order.priceSource === 'CUSTOM' ? 'Custom Price' : ''"
+            :helper="order.priceSource === 'CUSTOM' ? t('order.priceCustom') : ''"
             icon="prices"
           />
           <MetricCard
@@ -316,15 +317,15 @@ watch(
           />
         </div>
         <div class="mt-6 rounded-2xl border border-white/40 bg-white/60 p-4 text-sm text-ink-700">
-          <p><span class="font-medium text-ink-900">Deliver before:</span> {{ order.deliverBefore || '-' }}</p>
-          <p class="mt-2"><span class="font-medium text-ink-900">Catatan:</span> {{ order.notes || '-' }}</p>
+          <p><span class="font-medium text-ink-900">{{ t('order.deliverBefore') }}:</span> {{ order.deliverBefore || '-' }}</p>
+          <p class="mt-2"><span class="font-medium text-ink-900">{{ t('common.notes') }}:</span> {{ order.notes || '-' }}</p>
         </div>
       </TableCard>
 
       <TableCard
         v-else-if="activeTab === 'allocations'"
-        title="Source Allocations"
-        description="Gross income per kandang berasal dari alokasi aktual ini."
+        :title="t('order.sourceAllocations')"
+        :description="t('order.sourceAllocationsDescription')"
         icon="package"
       >
         <div v-if="allocations.length" class="space-y-3 text-sm">
@@ -338,17 +339,17 @@ watch(
               <span>{{ formatKg(item.quantityKg) }} kg</span>
             </div>
             <p class="mt-2 text-xs text-ink-500">
-              Diinput oleh {{ item.assignedByName || '-' }} pada {{ formatDateTime(item.createdAt) }}
+              {{ t('common.inputByAt', { name: item.assignedByName || '-', date: formatDateTime(item.createdAt) }) }}
             </p>
           </div>
         </div>
-        <p v-else class="text-sm text-ink-500">Belum ada alokasi sumber telur.</p>
+        <p v-else class="text-sm text-ink-500">{{ t('order.noAllocations') }}</p>
       </TableCard>
 
       <TableCard
         v-else
-        title="Payment History"
-        description="Riwayat perubahan status pembayaran order."
+        :title="t('order.paymentHistory')"
+        :description="t('order.paymentHistoryDescription')"
         icon="money"
       >
         <div v-if="paymentHistory.length" class="space-y-3 text-sm">
@@ -368,7 +369,7 @@ watch(
             <p class="mt-1 text-sm text-ink-700">{{ item.notes || '-' }}</p>
           </div>
         </div>
-        <p v-else class="text-sm text-ink-500">Belum ada riwayat pembayaran.</p>
+        <p v-else class="text-sm text-ink-500">{{ t('order.noPaymentHistory') }}</p>
       </TableCard>
 
       <UiDialog
@@ -388,7 +389,7 @@ watch(
           :initial-allocations="allocationModalMode === 'edit' ? allocations : []"
           :combined-available-kg="liveStock?.combinedAvailableKg ?? null"
           :coop-stocks="liveStock?.coops ?? []"
-          :submit-label="allocationModalMode === 'edit' ? 'Simpan perubahan alokasi' : 'Mulai pengantaran'"
+          :submit-label="allocationModalMode === 'edit' ? t('order.action.saveAllocation') : t('order.action.startDelivery')"
           :submitting="submitting"
           @submit="submitDeliveryAllocation"
         />
@@ -396,8 +397,8 @@ watch(
 
       <UiDialog
         v-model:open="paymentOpen"
-        title="Payment Update"
-        description="Semua update pembayaran akan masuk ke payment history."
+        :title="t('dialog.payment.title')"
+        :description="t('dialog.payment.description')"
       >
         <FormsPaymentUpdateForm
           :submitting="submitting"
@@ -410,7 +411,7 @@ watch(
 
       <UiDialog
         v-model:open="cancelOpen"
-        title="Cancel Order"
+        :title="t('order.cancel')"
         description="Pembatalan hanya berlaku untuk order aktif yang belum dihantar."
       >
         <FormsCancelOrderForm :submitting="submitting" @submit="cancelOrder" />

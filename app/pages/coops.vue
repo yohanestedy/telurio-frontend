@@ -10,6 +10,7 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const pagination = usePagination()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -21,12 +22,12 @@ const submitting = ref(false)
 const sortBy = ref('createdAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
-const orderByOptions = [
-  { label: 'Dibuat', value: 'createdAt', kind: 'date' as const },
-  { label: 'Diperbarui', value: 'updatedAt', kind: 'date' as const },
-  { label: 'Nama', value: 'name', kind: 'text' as const },
-  { label: 'Populasi', value: 'population', kind: 'number' as const },
-]
+const orderByOptions = computed(() => [
+  { label: t('common.createdAt'), value: 'createdAt', kind: 'date' as const },
+  { label: t('livestock.lastUpdate'), value: 'updatedAt', kind: 'date' as const },
+  { label: t('common.name'), value: 'name', kind: 'text' as const },
+  { label: t('coopProfile.population'), value: 'population', kind: 'number' as const },
+])
 const pageSizeOptions = defaultPageSizeOptions
 const skeletonCells = [
   { lines: [{ class: 'w-11/12' }, { class: 'mt-2 w-7/12' }] },
@@ -78,16 +79,16 @@ async function submitCoop(payload: Record<string, unknown>) {
   try {
     if (editing.value) {
       await api.patch(`/coops/${editing.value.id}`, payload)
-      toast.success('Kandang berhasil diperbarui')
+      toast.success(t('toast.coop.updated'))
     } else {
       await api.post('/coops', payload)
-      toast.success('Kandang berhasil dibuat')
+      toast.success(t('toast.coop.created'))
     }
     dialogOpen.value = false
     editing.value = null
     await loadCoops()
   } catch (caught) {
-    toast.error('Gagal menyimpan kandang', api.mapError(caught).message)
+    toast.error(t('toast.coop.saveFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -118,18 +119,18 @@ watch([sortBy, sortOrder], () => {
   <div class="space-y-4">
     <ListHeaderCard
       icon="coops"
-      title="Daftar Kandang"
-      description="Master kandang dan parameter penyusutan aktif."
+      :title="t('coop.listTitle')"
+      :description="t('coop.listDescription')"
     >
       <template #actions>
         <UiButton
           variant="secondary"
           icon="refresh"
-          title="Refresh"
-          aria-label="Refresh"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
           @click="loadCoops"
         />
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">{{ t('common.add') }}</UiButton>
       </template>
     </ListHeaderCard>
 
@@ -147,7 +148,7 @@ watch([sortBy, sortOrder], () => {
       @change-limit="onLimitChange"
     >
       <template #sort-menu>
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.sort') }}</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
             <select
               :value="sortBy"
@@ -173,31 +174,31 @@ watch([sortBy, sortOrder], () => {
       <template #filter-menu>
           <div class="mb-3 flex items-center gap-2">
             <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.dataFilter') }}</p>
           </div>
 
           <div class="space-y-1.5">
             <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
               <UiIcon name="coops" class="h-3.5 w-3.5 text-ink-500" />
-              <span>Status kandang</span>
+              <span>{{ t('coop.status') }}</span>
             </p>
             <select
               :value="draftFilters.active"
               class="field-shell py-2.5"
               @change="draftFilters.active = ($event.target as HTMLSelectElement).value"
             >
-              <option value="">Semua status</option>
-              <option value="true">Aktif</option>
-              <option value="false">Nonaktif</option>
+              <option value="">{{ t('coop.allStatuses') }}</option>
+              <option value="true">{{ t('common.active') }}</option>
+              <option value="false">{{ t('common.inactive') }}</option>
             </select>
           </div>
 
           <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
             <UiButton size="sm" variant="ghost" icon="refresh" @click="resetFilters">
-              Reset
+              {{ t('common.reset') }}
             </UiButton>
             <UiButton size="sm" icon="filter" @click="applyFilters">
-              Terapkan
+              {{ t('common.apply') }}
             </UiButton>
           </div>
       </template>
@@ -206,11 +207,11 @@ watch([sortBy, sortOrder], () => {
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
-              <th class="px-4 py-3 pr-4">Nama</th>
-              <th class="px-4 py-3 pr-4">Populasi</th>
-              <th class="px-4 py-3 pr-4">Penyusutan</th>
-              <th class="px-4 py-3 pr-4">Status</th>
-              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.name') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('coopProfile.population') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('coop.depreciation') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.status') }}</th>
+              <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -236,7 +237,7 @@ watch([sortBy, sortOrder], () => {
               <td class="px-4 py-4 pr-4">{{ coop.depreciationPercent }}%</td>
               <td class="px-4 py-4 pr-4">
                 <UiBadge :tone="coop.isActive ? 'success' : 'danger'">
-                  {{ coop.isActive ? 'Aktif' : 'Nonaktif' }}
+                  {{ coop.isActive ? t('common.active') : t('common.inactive') }}
                 </UiBadge>
               </td>
               <td class="px-4 py-4 text-right">
@@ -246,7 +247,7 @@ watch([sortBy, sortOrder], () => {
                   icon="edit"
                   @click="dialogOpen = true; editing = coop"
                 >
-                  Edit
+                  {{ t('common.edit') }}
                 </UiButton>
               </td>
             </tr>
@@ -255,7 +256,7 @@ watch([sortBy, sortOrder], () => {
             v-else
             mode="empty"
             :colspan="5"
-            message="Belum ada kandang untuk filter saat ini."
+            :message="t('coop.emptyFiltered')"
           />
         </table>
       </template>
@@ -263,8 +264,8 @@ watch([sortBy, sortOrder], () => {
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? 'Edit kandang' : 'Tambah kandang'"
-      description="Pastikan field kandang sesuai master data backend."
+      :title="editing ? t('coop.dialogTitle.edit') : t('coop.dialogTitle.add')"
+      :description="t('coop.dialogDescription')"
     >
       <FormsCoopForm
         :initial-value="editing ? {

@@ -12,6 +12,7 @@ const toast = useToast()
 const auth = useAuthStore()
 const route = useRoute()
 const pagination = usePagination()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -33,12 +34,12 @@ const endDateFilter = ref('')
 const sortBy = ref('date')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
-const orderByOptions = [
-  { label: 'Tanggal expense', value: 'date', kind: 'date' as const },
-  { label: 'Dibuat', value: 'createdAt', kind: 'date' as const },
-  { label: 'Jumlah', value: 'amount', kind: 'number' as const },
+const orderByOptions = computed(() => [
+  { label: t('expense.date'), value: 'date', kind: 'date' as const },
+  { label: t('common.createdAt'), value: 'createdAt', kind: 'date' as const },
+  { label: t('common.amount'), value: 'amount', kind: 'number' as const },
   // categoryLabel removed
-]
+])
 const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
@@ -139,16 +140,16 @@ async function submitExpense(payload: Record<string, unknown>) {
         amount: payload.amount,
         notes: payload.notes,
       })
-      toast.success('Pengeluaran berhasil diperbarui')
+      toast.success(t('toast.expense.updated'))
     } else {
       await api.post('/expenses', payload)
-      toast.success('Pengeluaran berhasil dibuat')
+      toast.success(t('toast.expense.created'))
     }
     dialogOpen.value = false
     editing.value = null
     await loadExpenses()
   } catch (caught) {
-    toast.error('Gagal menyimpan pengeluaran', api.mapError(caught).message)
+    toast.error(t('toast.expense.saveFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -162,12 +163,12 @@ async function deleteExpense(payload: { deleteReason: string }) {
   submitting.value = true
   try {
     await api.delete(`/expenses/${deleting.value.id}`, payload)
-    toast.success('Pengeluaran berhasil dihapus')
+    toast.success(t('toast.expense.deleted'))
     deleteDialogOpen.value = false
     deleting.value = null
     await loadExpenses()
   } catch (caught) {
-    toast.error('Gagal menghapus pengeluaran', api.mapError(caught).message)
+    toast.error(t('toast.expense.deleteFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -221,18 +222,18 @@ watch(
   <div class="space-y-4">
     <ListHeaderCard
       icon="expenses"
-      title="Pengeluaran Kandang"
-      description="Pengeluaran tersambung ke kandang dan kategori owner."
+      :title="t('expense.title')"
+      :description="t('expense.description')"
     >
       <template #actions>
         <UiButton
           variant="secondary"
           icon="refresh"
-          title="Refresh"
-          aria-label="Refresh"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
           @click="loadExpenses"
         />
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">{{ t('common.add') }}</UiButton>
       </template>
     </ListHeaderCard>
 
@@ -250,7 +251,7 @@ watch(
       @change-limit="onLimitChange"
     >
       <template #sort-menu>
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.sort') }}</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
             <select
               :value="sortBy"
@@ -276,21 +277,21 @@ watch(
       <template #filter-menu>
           <div class="mb-3 flex items-center gap-2">
             <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.dataFilter') }}</p>
           </div>
 
           <div class="space-y-3">
             <div class="space-y-1.5">
               <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
                 <UiIcon name="coops" class="h-3.5 w-3.5 text-ink-500" />
-                <span>Kandang</span>
+                <span>{{ t('common.coop') }}</span>
               </p>
               <select
                 :value="draftFilters.coopId"
                 class="field-shell py-2.5"
                 @change="draftFilters.coopId = ($event.target as HTMLSelectElement).value"
               >
-                <option value="">Semua kandang</option>
+                <option value="">{{ t('stock.allCoops') }}</option>
                 <option v-for="item in coopOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </option>
@@ -307,7 +308,7 @@ watch(
                 class="field-shell py-2.5"
                 @change="draftFilters.ownerId = ($event.target as HTMLSelectElement).value"
               >
-                <option value="">Semua owner</option>
+                <option value="">{{ t('expense.allOwners') }}</option>
                 <option v-for="item in ownerOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </option>
@@ -317,14 +318,14 @@ watch(
             <div class="space-y-1.5">
               <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
                 <UiIcon name="categories" class="h-3.5 w-3.5 text-ink-500" />
-                <span>Kategori</span>
+                <span>{{ t('expense.category') }}</span>
               </p>
               <select
                 :value="draftFilters.expenseCategoryId"
                 class="field-shell py-2.5"
                 @change="draftFilters.expenseCategoryId = ($event.target as HTMLSelectElement).value"
               >
-                <option value="">Semua kategori</option>
+                <option value="">{{ t('expense.allCategories') }}</option>
                 <option v-for="item in categoryFilterOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </option>
@@ -334,23 +335,23 @@ watch(
             <div class="grid gap-3 sm:grid-cols-2">
               <UiDatePicker
                 v-model="draftFilters.startDate"
-                label="Dari tanggal"
-                placeholder="Pilih tanggal awal"
+                :label="t('date.start')"
+                :placeholder="t('date.pickStart')"
               />
               <UiDatePicker
                 v-model="draftFilters.endDate"
-                label="Sampai tanggal"
-                placeholder="Pilih tanggal akhir"
+                :label="t('date.end')"
+                :placeholder="t('date.pickEnd')"
               />
             </div>
           </div>
 
           <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
             <UiButton size="sm" variant="ghost" icon="refresh" @click="resetFilters">
-              Reset
+              {{ t('common.reset') }}
             </UiButton>
             <UiButton size="sm" icon="filter" @click="applyFilters">
-              Terapkan
+              {{ t('common.apply') }}
             </UiButton>
           </div>
       </template>
@@ -359,12 +360,12 @@ watch(
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
-              <th class="px-4 py-3 pr-4">Tanggal</th>
-              <th class="px-4 py-3 pr-4">Kandang</th>
-              <th class="px-4 py-3 pr-4">Kategori</th>
-              <th class="px-4 py-3 pr-4">Deskripsi</th>
-              <th class="px-4 py-3 pr-4">Jumlah</th>
-              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.date') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.coop') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('expense.category') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('expense.itemDescription') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.amount') }}</th>
+              <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -390,10 +391,10 @@ watch(
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
                   <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = item">
-                    Edit
+                    {{ t('common.edit') }}
                   </UiButton>
                   <UiButton variant="ghost" size="sm" icon="delete" @click="deleteDialogOpen = true; deleting = item">
-                    Hapus
+                    {{ t('common.delete') }}
                   </UiButton>
                 </div>
               </td>
@@ -403,7 +404,7 @@ watch(
             v-else
             mode="empty"
             :colspan="6"
-            message="Belum ada data pengeluaran untuk filter saat ini."
+            :message="t('expense.emptyFiltered')"
           />
         </table>
       </template>
@@ -411,8 +412,8 @@ watch(
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? 'Edit expense' : 'Tambah expense'"
-      description="Expense akan masuk ke laporan net income kandang."
+      :title="editing ? t('expense.dialogTitle.edit') : t('expense.dialogTitle.add')"
+      :description="t('expense.dialogDescription')"
       size="xl"
     >
       <FormsExpenseForm
@@ -434,8 +435,8 @@ watch(
 
     <UiDialog
       v-model:open="deleteDialogOpen"
-      title="Hapus pengeluaran"
-      description="Masukkan alasan agar perubahan tetap jelas di audit trail."
+      :title="t('expense.deleteTitle')"
+      :description="t('expense.deleteDescription')"
     >
       <FormsDeleteReasonForm :submitting="submitting" @submit="deleteExpense" />
     </UiDialog>

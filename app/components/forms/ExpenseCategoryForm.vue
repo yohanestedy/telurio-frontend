@@ -3,11 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  name: z.string().min(2, 'Nama kategori minimal 2 karakter'),
-  isActive: z.boolean().optional(),
-})
-
 type FormValues = {
   name: string
   isActive: boolean
@@ -22,6 +17,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [{ name: string; isActive?: boolean }]
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
   initialValues: {
@@ -48,6 +45,10 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    name: z.string().min(2, t('validation.categoryNameMin', { min: '2' })),
+    isActive: z.boolean().optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -60,11 +61,11 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="grid gap-4" @submit.prevent="onSubmit">
-    <UiInput v-model="name" label="Nama kategori" :error="errors.name" />
-    <UiCheckbox v-if="isEdit" v-model="isActive" label="Kategori aktif" />
+    <UiInput v-model="name" :label="t('expenseCategory.name')" :error="errors.name" />
+    <UiCheckbox v-if="isEdit" v-model="isActive" :label="t('expenseCategory.active')" />
     <div class="flex justify-end">
       <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan kategori' }}
+        {{ submitting ? t('common.saving') : t('expenseCategory.save') }}
       </UiButton>
     </div>
   </form>

@@ -3,13 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  coopId: z.string().min(1, 'Kandang wajib dipilih'),
-  direction: z.enum(['IN', 'OUT']),
-  quantityKg: z.coerce.number().min(0.001, 'Jumlah minimal 0.001 kg'),
-  notes: z.string().max(255, 'Maksimal 255 karakter').optional(),
-})
-
 type FormValues = {
   coopId: string
   direction: 'IN' | 'OUT'
@@ -34,6 +27,8 @@ const emit = defineEmits<{
     },
   ]
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, setErrors, resetForm } = useForm<FormValues>({
   initialValues: {
@@ -66,6 +61,12 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    coopId: z.string().min(1, t('validation.required.coop')),
+    direction: z.enum(['IN', 'OUT']),
+    quantityKg: z.coerce.number().min(0.001, t('validation.min.quantityKg', { min: '0.001' })),
+    notes: z.string().max(255, t('validation.max.characters', { max: '255' })).optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -97,13 +98,13 @@ function onReset() {
     <UiSelect
       v-model="coopId"
       :options="coopOptions"
-      label="Kandang"
-      placeholder="Pilih kandang"
+      :label="t('common.coop')"
+      :placeholder="t('validation.required.coop')"
       :error="errors.coopId"
     />
 
     <div class="space-y-1.5">
-      <p class="text-sm font-medium text-ink-800">Arah penyesuaian</p>
+      <p class="text-sm font-medium text-ink-800">{{ t('stock.adjustmentDirection') }}</p>
       <div class="grid grid-cols-2 gap-2">
         <button
           type="button"
@@ -113,7 +114,7 @@ function onReset() {
             : 'border-white/60 bg-white/70 text-ink-700 hover:bg-white'"
           @click="direction = 'IN'"
         >
-          Masuk (+)
+          {{ t('stock.in') }} (+)
         </button>
         <button
           type="button"
@@ -123,7 +124,7 @@ function onReset() {
             : 'border-white/60 bg-white/70 text-ink-700 hover:bg-white'"
           @click="direction = 'OUT'"
         >
-          Keluar (-)
+          {{ t('stock.out') }} (-)
         </button>
       </div>
     </div>
@@ -133,7 +134,7 @@ function onReset() {
       type="number"
       min="0"
       step="0.001"
-      label="Jumlah (kg)"
+      :label="t('order.quantity') + ' (kg)'"
       placeholder="0.00"
       :error="errors.quantityKg"
     />
@@ -141,8 +142,8 @@ function onReset() {
     <div class="md:col-span-2">
       <UiTextarea
         v-model="notes"
-        label="Catatan"
-        placeholder="Alasan penyesuaian stok..."
+        :label="t('common.notes')"
+        :placeholder="t('stock.notesPlaceholder')"
         :rows="3"
         :error="errors.notes"
       />
@@ -150,10 +151,10 @@ function onReset() {
 
     <div class="md:col-span-2 flex justify-end gap-2">
       <UiButton type="button" variant="ghost" :disabled="submitting" @click="onReset">
-        Reset
+        {{ t('common.reset') }}
       </UiButton>
       <UiButton type="submit" :disabled="submitting">
-        {{ submitting ? 'Menyimpan...' : 'Simpan penyesuaian' }}
+        {{ submitting ? t('common.saving') : t('stock.saveAdjustment') }}
       </UiButton>
     </div>
   </form>

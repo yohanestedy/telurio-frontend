@@ -3,12 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  effectiveDate: z.string().min(1, 'Tanggal wajib diisi'),
-  pricePerKg: z.coerce.number().min(0, 'Harga tidak boleh negatif'),
-  notes: z.string().optional(),
-})
-
 type FormValues = {
   effectiveDate: string
   pricePerKg: string
@@ -24,6 +18,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [{ effectiveDate?: string; pricePerKg: number; notes?: string }]
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
   initialValues: {
@@ -53,6 +49,11 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    effectiveDate: z.string().min(1, t('validation.required.date')),
+    pricePerKg: z.coerce.number().min(0, t('validation.nonNegative.price')),
+    notes: z.string().optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -72,17 +73,17 @@ const onSubmit = handleSubmit((values) => {
     <UiDatePicker
       v-if="!isEdit"
       v-model="effectiveDate"
-      label="Tanggal efektif"
-      placeholder="Pilih tanggal efektif"
+      :label="t('form.price.effectiveDate')"
+      :placeholder="t('form.price.pickEffectiveDate')"
       :error="errors.effectiveDate"
     />
-    <UiInput v-model="pricePerKg" label="Harga per kg" type="number" :error="errors.pricePerKg" />
+    <UiInput v-model="pricePerKg" :label="t('form.price.pricePerKg')" type="number" :error="errors.pricePerKg" />
     <div :class="{ 'md:col-span-2': !isEdit }">
-      <UiTextarea v-model="notes" label="Catatan" :error="errors.notes" />
+      <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
     </div>
     <div class="md:col-span-2 flex justify-end">
       <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan harga' }}
+        {{ submitting ? t('common.saving') : t('form.price.save') }}
       </UiButton>
     </div>
   </form>

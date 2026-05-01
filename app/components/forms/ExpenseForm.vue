@@ -3,16 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  date: z.string().min(1, 'Tanggal wajib diisi'),
-  coopId: z.string().min(1, 'Kandang wajib dipilih'),
-  expenseCategoryId: z.string().optional(),
-  // categoryLabel removed
-  description: z.string().optional(),
-  amount: z.coerce.number().min(0, 'Jumlah tidak boleh negatif'),
-  notes: z.string().optional(),
-})
-
 type FormValues = {
   date: string
   coopId: string
@@ -44,6 +34,8 @@ const emit = defineEmits<{
     },
   ]
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
   initialValues: {
@@ -116,6 +108,14 @@ watch(expenseCategoryId, (value) => {
 })
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    date: z.string().min(1, t('validation.required.date')),
+    coopId: z.string().min(1, t('validation.required.coop')),
+    expenseCategoryId: z.string().optional(),
+    description: z.string().optional(),
+    amount: z.coerce.number().min(0, t('validation.min.zero')),
+    notes: z.string().optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -140,34 +140,34 @@ const onSubmit = handleSubmit((values) => {
   <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
     <UiDatePicker
       v-model="date"
-      label="Tanggal"
-      placeholder="Pilih tanggal"
+      :label="t('common.date')"
+      :placeholder="t('date.placeholder')"
       :error="errors.date"
     />
     <UiSelect
       v-if="!isEdit"
       v-model="coopId"
       :options="coopOptions"
-      label="Kandang"
-      placeholder="Pilih kandang"
+      :label="t('common.coop')"
+      :placeholder="t('validation.required.coop')"
       :error="errors.coopId"
     />
     <UiSelect
       v-model="expenseCategoryId"
       :options="categoryOptions"
-      label="Kategori tersimpan"
-      placeholder="Opsional"
+      :label="t('expense.savedCategory')"
+      :placeholder="t('expense.optional')"
       :error="errors.expenseCategoryId"
     />
     <!-- categoryLabel removed -->
-    <UiInput v-model="amount" type="number" label="Jumlah" :error="errors.amount" />
-    <UiInput v-model="description" label="Deskripsi" :error="errors.description" />
+    <UiInput v-model="amount" type="number" :label="t('common.amount')" :error="errors.amount" />
+    <UiInput v-model="description" :label="t('expense.itemDescription')" :error="errors.description" />
     <div class="md:col-span-2">
-      <UiTextarea v-model="notes" label="Catatan" :error="errors.notes" />
+      <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
     </div>
     <div class="md:col-span-2 flex justify-end">
       <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan pengeluaran' }}
+        {{ submitting ? t('common.saving') : t('expense.save') }}
       </UiButton>
     </div>
   </form>

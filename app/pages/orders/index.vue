@@ -19,6 +19,7 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const route = useRoute()
 const { can } = useAuth()
+const { t } = useI18n()
 const pagination = usePagination()
 const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
 
@@ -81,23 +82,23 @@ const sortOrder = computed({
   },
 })
 
-const deliveryStatusOptions = deliveryStatuses.map((item) => ({
+const deliveryStatusOptions = computed(() => deliveryStatuses.map((item) => ({
   label: deliveryStatusLabel(item),
   value: item,
-}))
+})))
 
-const paymentStatusOptions = paymentStatuses.map((item) => ({
+const paymentStatusOptions = computed(() => paymentStatuses.map((item) => ({
   label: paymentStatusLabel(item),
   value: item,
-}))
+})))
 
-const orderByOptions = [
-  { label: 'Tanggal kirim', value: 'deliveryDate', kind: 'date' as const },
-  { label: 'Dibuat', value: 'createdAt', kind: 'date' as const },
-  { label: 'Jumlah kg', value: 'quantityKg', kind: 'number' as const },
-  { label: 'Status delivery', value: 'deliveryStatus', kind: 'text' as const },
-  { label: 'Status payment', value: 'paymentStatus', kind: 'text' as const },
-]
+const orderByOptions = computed(() => [
+  { label: t('order.deliveryDate'), value: 'deliveryDate', kind: 'date' as const },
+  { label: t('common.createdAt'), value: 'createdAt', kind: 'date' as const },
+  { label: t('order.quantity'), value: 'quantityKg', kind: 'number' as const },
+  { label: t('order.delivery'), value: 'deliveryStatus', kind: 'text' as const },
+  { label: t('order.payment'), value: 'paymentStatus', kind: 'text' as const },
+])
 const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 
 const customerOptions = computed(() =>
@@ -206,16 +207,16 @@ async function submitOrder(payload: Record<string, unknown>) {
   try {
     if (editing.value) {
       await api.patch(`/orders/${editing.value.id}`, payload)
-      toast.success('Order berhasil diperbarui')
+      toast.success(t('toast.order.updated'))
     } else {
       await api.post('/orders', payload)
-      toast.success('Order berhasil dibuat')
+      toast.success(t('toast.order.created'))
     }
     dialogOpen.value = false
     editing.value = null
     await loadOrders()
   } catch (caught) {
-    toast.error('Gagal menyimpan order', api.mapError(caught).message)
+    toast.error(t('toast.order.saveFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -241,7 +242,7 @@ function formatMoneyNumber(value?: string | number | null) {
     return '-'
   }
 
-  return normalized.toLocaleString('id-ID')
+  return normalized.toLocaleString(ui.language === 'en' ? 'en-US' : 'id-ID')
 }
 
 async function refreshOrdersContext() {
@@ -290,28 +291,28 @@ watch(
   <div class="space-y-4">
     <TodayPriceNotice
       v-if="todayPriceMissing"
-      title="Harga telur hari ini belum diinput"
+      :title="t('notice.todayPriceMissing.title')"
       :message="auth.role === 'ADMIN'
-        ? 'Order dengan tanggal kirim hari ini belum bisa dibuat atau diproses pengantarannya sampai harga hari ini diinput.'
-        : 'Order dengan tanggal kirim hari ini belum bisa diproses sampai admin menginput harga telur untuk hari ini.'"
+        ? t('notice.todayPriceMissing.admin')
+        : t('notice.todayPriceMissing.user')"
       :show-action="auth.role === 'ADMIN'"
       @action="navigateTo({ path: '/prices', query: { create: 'today' } })"
     />
 
     <ListHeaderCard
       icon="orders"
-      title="Daftar Order"
-      description="Delivery status dan payment status dipisah sesuai flow bisnis."
+      :title="t('order.listTitle')"
+      :description="t('order.listDescription')"
     >
       <template #actions>
         <UiButton
           variant="secondary"
           icon="refresh"
-          title="Refresh"
-          aria-label="Refresh"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
           @click="refreshOrdersContext"
         />
-        <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
+        <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">{{ t('common.add') }}</UiButton>
       </template>
     </ListHeaderCard>
 
@@ -329,7 +330,7 @@ watch(
       @change-limit="onLimitChange"
     >
       <template #sort-menu>
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.sort') }}</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
             <select
               :value="sortBy"
@@ -355,21 +356,21 @@ watch(
       <template #filter-menu>
           <div class="mb-3 flex items-center gap-2">
             <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.dataFilter') }}</p>
           </div>
 
           <div class="space-y-3">
             <div class="space-y-1.5">
               <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
                 <UiIcon name="delivery" class="h-3.5 w-3.5 text-ink-500" />
-                <span>Status Delivery</span>
+                <span>{{ t('order.delivery') }}</span>
               </p>
               <select
                 :value="draftFilters.deliveryStatus"
                 class="field-shell py-2.5"
                 @change="draftFilters.deliveryStatus = ($event.target as HTMLSelectElement).value"
               >
-                <option value="">Semua</option>
+                <option value="">{{ t('common.all') }}</option>
                 <option v-for="item in deliveryStatusOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </option>
@@ -379,14 +380,14 @@ watch(
             <div class="space-y-1.5">
               <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
                 <UiIcon name="money" class="h-3.5 w-3.5 text-ink-500" />
-                <span>Status Pembayaran</span>
+                <span>{{ t('order.payment') }}</span>
               </p>
               <select
                 :value="draftFilters.paymentStatus"
                 class="field-shell py-2.5"
                 @change="draftFilters.paymentStatus = ($event.target as HTMLSelectElement).value"
               >
-                <option value="">Semua</option>
+                <option value="">{{ t('common.all') }}</option>
                 <option v-for="item in paymentStatusOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </option>
@@ -395,21 +396,21 @@ watch(
 
             <UiDatePicker
               v-model="draftFilters.deliveryDate"
-              label="Tanggal kirim spesifik"
-              placeholder="Pilih tanggal kirim"
+              :label="t('order.deliveryDateSpecific')"
+              :placeholder="t('order.pickDeliveryDate')"
             />
 
             <div class="grid gap-3 sm:grid-cols-2">
               <UiDatePicker
                 v-model="draftFilters.startDate"
-                label="Dari tanggal"
-                placeholder="Pilih tanggal awal"
+                :label="t('date.start')"
+                :placeholder="t('date.pickStart')"
                 :disabled="Boolean(draftFilters.deliveryDate)"
               />
               <UiDatePicker
                 v-model="draftFilters.endDate"
-                label="Sampai tanggal"
-                placeholder="Pilih tanggal akhir"
+                :label="t('date.end')"
+                :placeholder="t('date.pickEnd')"
                 :disabled="Boolean(draftFilters.deliveryDate)"
               />
             </div>
@@ -417,10 +418,10 @@ watch(
 
           <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
             <UiButton size="sm" variant="ghost" icon="refresh" @click="resetFilters">
-              Reset
+              {{ t('common.reset') }}
             </UiButton>
             <UiButton size="sm" icon="filter" @click="applyFilters">
-              Terapkan
+              {{ t('common.apply') }}
             </UiButton>
           </div>
       </template>
@@ -429,13 +430,13 @@ watch(
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
-              <th class="px-4 py-3 pr-4">Customer</th>
-              <th class="px-4 py-3 pr-4">Tanggal kirim</th>
+              <th class="px-4 py-3 pr-4">{{ t('order.customerHeader') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('order.deliveryDate') }}</th>
               <th class="px-4 py-3 pr-4">Kg</th>
-              <th class="px-4 py-3 pr-4">Total Rp</th>
-              <th class="px-4 py-3 pr-4">Delivery</th>
-              <th class="px-4 py-3 pr-4">Payment</th>
-              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+              <th class="px-4 py-3 pr-4">{{ t('order.totalRp') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('order.delivery') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('order.payment') }}</th>
+              <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -462,7 +463,7 @@ watch(
               <td class="px-4 py-4 pr-4">
                 <p class="font-medium text-ink-900">{{ formatMoneyNumber(order.totalInvoice) }}</p>
                 <p class="text-[11px] leading-tight text-ink-500">
-                  {{ order.pricePerKg ? `@ ${formatMoneyNumber(order.pricePerKg)} /kg` : 'Harga belum terkunci' }}
+                  {{ order.pricePerKg ? `@ ${formatMoneyNumber(order.pricePerKg)} /kg` : t('order.priceNotLocked') }}
                 </p>
               </td>
               <td class="whitespace-nowrap px-4 py-4 pr-4"><StatusChip compact kind="delivery" :value="order.deliveryStatus" /></td>
@@ -473,8 +474,8 @@ watch(
                     variant="ghost"
                     size="sm"
                     icon="search"
-                    title="Detail order"
-                    aria-label="Detail order"
+                    :title="t('order.action.viewDetail')"
+                    :aria-label="t('order.action.viewDetail')"
                     class="h-15 w-15 justify-center p-0"
                     @click="navigateTo({ path: `/orders/${order.id}`, query: { deliveryDate: order.deliveryDate } })"
                   />
@@ -483,8 +484,8 @@ watch(
                     variant="ghost"
                     size="sm"
                     icon="edit"
-                    title="Edit order"
-                    aria-label="Edit order"
+                    :title="t('common.edit')"
+                    :aria-label="t('common.edit')"
                     class="h-15 w-15 justify-center p-0"
                     @click="dialogOpen = true; editing = order"
                   />
@@ -496,7 +497,7 @@ watch(
             v-else
             mode="empty"
             :colspan="7"
-            message="Belum ada order untuk filter saat ini."
+            :message="t('order.emptyFiltered')"
           />
         </table>
       </template>
@@ -504,7 +505,7 @@ watch(
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? 'Edit order' : 'Tambah order'"
+      :title="editing ? t('common.edit') : t('common.add')"
       description="Harga final akan dikunci saat delivery dimulai atau saat order langsung lunas."
       size="xl"
     >

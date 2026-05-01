@@ -3,16 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  date: z.string().min(1, 'Tanggal wajib diisi'),
-  coopId: z.string().min(1, 'Kandang wajib dipilih'),
-  collectionTime: z.string().min(1, 'Waktu pengambilan wajib diisi'),
-  goodKg: z.coerce.number().min(0, 'Minimal 0'),
-  goodCount: z.coerce.number().int().min(0, 'Minimal 0'),
-  brokenCount: z.coerce.number().int().min(0, 'Minimal 0').optional(),
-  notes: z.string().optional(),
-})
-
 type FormValues = {
   date: string
   coopId: string
@@ -43,6 +33,8 @@ const emit = defineEmits<{
     },
   ]
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
   initialValues: {
@@ -84,6 +76,15 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    date: z.string().min(1, t('validation.required.date')),
+    coopId: z.string().min(1, t('validation.required.coop')),
+    collectionTime: z.string().min(1, t('validation.required.collectionTime')),
+    goodKg: z.coerce.number().min(0, t('validation.min.zero')),
+    goodCount: z.coerce.number().int().min(0, t('validation.min.zero')),
+    brokenCount: z.coerce.number().int().min(0, t('validation.min.zero')).optional(),
+    notes: z.string().optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -109,34 +110,34 @@ const onSubmit = handleSubmit((values) => {
     <UiDatePicker
       v-if="!isEdit"
       v-model="date"
-      label="Tanggal"
-      placeholder="Pilih tanggal"
+      :label="t('common.date')"
+      :placeholder="t('date.placeholder')"
       :error="errors.date"
     />
     <UiSelect
       v-if="!isEdit"
       v-model="coopId"
       :options="coopOptions"
-      label="Kandang"
-      placeholder="Pilih kandang"
+      :label="t('common.coop')"
+      :placeholder="t('validation.required.coop')"
       :error="errors.coopId"
     />
     <UiInput
       v-if="!isEdit"
       v-model="collectionTime"
-      label="Waktu pengambilan"
+      :label="t('form.production.collectionTime')"
       placeholder="07:00"
       :error="errors.collectionTime"
     />
-    <UiInput v-model="goodKg" type="number" label="Berat bagus (kg)" :error="errors.goodKg" />
-    <UiInput v-model="goodCount" type="number" label="Jumlah bagus" :error="errors.goodCount" />
-    <UiInput v-model="brokenCount" type="number" label="Jumlah pecah" :error="errors.brokenCount" />
+    <UiInput v-model="goodKg" type="number" :label="t('form.production.goodWeight')" :error="errors.goodKg" />
+    <UiInput v-model="goodCount" type="number" :label="t('form.production.goodCount')" :error="errors.goodCount" />
+    <UiInput v-model="brokenCount" type="number" :label="t('form.production.brokenCount')" :error="errors.brokenCount" />
     <div class="md:col-span-2">
-      <UiTextarea v-model="notes" label="Catatan" :error="errors.notes" />
+      <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
     </div>
     <div class="md:col-span-2 flex justify-end">
       <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan produksi' }}
+        {{ submitting ? t('common.saving') : t('form.production.save') }}
       </UiButton>
     </div>
   </form>

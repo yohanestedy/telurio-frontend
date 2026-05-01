@@ -11,6 +11,7 @@ const api = useApi()
 const toast = useToast()
 const pagination = usePagination()
 const route = useRoute()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -25,11 +26,11 @@ const endDateFilter = ref('')
 const sortBy = ref('effectiveDate')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
-const orderByOptions = [
-  { label: 'Tanggal efektif', value: 'effectiveDate', kind: 'date' as const },
-  { label: 'Dibuat', value: 'createdAt', kind: 'date' as const },
-  { label: 'Harga per kg', value: 'pricePerKg', kind: 'number' as const },
-]
+const orderByOptions = computed(() => [
+  { label: t('form.price.effectiveDate'), value: 'effectiveDate', kind: 'date' as const },
+  { label: t('common.createdAt'), value: 'createdAt', kind: 'date' as const },
+  { label: t('form.price.pricePerKg'), value: 'pricePerKg', kind: 'number' as const },
+])
 const pageSizeOptions = defaultPageSizeOptions
 const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
@@ -114,17 +115,17 @@ async function submitPrice(payload: Record<string, unknown>) {
   try {
     if (editing.value) {
       await api.patch(`/prices/${editing.value.id}`, payload)
-      toast.success('Harga berhasil diperbarui')
+      toast.success(t('toast.price.updated'))
     } else {
       await api.post('/prices', payload)
-      toast.success('Harga berhasil dibuat')
+      toast.success(t('toast.price.created'))
     }
     dialogOpen.value = false
     editing.value = null
     prefillTodayPrice.value = false
     await loadPrices()
   } catch (caught) {
-    toast.error('Gagal menyimpan harga', api.mapError(caught).message)
+    toast.error(t('toast.price.saveFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -184,40 +185,40 @@ watch(
   <div class="space-y-4">
     <ListHeaderCard
       icon="money"
-      title="Riwayat Harga Harian"
-      description="Harga per kg yang menjadi source of truth untuk order."
+      :title="t('price.listTitle')"
+      :description="t('price.listDescription')"
       :align-actions-end="true"
     >
       <template #actions>
         <UiButton
           variant="secondary"
           icon="refresh"
-          title="Refresh"
-          aria-label="Refresh"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
           @click="loadPrices"
         />
         <UiButton
           variant="ghost"
           icon="prices"
-          title="Publikasi customer"
-          aria-label="Publikasi customer"
+          :title="t('price.publishCustomer')"
+          :aria-label="t('price.publishCustomer')"
           @click="navigateTo('/public/prices')"
         />
-        <UiButton icon="plus" @click="openCreatePriceDialog">Tambah</UiButton>
+        <UiButton icon="plus" @click="openCreatePriceDialog">{{ t('common.add') }}</UiButton>
       </template>
 
       <MetricCard
-        label="Harga aktif"
+        :label="t('price.active')"
         :value="currentPrice ? formatRupiah(currentPrice.pricePerKg) : '-'"
-        :helper="currentPrice ? formatDate(currentPrice.effectiveDate) : 'Harga untuk hari ini belum tersedia'"
+        :helper="currentPrice ? formatDate(currentPrice.effectiveDate) : t('price.todayUnavailable')"
         icon="prices"
       />
     </ListHeaderCard>
 
     <TodayPriceNotice
       v-if="todayPriceMissing"
-      title="Harga telur hari ini belum diinput"
-      message="Input harga untuk hari ini terlebih dahulu agar order dengan tanggal kirim hari ini bisa diproses tanpa kendala."
+      :title="t('notice.todayPriceMissing.title')"
+      :message="t('price.todayMissingMessage')"
       :show-action="true"
       @action="openTodayPriceDialog"
     />
@@ -235,7 +236,7 @@ watch(
       @change-limit="onLimitChange"
     >
       <template #sort-menu>
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.sort') }}</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
             <select
               :value="sortBy"
@@ -261,28 +262,28 @@ watch(
       <template #filter-menu>
           <div class="mb-3 flex items-center gap-2">
             <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.dataFilter') }}</p>
           </div>
 
           <div class="grid gap-3 sm:grid-cols-2">
             <UiDatePicker
               v-model="draftFilters.startDate"
-              label="Dari tanggal"
-              placeholder="Pilih tanggal awal"
+              :label="t('date.start')"
+              :placeholder="t('date.pickStart')"
             />
             <UiDatePicker
               v-model="draftFilters.endDate"
-              label="Sampai tanggal"
-              placeholder="Pilih tanggal akhir"
+              :label="t('date.end')"
+              :placeholder="t('date.pickEnd')"
             />
           </div>
 
           <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
             <UiButton size="sm" variant="ghost" icon="refresh" @click="resetFilters">
-              Reset
+              {{ t('common.reset') }}
             </UiButton>
             <UiButton size="sm" icon="filter" @click="applyFilters">
-              Terapkan
+              {{ t('common.apply') }}
             </UiButton>
           </div>
       </template>
@@ -291,10 +292,10 @@ watch(
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
-              <th class="px-4 py-3 pr-4">Tanggal</th>
-              <th class="px-4 py-3 pr-4">Harga</th>
-              <th class="px-4 py-3 pr-4">Catatan</th>
-              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.date') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('price.price') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.notes') }}</th>
+              <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -317,7 +318,7 @@ watch(
               <td class="px-4 py-4 pr-4">{{ price.notes || '-' }}</td>
               <td class="px-4 py-4 text-right">
                 <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = price">
-                  Edit
+                  {{ t('common.edit') }}
                 </UiButton>
               </td>
             </tr>
@@ -326,7 +327,7 @@ watch(
             v-else
             mode="empty"
             :colspan="4"
-            message="Belum ada harga untuk filter saat ini."
+            :message="t('price.emptyFiltered')"
           />
         </table>
       </template>
@@ -334,8 +335,8 @@ watch(
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? 'Edit harga' : 'Tambah harga baru'"
-      description="Harga akan dipakai saat order dibayar lunas atau delivery dimulai."
+      :title="editing ? t('price.dialogTitle.edit') : t('price.dialogTitle.add')"
+      :description="t('price.dialogDescription')"
     >
       <FormsPriceForm
         :is-edit="Boolean(editing)"

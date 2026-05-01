@@ -10,6 +10,7 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const pagination = usePagination()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -21,11 +22,11 @@ const submitting = ref(false)
 const sortBy = ref('createdAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
-const orderByOptions = [
-  { label: 'Dibuat', value: 'createdAt', kind: 'date' as const },
-  { label: 'Nama', value: 'name', kind: 'text' as const },
-  { label: 'Telepon', value: 'phone', kind: 'text' as const },
-]
+const orderByOptions = computed(() => [
+  { label: t('common.createdAt'), value: 'createdAt', kind: 'date' as const },
+  { label: t('common.name'), value: 'name', kind: 'text' as const },
+  { label: t('common.phone'), value: 'phone', kind: 'text' as const },
+])
 const pageSizeOptions = defaultPageSizeOptions
 const skeletonCells = [
   { lines: [{ class: 'w-10/12' }] },
@@ -81,16 +82,16 @@ async function submitCustomer(payload: Record<string, unknown>) {
   try {
     if (editing.value) {
       await api.patch(`/customers/${editing.value.id}`, payload)
-      toast.success('Pelanggan berhasil diperbarui')
+      toast.success(t('toast.customer.updated'))
     } else {
       await api.post('/customers', payload)
-      toast.success('Pelanggan berhasil dibuat')
+      toast.success(t('toast.customer.created'))
     }
     dialogOpen.value = false
     editing.value = null
     await loadCustomers()
   } catch (caught) {
-    toast.error('Gagal menyimpan pelanggan', api.mapError(caught).message)
+    toast.error(t('toast.customer.saveFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -121,18 +122,18 @@ watch([sortBy, sortOrder], () => {
   <div class="space-y-4">
     <ListHeaderCard
       icon="customers"
-      title="Daftar Pelanggan"
-      description="Data customer yang dipakai saat membuat order."
+      :title="t('customer.listTitle')"
+      :description="t('customer.listDescription')"
     >
       <template #actions>
         <UiButton
           variant="secondary"
           icon="refresh"
-          title="Refresh"
-          aria-label="Refresh"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
           @click="loadCustomers"
         />
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">Tambah</UiButton>
+        <UiButton icon="plus" @click="dialogOpen = true; editing = null">{{ t('common.add') }}</UiButton>
       </template>
     </ListHeaderCard>
 
@@ -149,7 +150,7 @@ watch([sortBy, sortOrder], () => {
       @change-limit="onLimitChange"
     >
       <template #sort-menu>
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Urutkan</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.sort') }}</p>
           <div class="mt-2 grid gap-2 sm:grid-cols-2">
             <select
               :value="sortBy"
@@ -175,28 +176,28 @@ watch([sortBy, sortOrder], () => {
       <template #filter-menu>
           <div class="mb-3 flex items-center gap-2">
             <UiIcon name="filter" class="h-4 w-4 text-brand-700" />
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Filter Data</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">{{ t('common.dataFilter') }}</p>
           </div>
 
           <div class="space-y-1.5">
             <p class="flex items-center gap-1.5 text-xs font-medium text-ink-600">
               <UiIcon name="search" class="h-3.5 w-3.5 text-ink-500" />
-              <span>Cari pelanggan</span>
+              <span>{{ t('customer.search') }}</span>
             </p>
             <input
               v-model="draftFilters.search"
               type="text"
               class="field-shell py-2.5"
-              placeholder="Nama atau nomor telepon"
+              :placeholder="t('customer.searchPlaceholder')"
             >
           </div>
 
           <div class="mt-3 flex items-center justify-end gap-2 border-t border-slate-200/80 pt-3">
             <UiButton size="sm" variant="ghost" icon="refresh" @click="resetFilters">
-              Reset
+              {{ t('common.reset') }}
             </UiButton>
             <UiButton size="sm" icon="filter" @click="applyFilters">
-              Terapkan
+              {{ t('common.apply') }}
             </UiButton>
           </div>
       </template>
@@ -205,10 +206,10 @@ watch([sortBy, sortOrder], () => {
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
-              <th class="px-4 py-3 pr-4">Nama</th>
-              <th class="px-4 py-3 pr-4">Telepon</th>
-              <th class="px-4 py-3 pr-4">Alamat</th>
-              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.name') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.phone') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.address') }}</th>
+              <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -231,7 +232,7 @@ watch([sortBy, sortOrder], () => {
               <td class="px-4 py-4 pr-4">{{ customer.address || '-' }}</td>
               <td class="px-4 py-4 text-right">
                 <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = customer">
-                  Edit
+                  {{ t('common.edit') }}
                 </UiButton>
               </td>
             </tr>
@@ -240,7 +241,7 @@ watch([sortBy, sortOrder], () => {
             v-else
             mode="empty"
             :colspan="4"
-            message="Belum ada pelanggan untuk filter saat ini."
+            :message="t('customer.emptyFiltered')"
           />
         </table>
       </template>
@@ -248,8 +249,8 @@ watch([sortBy, sortOrder], () => {
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? 'Edit pelanggan' : 'Tambah pelanggan'"
-      description="Pelanggan baru akan langsung tersedia saat form order dibuka."
+      :title="editing ? t('customer.dialogTitle.edit') : t('customer.dialogTitle.add')"
+      :description="t('customer.dialogDescription')"
     >
       <FormsCustomerForm
         :initial-value="editing ? {

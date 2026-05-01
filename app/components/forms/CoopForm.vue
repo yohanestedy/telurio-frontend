@@ -3,18 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  name: z.string().min(2, 'Nama kandang minimal 2 karakter'),
-  population: z.coerce.number().int().min(1, 'Populasi minimal 1'),
-  chickenStrain: z.string().optional(),
-  chickBirthDate: z.string().optional(),
-  depreciationPercent: z.coerce
-    .number()
-    .min(0, 'Minimal 0')
-    .max(100, 'Maksimal 100'),
-  isActive: z.boolean().optional(),
-})
-
 type FormValues = {
   name: string
   population: string
@@ -41,6 +29,8 @@ const emit = defineEmits<{
     },
   ]
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
   initialValues: {
@@ -79,6 +69,17 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    name: z.string().min(2, t('validation.coopNameMin', { min: '2' })),
+    population: z.coerce.number().int().min(1, t('validation.min.population')),
+    chickenStrain: z.string().optional(),
+    chickBirthDate: z.string().optional(),
+    depreciationPercent: z.coerce
+      .number()
+      .min(0, t('validation.min.zero'))
+      .max(100, t('validation.max.percent')),
+    isActive: z.boolean().optional(),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -95,27 +96,27 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiInput v-model="name" label="Nama kandang" :error="errors.name" />
-    <UiInput v-model="population" label="Populasi aktif" type="number" :error="errors.population" />
-    <UiInput v-model="chickenStrain" label="Strain ayam" :error="errors.chickenStrain" />
+    <UiInput v-model="name" :label="t('form.coop.name')" :error="errors.name" />
+    <UiInput v-model="population" :label="t('form.coop.activePopulation')" type="number" :error="errors.population" />
+    <UiInput v-model="chickenStrain" :label="t('form.coop.chickenStrain')" :error="errors.chickenStrain" />
     <UiDatePicker
       v-model="chickBirthDate"
-      label="Tanggal menetas"
-      placeholder="Pilih tanggal menetas"
+      :label="t('form.coop.hatchDate')"
+      :placeholder="t('form.coop.pickHatchDate')"
       :error="errors.chickBirthDate"
     />
     <UiInput
       v-model="depreciationPercent"
-      label="Persentase penyusutan"
+      :label="t('form.coop.depreciationPercent')"
       type="number"
       :error="errors.depreciationPercent"
     />
     <div class="md:col-span-2">
-      <UiCheckbox v-model="isActive" label="Kandang aktif" />
+      <UiCheckbox v-model="isActive" :label="t('form.coop.active')" />
     </div>
     <div class="md:col-span-2 flex justify-end">
       <UiButton :disabled="submitting" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Simpan kandang' }}
+        {{ submitting ? t('common.saving') : t('form.coop.save') }}
       </UiButton>
     </div>
   </form>

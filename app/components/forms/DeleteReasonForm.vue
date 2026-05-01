@@ -3,10 +3,6 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
-  deleteReason: z.string().min(3, 'Alasan minimal 3 karakter'),
-})
-
 type FormValues = {
   deleteReason: string
 }
@@ -20,6 +16,8 @@ const emit = defineEmits<{
   submit: [{ deleteReason: string }]
 }>()
 
+const { t } = useI18n()
+
 const { defineField, errors, handleSubmit, setErrors, resetForm } = useForm<FormValues>({
   initialValues: {
     deleteReason: '',
@@ -29,6 +27,9 @@ const { defineField, errors, handleSubmit, setErrors, resetForm } = useForm<Form
 const [deleteReason] = defineField('deleteReason')
 
 const onSubmit = handleSubmit((values) => {
+  const schema = z.object({
+    deleteReason: z.string().min(3, t('validation.reasonMin', { min: '3' })),
+  })
   const parsed = schema.safeParse(values)
   if (!parsed.success) {
     setErrors(mapZodErrors(parsed.error))
@@ -44,12 +45,12 @@ const onSubmit = handleSubmit((values) => {
   <form class="space-y-4" @submit.prevent="onSubmit">
     <UiTextarea
       v-model="deleteReason"
-      :label="label ?? 'Alasan penghapusan'"
+      :label="label ?? t('delete.reason')"
       :error="errors.deleteReason"
     />
     <div class="flex justify-end">
       <UiButton variant="destructive" :disabled="submitting" type="submit">
-        {{ submitting ? 'Memproses...' : 'Konfirmasi hapus' }}
+        {{ submitting ? t('common.processing') : t('delete.confirm') }}
       </UiButton>
     </div>
   </form>

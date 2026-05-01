@@ -9,6 +9,7 @@ definePageMeta({
 const api = useApi()
 const auth = useAuthStore()
 const toast = useToast()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -47,16 +48,16 @@ async function submitCategory(payload: ExpenseCategoryPayload) {
         name: payload.name,
         isActive: payload.isActive,
       })
-      toast.success('Kategori berhasil diperbarui')
+      toast.success(t('toast.expenseCategory.updated'))
     } else {
       await api.post('/expense-categories', { name: payload.name })
-      toast.success('Kategori berhasil dibuat')
+      toast.success(t('toast.expenseCategory.created'))
     }
     dialogOpen.value = false
     editing.value = null
     await loadCategories()
   } catch (caught) {
-    toast.error('Gagal menyimpan kategori', api.mapError(caught).message)
+    toast.error(t('toast.expenseCategory.saveFailed'), api.mapError(caught).message)
   } finally {
     submitting.value = false
   }
@@ -69,15 +70,15 @@ onMounted(loadCategories)
   <div class="space-y-4">
     <ListHeaderCard
       icon="categories"
-      title="Kategori Pengeluaran"
-      description="Owner dapat mengelola kategori pengeluaran miliknya sendiri."
+      :title="t('expenseCategory.title')"
+      :description="t('expenseCategory.description')"
     >
       <template #actions>
         <UiButton
           variant="secondary"
           icon="refresh"
-          title="Refresh"
-          aria-label="Refresh"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
           @click="loadCategories"
         />
         <UiButton
@@ -85,7 +86,7 @@ onMounted(loadCategories)
           icon="plus"
           @click="dialogOpen = true; editing = null"
         >
-          Tambah
+          {{ t('common.add') }}
         </UiButton>
       </template>
     </ListHeaderCard>
@@ -94,7 +95,7 @@ onMounted(loadCategories)
       <div class="relative z-20 flex items-center justify-between gap-3">
         <div class="flex items-center gap-2 text-sm text-ink-500">
           <UiIcon name="categories" class="h-4 w-4 text-brand-700" />
-          <span>Daftar kategori aktif dan nonaktif.</span>
+          <span>{{ t('expenseCategory.listDescription') }}</span>
         </div>
       </div>
 
@@ -104,10 +105,10 @@ onMounted(loadCategories)
         <table class="min-w-full text-left text-sm">
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
-              <th class="px-4 py-3 pr-4">Nama</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.name') }}</th>
               <th class="px-4 py-3 pr-4">Owner</th>
-              <th class="px-4 py-3 pr-4">Status</th>
-              <th class="px-4 py-3 pr-4 text-right">Aksi</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.status') }}</th>
+              <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <ListTableSkeletonBody
@@ -129,7 +130,7 @@ onMounted(loadCategories)
               <td class="px-4 py-4 pr-4">{{ category.ownerName }}</td>
               <td class="px-4 py-4 pr-4">
                 <UiBadge :tone="category.isActive ? 'success' : 'warning'">
-                  {{ category.isActive ? 'Aktif' : 'Nonaktif' }}
+                  {{ category.isActive ? t('common.active') : t('common.inactive') }}
                 </UiBadge>
               </td>
               <td class="px-4 py-4 text-right">
@@ -140,7 +141,7 @@ onMounted(loadCategories)
                   icon="edit"
                   @click="dialogOpen = true; editing = category"
                 >
-                  Edit
+                  {{ t('common.edit') }}
                 </UiButton>
               </td>
             </tr>
@@ -149,7 +150,7 @@ onMounted(loadCategories)
             v-else
             mode="empty"
             :colspan="4"
-            message="Belum ada kategori pengeluaran."
+            :message="t('expenseCategory.empty')"
           />
         </table>
       </div>
@@ -157,8 +158,8 @@ onMounted(loadCategories)
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? 'Edit kategori' : 'Tambah kategori'"
-      description="Kategori ini akan tersedia pada form pengeluaran."
+      :title="editing ? t('expenseCategory.dialogTitle.edit') : t('expenseCategory.dialogTitle.add')"
+      :description="t('expenseCategory.dialogDescription')"
     >
       <FormsExpenseCategoryForm
         :submitting="submitting"

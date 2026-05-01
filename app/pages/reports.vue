@@ -15,6 +15,7 @@ definePageMeta({
 const api = useApi()
 const auth = useAuthStore()
 const toast = useToast()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -88,7 +89,7 @@ async function loadReports() {
     await Promise.all(tasks)
   } catch (caught) {
     error.value = api.mapError(caught).message
-    toast.error('Gagal memuat laporan', error.value)
+    toast.error(t('report.loadFailed'), error.value)
   } finally {
     loading.value = false
   }
@@ -102,18 +103,18 @@ onMounted(async () => {
 <template>
   <div class="space-y-6">
     <FilterBar>
-      <UiInput v-model="month" label="Bulan" type="number" />
-      <UiInput v-model="year" label="Tahun" type="number" />
-      <UiSelect v-model="coopId" :options="coopOptions" label="Kandang" placeholder="Semua kandang" />
+      <UiInput v-model="month" :label="t('common.month')" type="number" />
+      <UiInput v-model="year" :label="t('common.year')" type="number" />
+      <UiSelect v-model="coopId" :options="coopOptions" :label="t('common.coop')" :placeholder="t('report.coopPlaceholder')" />
       <UiSelect
         v-if="auth.role === 'ADMIN'"
         v-model="ownerId"
         :options="ownerOptions"
-        label="Owner summary"
-        placeholder="Pilih owner"
+        :label="t('report.ownerSummary')"
+        :placeholder="t('report.ownerPlaceholder')"
       />
       <template #actions>
-        <UiButton icon="refresh" @click="loadReports">Refresh</UiButton>
+        <UiButton icon="refresh" @click="loadReports">{{ t('common.refresh') }}</UiButton>
       </template>
     </FilterBar>
 
@@ -123,17 +124,17 @@ onMounted(async () => {
       <LoadingSkeleton variant="table" :rows="6" :columns="4" />
     </div>
     <ErrorState v-else-if="error" :message="error">
-      <UiButton icon="refresh" @click="loadReports">Coba lagi</UiButton>
+      <UiButton icon="refresh" @click="loadReports">{{ t('common.retry') }}</UiButton>
     </ErrorState>
     <template v-else>
-      <TableCard title="Gross Income" description="Pendapatan kotor per kandang dari source allocation order yang sudah delivered." icon="reports">
+      <TableCard :title="t('report.grossIncome.title')" :description="t('report.grossIncome.description')" icon="reports">
         <table class="min-w-full text-left text-sm">
           <thead class="text-ink-500">
             <tr>
-              <th class="pb-3 pr-4">Kandang</th>
-              <th class="pb-3 pr-4">Delivered Kg</th>
-              <th class="pb-3 pr-4">Avg Price</th>
-              <th class="pb-3 pr-4">Gross Income</th>
+              <th class="pb-3 pr-4">{{ t('common.coop') }}</th>
+              <th class="pb-3 pr-4">{{ t('report.grossIncome.deliveredKg') }}</th>
+              <th class="pb-3 pr-4">{{ t('report.grossIncome.avgPrice') }}</th>
+              <th class="pb-3 pr-4">{{ t('report.grossIncome.title') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -147,15 +148,15 @@ onMounted(async () => {
         </table>
       </TableCard>
 
-      <TableCard title="Net Income" description="Gross income dikurangi expense dan penyusutan aktif kandang." icon="money">
+      <TableCard :title="t('report.netIncome.title')" :description="t('report.netIncome.description')" icon="money">
         <table class="min-w-full text-left text-sm">
           <thead class="text-ink-500">
             <tr>
-              <th class="pb-3 pr-4">Kandang</th>
-              <th class="pb-3 pr-4">Gross</th>
-              <th class="pb-3 pr-4">Expenses</th>
-              <th class="pb-3 pr-4">Depreciation</th>
-              <th class="pb-3 pr-4">Net</th>
+              <th class="pb-3 pr-4">{{ t('common.coop') }}</th>
+              <th class="pb-3 pr-4">{{ t('report.netIncome.gross') }}</th>
+              <th class="pb-3 pr-4">{{ t('report.netIncome.expenses') }}</th>
+              <th class="pb-3 pr-4">{{ t('report.netIncome.depreciation') }}</th>
+              <th class="pb-3 pr-4">{{ t('report.netIncome.net') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -171,13 +172,13 @@ onMounted(async () => {
       </TableCard>
 
       <TableCard
-        title="Monthly Summary Owner"
-        description="Ringkasan owner share per kandang berdasarkan ownership share percent."
+        :title="t('report.ownerSummary.title')"
+        :description="t('report.ownerSummary.description')"
         icon="wallet"
       >
         <div v-if="monthlySummary" class="space-y-4">
           <MetricCard
-            label="Total Owner Share"
+            :label="t('report.ownerSummary.totalShare')"
             :value="formatRupiah(monthlySummary.totalOwnerShare)"
             :helper="`${monthlySummary.ownerName} • ${monthlySummary.month}/${monthlySummary.year}`"
             icon="wallet"
@@ -185,10 +186,10 @@ onMounted(async () => {
           <table class="min-w-full text-left text-sm">
             <thead class="text-ink-500">
               <tr>
-                <th class="pb-3 pr-4">Kandang</th>
-                <th class="pb-3 pr-4">Share %</th>
-                <th class="pb-3 pr-4">Net Income</th>
-                <th class="pb-3 pr-4">Owner Share</th>
+                <th class="pb-3 pr-4">{{ t('common.coop') }}</th>
+                <th class="pb-3 pr-4">{{ t('report.ownerSummary.sharePercent') }}</th>
+                <th class="pb-3 pr-4">{{ t('report.netIncome.title') }}</th>
+                <th class="pb-3 pr-4">{{ t('report.ownerSummary.ownerShare') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -202,7 +203,7 @@ onMounted(async () => {
           </table>
         </div>
         <p v-else class="text-sm text-ink-500">
-          Pilih owner untuk menampilkan monthly summary atau gunakan akun owner secara langsung.
+          {{ t('report.ownerSummary.empty') }}
         </p>
       </TableCard>
     </template>
