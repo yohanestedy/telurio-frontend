@@ -96,7 +96,7 @@ function deliveryAccentClass(order: CalendarOrder) {
     <article
       v-for="(order, index) in sortedOrders"
       :key="order.orderId"
-      class="order-action-card overflow-hidden rounded-2xl border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(255,249,243,0.94))] shadow-[0_14px_26px_rgba(15,23,42,0.07)]"
+      class="order-action-card overflow-hidden rounded-2xl border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(255,249,243,0.94))] shadow-[0_14px_26px_rgba(15,23,42,0.07)] dark:!border-white/10 dark:!bg-[linear-gradient(145deg,rgba(42,34,28,0.82),rgba(29,25,22,0.78))] dark:!shadow-[0_14px_26px_rgba(0,0,0,0.18)]"
       :style="{ '--order-delay': `${index * 45}ms` }"
     >
       <div :class="[props.dense ? 'h-1' : 'h-1.5', deliveryAccentClass(order)]" />
@@ -113,7 +113,7 @@ function deliveryAccentClass(order: CalendarOrder) {
         </div>
 
         <div :class="[
-          'rounded-2xl border border-white/80 bg-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]',
+          'order-stat-panel rounded-2xl border border-white/80 bg-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:!border-white/10 dark:!bg-[rgba(16,15,14,0.30)] dark:!shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
           props.dense ? 'mt-2.5 px-2.5 py-2.5' : 'mt-3 px-3 py-3',
         ]">
           <div class="grid grid-cols-3 gap-2">
@@ -159,7 +159,7 @@ function deliveryAccentClass(order: CalendarOrder) {
           <StatusChip compact kind="payment" :value="order.paymentStatus" />
         </div>
 
-        <div :class="props.dense ? 'my-2.5 h-px bg-slate-200/80' : 'my-3 h-px bg-slate-200/80'" />
+        <div class="order-divider" :class="props.dense ? 'my-2.5 h-px bg-slate-200/80' : 'my-3 h-px bg-slate-200/80'" />
 
         <div class="flex flex-wrap gap-2">
           <div
@@ -211,6 +211,22 @@ function deliveryAccentClass(order: CalendarOrder) {
 
 .order-action-card:active {
   transform: scale(0.988);
+}
+
+:global(.dark) .order-action-card {
+  border-color: rgba(255, 255, 255, 0.10);
+  background: linear-gradient(145deg, rgba(38, 33, 29, 0.94), rgba(28, 25, 22, 0.90));
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.24);
+}
+
+:global(.dark) .order-stat-panel {
+  border-color: rgba(255, 255, 255, 0.10);
+  background-color: rgba(18, 17, 16, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+:global(.dark) .order-divider {
+  background-color: rgba(255, 255, 255, 0.10);
 }
 
 .order-stagger-enter-active,

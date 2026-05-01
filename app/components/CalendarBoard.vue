@@ -265,9 +265,9 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div class="rounded-2xl border border-brand-100/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(255,248,243,0.9))] px-3 py-2.5 shadow-[0_10px_24px_rgba(243,95,16,0.08)] md:min-w-[255px]">
+        <div class="rounded-2xl border border-brand-100/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(255,248,243,0.9))] px-3 py-2.5 shadow-[0_10px_24px_rgba(243,95,16,0.08)] md:min-w-[255px] dark:!border-white/10 dark:!bg-[linear-gradient(135deg,rgba(42,34,28,0.78),rgba(29,25,22,0.72))] dark:!shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
           <div class="flex items-center gap-3">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-700">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-700 dark:!bg-[rgba(255,116,32,0.14)]">
               <UiIcon name="prices" class="h-4 w-4" />
             </div>
 

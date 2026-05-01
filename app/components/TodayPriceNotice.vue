@@ -20,15 +20,15 @@ const { t } = useI18n()
 
 <template>
   <GlassCard>
-    <div class="rounded-3xl border border-brand-200/80 bg-gradient-to-br from-brand-50/95 to-[#fff3e7] p-5 shadow-[0_14px_32px_rgba(243,95,16,0.10)]">
+    <div class="rounded-3xl border border-brand-200/80 bg-gradient-to-br from-brand-50/95 to-[#fff3e7] p-5 shadow-[0_14px_32px_rgba(243,95,16,0.10)] dark:!border-brand-500/20 dark:!bg-[linear-gradient(135deg,rgba(55,35,24,0.82),rgba(33,27,23,0.76))] dark:!shadow-[0_14px_32px_rgba(0,0,0,0.18)]">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex items-start gap-3">
-          <div class="rounded-2xl border border-brand-200 bg-white/78 p-2 text-brand-700">
+          <div class="rounded-2xl border border-brand-200 bg-white/78 p-2 text-brand-700 dark:!border-brand-500/20 dark:!bg-[rgba(255,116,32,0.12)]">
             <UiIcon name="alert" class="h-4 w-4" />
           </div>
           <div>
-            <p class="font-semibold text-brand-900">{{ title || t('notice.todayPriceMissing.title') }}</p>
-            <p class="mt-1 text-sm leading-6 text-[#8f4518]">{{ message }}</p>
+            <p class="font-semibold text-brand-900 dark:!text-brand-200">{{ title || t('notice.todayPriceMissing.title') }}</p>
+            <p class="mt-1 text-sm leading-6 text-[#8f4518] dark:!text-brand-200/90">{{ message }}</p>
           </div>
         </div>
         <UiButton

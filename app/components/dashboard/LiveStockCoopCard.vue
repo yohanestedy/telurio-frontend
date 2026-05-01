@@ -100,10 +100,10 @@ const visibleOutFlowRows = computed(() =>
 </script>
 
 <template>
-  <article class="rounded-2xl border border-white/70 bg-white/88 px-3 py-3 shadow-[0_8px_18px_rgba(67,63,57,0.07)] sm:px-3.5 sm:py-3.5">
+  <article class="rounded-2xl border border-white/70 bg-white/88 px-3 py-3 shadow-[0_8px_18px_rgba(67,63,57,0.07)] sm:px-3.5 sm:py-3.5 dark:!border-white/10 dark:!bg-[rgba(28,25,22,0.66)] dark:!shadow-[0_8px_18px_rgba(0,0,0,0.14)]">
     <div class="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
       <div class="flex min-w-0 items-center gap-2">
-        <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-100/80 bg-emerald-50 text-emerald-700">
+        <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-100/80 bg-emerald-50 text-emerald-700 dark:!border-emerald-400/20 dark:!bg-[rgba(16,185,129,0.12)]">
           <UiIcon name="coops" class="h-5 w-5" />
         </div>
         <div class="min-w-0">
@@ -136,9 +136,9 @@ const visibleOutFlowRows = computed(() =>
     </div>
 
     <div class="mt-2.5 grid gap-2 xl:grid-cols-2">
-      <section class="flex flex-col rounded-xl border border-emerald-200/70 bg-emerald-50/40">
-        <div class="flex items-center gap-1.5 border-b border-emerald-100/80 px-2.5 py-2">
-          <span class="grid h-6 w-6 place-items-center rounded-full bg-emerald-100/90 text-emerald-700">
+      <section class="flex flex-col rounded-xl border border-emerald-200/70 bg-emerald-50/40 dark:!border-emerald-400/20 dark:!bg-[rgba(16,185,129,0.08)]">
+        <div class="flex items-center gap-1.5 border-b border-emerald-100/80 px-2.5 py-2 dark:!border-emerald-400/15">
+          <span class="grid h-6 w-6 place-items-center rounded-full bg-emerald-100/90 text-emerald-700 dark:!bg-[rgba(16,185,129,0.14)]">
             <UiIcon name="arrowDown" class="h-3 w-3" />
           </span>
           <p class="text-sm font-semibold text-emerald-700">{{ t('livestock.eggIn') }}</p>
@@ -159,15 +159,15 @@ const visibleOutFlowRows = computed(() =>
             {{ t('livestock.noEggIn') }}
           </p>
         </div>
-        <div class="flex items-center justify-between border-t border-emerald-100/80 px-2.5 py-2 text-emerald-700">
+        <div class="flex items-center justify-between border-t border-emerald-100/80 px-2.5 py-2 text-emerald-700 dark:!border-emerald-400/15">
           <span class="text-sm font-semibold">{{ t('livestock.totalIn') }}</span>
           <span class="text-lg font-bold">{{ formatKg(props.summary.totalInKg) }} kg</span>
         </div>
       </section>
 
-      <section class="flex flex-col rounded-xl border border-brand-200/70 bg-brand-50/35">
-        <div class="flex items-center gap-1.5 border-b border-brand-100/80 px-2.5 py-2">
-          <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-100/90 text-brand-700">
+      <section class="flex flex-col rounded-xl border border-brand-200/70 bg-brand-50/35 dark:!border-brand-500/20 dark:!bg-[rgba(255,116,32,0.08)]">
+        <div class="flex items-center gap-1.5 border-b border-brand-100/80 px-2.5 py-2 dark:!border-brand-500/15">
+          <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-100/90 text-brand-700 dark:!bg-[rgba(255,116,32,0.14)]">
             <UiIcon name="arrowUp" class="h-3 w-3" />
           </span>
           <p class="text-sm font-semibold text-brand-700">{{ t('livestock.eggOut') }}</p>
@@ -188,7 +188,7 @@ const visibleOutFlowRows = computed(() =>
             {{ t('livestock.noEggOut') }}
           </p>
         </div>
-        <div class="flex items-center justify-between border-t border-brand-100/80 px-2.5 py-2 text-brand-700">
+        <div class="flex items-center justify-between border-t border-brand-100/80 px-2.5 py-2 text-brand-700 dark:!border-brand-500/15">
           <span class="text-sm font-semibold">{{ t('livestock.totalOut') }}</span>
           <span class="text-lg font-bold">{{ formatKg(props.summary.totalOutKg) }} kg</span>
         </div>
