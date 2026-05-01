@@ -47,3 +47,76 @@
     @apply border border-white/70 bg-white/95 shadow-[0_24px_64px_rgba(15,23,42,0.18)] backdrop-blur-xl;
   }
 }
+
+.dark body {
+  background:
+    radial-gradient(circle at top left, rgba(255, 116, 32, 0.10), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(148, 97, 59, 0.12), transparent 30%),
+    linear-gradient(180deg, #151311 0%, #0f0e0d 100%);
+  color: #f6f1eb;
+}
+
+.dark .bg-shell {
+  background:
+    radial-gradient(circle at top left, rgba(255, 116, 32, 0.10), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(148, 97, 59, 0.12), transparent 30%),
+    linear-gradient(180deg, #151311 0%, #0f0e0d 100%);
+}
+
+.dark .glass-panel,
+.dark .glass-popover {
+  border-color: rgba(255, 255, 255, 0.10);
+  background-color: rgba(28, 25, 22, 0.88);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+.dark .glass-subtle {
+  border-color: rgba(255, 116, 32, 0.18);
+  background-color: rgba(45, 31, 22, 0.78);
+}
+
+.dark .surface-outline {
+  border-color: rgba(255, 255, 255, 0.10);
+  background-color: rgba(28, 25, 22, 0.72);
+}
+
+.dark .field-shell {
+  border-color: rgba(255, 116, 32, 0.20);
+  background-color: rgba(23, 21, 19, 0.92);
+  color: #f6f1eb;
+}
+
+.dark [class*="bg-white"] {
+  background-color: rgba(28, 25, 22, 0.88);
+}
+
+.dark [class*="bg-slate-50"],
+.dark [class*="bg-orange-50"],
+.dark [class*="bg-brand-50"] {
+  background-color: rgba(48, 35, 26, 0.72);
+}
+
+.dark [class*="border-slate"],
+.dark [class*="border-orange"],
+.dark [class*="border-white"],
+.dark [class*="border-brand-100"],
+.dark [class*="border-brand-200"] {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark [class*="text-ink-900"],
+.dark [class*="text-ink-800"],
+.dark [class*="text-ink-700"] {
+  color: #f6f1eb;
+}
+
+.dark [class*="text-ink-600"],
+.dark [class*="text-ink-500"],
+.dark [class*="text-ink-400"] {
+  color: #bdb3a7;
+}
+
+.dark [class*="hover:bg-slate-50"]:hover,
+.dark [class*="hover:bg-orange-50"]:hover {
+  background-color: rgba(70, 48, 34, 0.78);
+}

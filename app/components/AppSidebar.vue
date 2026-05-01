@@ -2,6 +2,7 @@
 const auth = useAuthStore()
 const menu = useRoleMenu()
 const { logout } = useAuth()
+const { t } = useI18n()
 
 const logoutDialogOpen = ref(false)
 
@@ -51,12 +52,14 @@ async function confirmLogout() {
 
       <div v-if="auth.user" class="glass-panel rounded-[28px] p-5">
         <p class="text-sm font-semibold text-ink-900">{{ auth.user.name }}</p>
-        <p class="text-xs uppercase tracking-[0.2em] text-ink-500">{{ roleLabel(auth.user.role) }}</p>
+        <p class="text-xs uppercase tracking-[0.2em] text-ink-500">{{ t(`role.${auth.user.role}`) }}</p>
         <p class="mt-3 text-xs text-ink-500">
-          Scope kandang: {{ auth.user.coopAccesses.length || 0 }}
+          {{ t('common.scopeCoop') }}: {{ auth.user.coopAccesses.length || 0 }}
         </p>
         <div class="mt-4 flex justify-end">
-          <UiButton variant="ghost" size="sm" icon="logout" @click="logoutDialogOpen = true">Logout</UiButton>
+          <UiButton variant="ghost" size="sm" icon="logout" @click="logoutDialogOpen = true">
+            {{ t('common.logout') }}
+          </UiButton>
         </div>
       </div>
 

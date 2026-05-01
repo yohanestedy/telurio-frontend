@@ -17,6 +17,7 @@ const route = useRoute()
 const auth = useAuthStore()
 const { logout } = useAuth()
 const { todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
+const { t } = useI18n()
 
 const activePanel = ref<'more' | 'quick' | null>(null)
 const morePanelRef = ref<HTMLElement | null>(null)
@@ -24,17 +25,17 @@ const quickPanelRef = ref<HTMLElement | null>(null)
 const logoutDialogOpen = ref(false)
 
 const primaryItems = computed(() =>
-  menu.value.mobile.filter((item) => item.label !== 'More').slice(0, 3),
+  menu.value.mobile.filter((item) => item.icon !== 'more').slice(0, 3),
 )
 
 const leftItems = computed(() => primaryItems.value.slice(0, 2))
 const rightItems = computed(() => primaryItems.value.slice(2))
 
 const moreItem = computed<MenuItem>(() =>
-  menu.value.mobile.find((item) => item.label === 'More') ?? {
-    label: 'More',
+  menu.value.mobile.find((item) => item.icon === 'more') ?? {
+    label: t('menu.label.More'),
     path: '/profile',
-    description: 'Menu lainnya',
+    description: t('menu.description.Menu lainnya'),
     permission: 'profile.view',
     icon: 'more',
   },
@@ -50,19 +51,19 @@ const quickActions = computed<QuickAction[]>(() => {
     return [
       {
         key: 'create-order',
-        label: 'Tambah order',
-        description: 'Buat pesanan baru langsung dari mobile.',
+        label: t('quick.createOrder'),
+        description: t('quick.createOrderDescription'),
         icon: 'orders',
         to: { path: '/orders', query: { create: 'new' } },
       },
       ...(todayPriceMissing.value
         ? [{
             key: 'today-price',
-            label: 'Input harga hari ini',
-            description: 'Lengkapi harga harian agar order hari ini bisa diproses.',
+            label: t('quick.todayPrice'),
+            description: t('quick.todayPriceDescription'),
             icon: 'prices' as AppIconName,
             to: { path: '/prices', query: { create: 'today' } },
-            badge: 'Hari ini',
+            badge: t('quick.todayBadge'),
           }]
         : []),
     ]
@@ -72,8 +73,8 @@ const quickActions = computed<QuickAction[]>(() => {
     return [
       {
         key: 'create-expense',
-        label: 'Tambah expense',
-        description: 'Catat pengeluaran kandang dengan cepat.',
+        label: t('quick.createExpense'),
+        description: t('quick.createExpenseDescription'),
         icon: 'expenses',
         to: { path: '/expenses', query: { create: 'new' } },
       },
@@ -83,8 +84,8 @@ const quickActions = computed<QuickAction[]>(() => {
   return [
     {
       key: 'create-production',
-      label: 'Tambah produksi',
-      description: 'Input hasil produksi harian secara langsung.',
+      label: t('quick.createProduction'),
+      description: t('quick.createProductionDescription'),
       icon: 'productions',
       to: { path: '/productions', query: { create: 'new' } },
     },
@@ -157,8 +158,8 @@ watch(
           <div class="mx-auto mb-5 h-1.5 w-14 rounded-full bg-white/35" />
 
           <div class="mb-5 text-center">
-            <p class="text-base font-semibold">Quick action</p>
-            <p class="mt-1 text-sm text-white/80">Akses aksi utama tanpa perlu pindah-pindah halaman.</p>
+            <p class="text-base font-semibold">{{ t('mobile.quickAction') }}</p>
+            <p class="mt-1 text-sm text-white/80">{{ t('mobile.quickActionDescription') }}</p>
           </div>
 
           <div class="grid gap-2.5">
@@ -209,11 +210,11 @@ watch(
         >
           <div class="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p class="text-sm font-semibold text-ink-900">Menu lainnya</p>
-              <p class="text-xs text-ink-500">Akses halaman lain sesuai peran akun Anda.</p>
+              <p class="text-sm font-semibold text-ink-900">{{ t('mobile.moreTitle') }}</p>
+              <p class="text-xs text-ink-500">{{ t('mobile.moreDescription') }}</p>
             </div>
             <UiButton variant="ghost" size="sm" icon="close" @click="closePanels">
-              Tutup
+              {{ t('common.close') }}
             </UiButton>
           </div>
 
@@ -245,8 +246,8 @@ watch(
                   <UiIcon name="logout" class="h-4 w-4" />
                 </div>
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-ink-900">Logout</p>
-                  <p class="mt-0.5 text-xs leading-5 text-ink-500">Keluar dari sesi akun saat ini.</p>
+                  <p class="text-sm font-medium text-ink-900">{{ t('common.logout') }}</p>
+                  <p class="mt-0.5 text-xs leading-5 text-ink-500">{{ t('mobile.logoutDescription') }}</p>
                 </div>
               </div>
             </button>
@@ -282,7 +283,7 @@ watch(
 
           <button
             class="relative z-20 flex flex-col items-center gap-1 text-center text-[11px] font-medium text-ink-600"
-            aria-label="Quick action"
+            :aria-label="t('mobile.quickAction')"
             @click="togglePanel('quick')"
           >
             <span
@@ -291,7 +292,7 @@ watch(
             >
               <UiIcon name="plus" class="h-7 w-7 max-[380px]:h-6 max-[380px]:w-6" />
             </span>
-            <span class="sr-only">Quick action</span>
+            <span class="sr-only">{{ t('mobile.quickAction') }}</span>
           </button>
 
           <NuxtLink

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const ui = useUiStore()
 const { logout } = useAuth()
+const { t } = useI18n()
 const pending = ref(false)
 
 async function confirmLogout() {
@@ -28,12 +29,12 @@ async function confirmLogout() {
   >
     <div class="space-y-5">
       <div class="rounded-2xl border border-brand-200/80 bg-brand-50/85 px-4 py-3 text-sm text-[#8f4518]">
-        Demi keamanan, sesi saat ini harus diakhiri sebelum Anda bisa melanjutkan penggunaan aplikasi.
+        {{ t('session.securityNote') }}
       </div>
 
       <div class="flex justify-end">
         <UiButton :disabled="pending" icon="logout" @click="confirmLogout">
-          {{ pending ? 'Memproses...' : 'Logout sekarang' }}
+          {{ pending ? t('common.processing') : t('session.logoutNow') }}
         </UiButton>
       </div>
     </div>

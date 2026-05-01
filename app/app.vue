@@ -1,3 +1,11 @@
+<script setup lang="ts">
+const ui = useUiStore()
+
+onMounted(() => {
+  ui.initializePreferences()
+})
+</script>
+
 <template>
   <div class="min-h-screen bg-shell text-ink-900">
     <NuxtLoadingIndicator color="#f35f10" />

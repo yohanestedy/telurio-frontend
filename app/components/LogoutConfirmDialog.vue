@@ -4,6 +4,7 @@ interface Props {
 }
 
 defineProps<Props>()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -22,19 +23,19 @@ function confirm() {
 <template>
   <UiDialog
     :open="open"
-    title="Konfirmasi logout"
-    description="Anda akan keluar dari sesi saat ini dan perlu login kembali untuk melanjutkan."
+    :title="t('logout.title')"
+    :description="t('logout.description')"
     size="md"
     @update:open="emit('update:open', $event)"
   >
     <div class="space-y-5">
       <div class="rounded-2xl border border-brand-200/80 bg-brand-50/85 px-4 py-3 text-sm text-[#8f4518]">
-        Pastikan pekerjaan penting sudah tersimpan sebelum keluar dari aplikasi.
+        {{ t('logout.warning') }}
       </div>
 
       <div class="flex justify-end gap-2">
-        <UiButton variant="ghost" @click="close">Batal</UiButton>
-        <UiButton variant="destructive" icon="logout" @click="confirm">Ya, logout</UiButton>
+        <UiButton variant="ghost" @click="close">{{ t('common.cancel') }}</UiButton>
+        <UiButton variant="destructive" icon="logout" @click="confirm">{{ t('logout.confirm') }}</UiButton>
       </div>
     </div>
   </UiDialog>
