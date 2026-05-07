@@ -287,6 +287,26 @@ export interface MonthlySummaryItem {
   ownerShare: string;
 }
 
+export interface GeneralExpenseItem {
+  id: string;
+  ownerId: string;
+  date: string;
+  amount: string;
+  description: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  notes: string | null;
+  createdByName: string | null;
+  createdAt: string;
+}
+
+export interface GeneralExpenseCategoryItem {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface MonthlySummaryResponse {
   ownerId: string;
   ownerName: string;
@@ -294,6 +314,17 @@ export interface MonthlySummaryResponse {
   year: number;
   coops: MonthlySummaryItem[];
   totalOwnerShare: string;
+  generalExpenses: {
+    total: string;
+    count: number;
+    items: Array<{
+      id: string;
+      date: string;
+      description: string;
+      amount: string;
+      categoryName: string | null;
+    }>;
+  };
 }
 
 export interface CalendarDay {
@@ -319,6 +350,12 @@ export interface CalendarDay {
       coopName: string;
       totalAmount: string;
     }>;
+    generalExpenses: Array<{
+      id: string;
+      description: string;
+      amount: string;
+      categoryName: string | null;
+    }>;
     priceUpdates: Array<{
       pricePerKg: string;
     }>;
@@ -331,6 +368,7 @@ export interface CalendarMarkerDay {
     orders: number;
     productions: number;
     expenses: number;
+    generalExpenses: number;
     priceUpdates: number;
   };
 }
@@ -367,6 +405,10 @@ export type Permission =
   | "prices.manage"
   | "stocks.view"
   | "stocks.manage"
+  | "general-expenses.view"
+  | "general-expenses.manage"
+  | "general-expense-categories.view"
+  | "general-expense-categories.manage"
   | "reports.view"
   | "profile.view";
 import type { AppIconName } from "../utils/icons";

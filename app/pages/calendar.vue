@@ -65,6 +65,7 @@ function emptyCalendarDay(date: string): CalendarDay {
       orders: [],
       productions: [],
       expenses: [],
+      generalExpenses: [],
       priceUpdates: [],
     },
   }
@@ -486,6 +487,23 @@ onMounted(() => {
                 </div>
               </div>
               <p v-else class="mt-2 text-ink-500">{{ t('calendar.noExpense') }}</p>
+            </div>
+
+            <div v-if="selectedDay.events.generalExpenses?.length" class="rounded-2xl border border-white/70 bg-white/80 p-3">
+              <p class="text-xs uppercase tracking-wide text-ink-500">{{ t('calendar.marker.generalExpense') }}</p>
+              <div class="mt-2 space-y-1.5">
+                <div
+                  v-for="item in selectedDay.events.generalExpenses"
+                  :key="item.id"
+                  class="flex items-center justify-between gap-3"
+                >
+                  <div>
+                    <span class="font-medium text-ink-800">{{ item.description }}</span>
+                    <UiBadge v-if="item.categoryName" tone="neutral" class="ml-1.5">{{ item.categoryName }}</UiBadge>
+                  </div>
+                  <span>{{ formatRupiah(item.amount) }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </GlassCard>

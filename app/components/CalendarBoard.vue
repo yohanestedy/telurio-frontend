@@ -115,6 +115,16 @@ function buildMarkers(date: string): CalendarMarker[] {
     })
   }
 
+  const generalExpenseCount = payload?.generalExpenses ?? 0
+  if (generalExpenseCount > 0) {
+    markers.push({
+      key: 'generalExpenses',
+      label: t('calendar.marker.generalExpense'),
+      count: generalExpenseCount,
+      className: 'bg-purple-500 dark:!bg-purple-300',
+    })
+  }
+
   return markers
 }
 

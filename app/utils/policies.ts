@@ -24,6 +24,10 @@ export const permissionMap: Record<Permission, Role[]> = {
   "prices.manage": ["ADMIN"],
   "stocks.view": ["ADMIN", "OWNER", "OPERATOR"],
   "stocks.manage": ["ADMIN", "OWNER", "OPERATOR"],
+  "general-expenses.view": ["ADMIN", "OWNER"],
+  "general-expenses.manage": ["ADMIN", "OWNER"],
+  "general-expense-categories.view": ["ADMIN", "OWNER"],
+  "general-expense-categories.manage": ["OWNER"],
   "reports.view": ["ADMIN", "OWNER", "OPERATOR"],
   "profile.view": ["ADMIN", "OWNER", "OPERATOR"],
 };
@@ -94,6 +98,13 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         description: "Ledger pergerakan stok",
         permission: "stocks.view",
         icon: "layers",
+      },
+      {
+        label: "General Expenses",
+        path: "/general-expenses",
+        description: "Pengeluaran non-kandang",
+        permission: "general-expenses.view",
+        icon: "wallet",
       },
       {
         label: "Reports",
@@ -183,6 +194,20 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         path: "/expense-categories",
         description: "Kategori pengeluaran",
         permission: "expense-categories.view",
+        icon: "categories",
+      },
+      {
+        label: "General Expenses",
+        path: "/general-expenses",
+        description: "Pengeluaran non-kandang",
+        permission: "general-expenses.view",
+        icon: "wallet",
+      },
+      {
+        label: "General Expense Categories",
+        path: "/general-expense-categories",
+        description: "Kategori pengeluaran non-kandang",
+        permission: "general-expense-categories.view",
         icon: "categories",
       },
       {
