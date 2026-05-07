@@ -305,6 +305,7 @@ export interface GeneralExpenseCategoryItem {
   id: string;
   name: string;
   isActive: boolean;
+  ownerName: string | null;
   createdAt: string;
 }
 

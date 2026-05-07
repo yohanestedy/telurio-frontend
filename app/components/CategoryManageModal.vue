@@ -7,6 +7,7 @@ interface CategoryItem {
   id: string
   name: string
   isActive: boolean
+  ownerName?: string | null
 }
 
 const props = defineProps<{
@@ -14,21 +15,26 @@ const props = defineProps<{
   title: string
   categories: CategoryItem[]
   loading?: boolean
+  /** Show owner name column (for ADMIN viewing all owners' categories) */
+  showOwner?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
   'create': [payload: { name: string }]
   'update': [payload: { id: string; name: string; isActive: boolean }]
+  'delete': [payload: { id: string }]
   'refresh': []
 }>()
 
 const { t } = useI18n()
 const auth = useAuthStore()
 
-const showForm = ref(false)
+type ModalView = 'list' | 'form' | 'delete-confirm'
+
+const currentView = ref<ModalView>('list')
 const editing = ref<CategoryItem | null>(null)
-const submitting = ref(false)
+const deleting = ref<CategoryItem | null>(null)
 
 type FormValues = { name: string; isActive: boolean }
 
@@ -42,18 +48,30 @@ const [isActive] = defineField('isActive')
 function openCreate() {
   editing.value = null
   resetForm({ values: { name: '', isActive: true } })
-  showForm.value = true
+  currentView.value = 'form'
 }
 
 function openEdit(item: CategoryItem) {
   editing.value = item
   resetForm({ values: { name: item.name, isActive: item.isActive } })
-  showForm.value = true
+  currentView.value = 'form'
 }
 
-function cancelForm() {
-  showForm.value = false
+function openDeleteConfirm(item: CategoryItem) {
+  deleting.value = item
+  currentView.value = 'delete-confirm'
+}
+
+function backToList() {
+  currentView.value = 'list'
   editing.value = null
+  deleting.value = null
+}
+
+function confirmDelete() {
+  if (!deleting.value) return
+  emit('delete', { id: deleting.value.id })
+  backToList()
 }
 
 const onSubmit = handleSubmit((values) => {
@@ -73,14 +91,12 @@ const onSubmit = handleSubmit((values) => {
     emit('create', { name: parsed.data.name })
   }
 
-  showForm.value = false
-  editing.value = null
+  backToList()
 })
 
 watch(() => props.open, (val) => {
   if (!val) {
-    showForm.value = false
-    editing.value = null
+    backToList()
   }
 })
 </script>
@@ -93,25 +109,39 @@ watch(() => props.open, (val) => {
   >
     <div class="space-y-3">
       <!-- Category List -->
-      <div v-if="!showForm" class="space-y-3">
-        <div class="max-h-[45vh] space-y-1 overflow-y-auto">
-          <div
-            v-for="item in categories"
-            :key="item.id"
-            class="flex items-center justify-between gap-3 rounded-lg bg-ink-50/50 px-3 py-2.5"
-          >
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="truncate text-sm font-medium text-ink-800">{{ item.name }}</span>
-              <UiBadge v-if="!item.isActive" tone="warning" class="shrink-0">{{ t('common.inactive') }}</UiBadge>
-            </div>
-            <UiButton
-              v-if="auth.role === 'OWNER'"
-              variant="ghost"
-              size="sm"
-              icon="edit"
-              @click="openEdit(item)"
-            />
-          </div>
+      <div v-if="currentView === 'list'" class="space-y-3">
+        <div class="max-h-[45vh] overflow-y-auto">
+          <table class="w-full text-sm">
+            <thead v-if="categories.length" class="text-left text-xs text-ink-500">
+              <tr>
+                <th class="pb-2 pr-2 font-medium">{{ t('common.name') }}</th>
+                <th v-if="showOwner" class="pb-2 pr-2 font-medium">Owner</th>
+                <th class="pb-2 pr-2 font-medium">{{ t('common.status') }}</th>
+                <th v-if="auth.role === 'OWNER'" class="pb-2 text-right font-medium">{{ t('common.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in categories"
+                :key="item.id"
+                class="border-t border-ink-100/60"
+              >
+                <td class="py-2.5 pr-2 font-medium text-ink-800">{{ item.name }}</td>
+                <td v-if="showOwner" class="py-2.5 pr-2 text-ink-500">{{ item.ownerName ?? '-' }}</td>
+                <td class="py-2.5 pr-2">
+                  <UiBadge :tone="item.isActive ? 'success' : 'warning'" class="text-[10px]">
+                    {{ item.isActive ? t('common.active') : t('common.inactive') }}
+                  </UiBadge>
+                </td>
+                <td v-if="auth.role === 'OWNER'" class="py-2.5 text-right">
+                  <div class="flex items-center justify-end gap-0.5">
+                    <UiButton variant="ghost" size="sm" icon="edit" @click="openEdit(item)" />
+                    <UiButton variant="ghost" size="sm" icon="delete" @click="openDeleteConfirm(item)" />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
           <p v-if="!categories.length && !loading" class="py-4 text-center text-sm text-ink-400">
             {{ t('expenseCategory.empty') }}
@@ -126,19 +156,39 @@ watch(() => props.open, (val) => {
       </div>
 
       <!-- Create/Edit Form -->
-      <div v-else class="space-y-4">
+      <div v-else-if="currentView === 'form'" class="space-y-4">
         <form class="grid gap-4" @submit.prevent="onSubmit">
           <UiInput v-model="name" :label="t('expenseCategory.name')" :error="errors.name" />
           <UiCheckbox v-if="editing" v-model="isActive" :label="t('expenseCategory.active')" />
           <div class="flex items-center justify-between">
-            <UiButton variant="ghost" size="sm" @click="cancelForm">
+            <UiButton variant="ghost" size="sm" @click="backToList">
               ← {{ t('common.back') }}
             </UiButton>
-            <UiButton :disabled="submitting" type="submit" size="sm">
+            <UiButton type="submit" size="sm">
               {{ t('common.save') }}
             </UiButton>
           </div>
         </form>
+      </div>
+
+      <!-- Delete Confirmation -->
+      <div v-else-if="currentView === 'delete-confirm'" class="space-y-4">
+        <div class="rounded-xl bg-red-50 p-3">
+          <p class="text-sm font-medium text-red-800">
+            {{ t('expenseCategory.deleteConfirm', { name: deleting?.name ?? '' }) }}
+          </p>
+          <p class="mt-1 text-xs text-red-600">
+            {{ t('expenseCategory.deleteWarning') }}
+          </p>
+        </div>
+        <div class="flex items-center justify-between">
+          <UiButton variant="ghost" size="sm" @click="backToList">
+            ← {{ t('common.back') }}
+          </UiButton>
+          <UiButton variant="destructive" size="sm" @click="confirmDelete">
+            {{ t('common.delete') }}
+          </UiButton>
+        </div>
       </div>
     </div>
   </UiDialog>

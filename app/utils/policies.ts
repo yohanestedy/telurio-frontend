@@ -100,6 +100,13 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         icon: "layers",
       },
       {
+        label: "Expenses",
+        path: "/expenses",
+        description: "Pengeluaran kandang",
+        permission: "expenses.view",
+        icon: "expenses",
+      },
+      {
         label: "General Expenses",
         path: "/general-expenses",
         description: "Pengeluaran pribadi",

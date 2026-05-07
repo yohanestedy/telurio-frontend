@@ -9,8 +9,11 @@ definePageMeta({
 
 const api = useApi()
 const toast = useToast()
+const auth = useAuthStore()
 const pagination = usePagination()
 const { t } = useI18n()
+
+const isAdmin = computed(() => auth.role === 'ADMIN')
 
 const loading = ref(true)
 const error = ref('')
@@ -96,6 +99,16 @@ async function updateCategory(payload: { id: string; name: string; isActive: boo
   }
 }
 
+async function deleteCategory(payload: { id: string }) {
+  try {
+    await api.delete(`/general-expense-categories/${payload.id}`, {})
+    toast.success(t('toast.expenseCategory.deleted'))
+    await loadCategories()
+  } catch (caught) {
+    toast.error(api.mapError(caught).message)
+  }
+}
+
 async function loadExpenses() {
   loading.value = true
   error.value = ''
@@ -163,6 +176,17 @@ async function onLimitChange(nextLimit: number) {
   await loadExpenses()
 }
 
+const route = useRoute()
+
+async function consumeCreateQuery(value: unknown) {
+  if (value !== 'new') return
+  dialogOpen.value = true
+  editing.value = null
+  const nextQuery = { ...route.query }
+  delete nextQuery.create
+  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
+}
+
 onMounted(async () => {
   await Promise.all([loadExpenses(), loadCategories()])
 })
@@ -173,6 +197,12 @@ watch([sortBy, sortOrder], () => {
     loadExpenses()
   }
 })
+
+watch(
+  () => route.query.create,
+  (value) => { consumeCreateQuery(value) },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -292,7 +322,7 @@ watch([sortBy, sortOrder], () => {
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
               <th class="px-4 py-3 pr-4">{{ t('common.date') }}</th>
-              <th class="px-4 py-3 pr-4">Owner</th>
+              <th v-if="isAdmin" class="px-4 py-3 pr-4">Owner</th>
               <th class="px-4 py-3 pr-4">{{ t('expense.itemDescription') }}</th>
               <th class="px-4 py-3 pr-4">{{ t('expense.category') }}</th>
               <th class="px-4 py-3 pr-4">{{ t('common.amount') }}</th>
@@ -315,7 +345,7 @@ watch([sortBy, sortOrder], () => {
           <tbody v-else-if="expenses.length">
             <tr v-for="item in expenses" :key="item.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">{{ formatDate(item.date) }}</td>
-              <td class="px-4 py-4 pr-4 text-ink-600">{{ item.ownerName ?? '-' }}</td>
+              <td v-if="isAdmin" class="px-4 py-4 pr-4 text-ink-600">{{ item.ownerName ?? '-' }}</td>
               <td class="px-4 py-4 pr-4 text-ink-700">
                 <div>{{ item.description }}</div>
                 <div v-if="item.notes" class="mt-0.5 text-xs text-ink-400">{{ item.notes }}</div>
@@ -371,8 +401,10 @@ watch([sortBy, sortOrder], () => {
       v-model:open="categoryModalOpen"
       :title="t('generalExpense.category.title')"
       :categories="categories"
+      :show-owner="isAdmin"
       @create="createCategory"
       @update="updateCategory"
+      @delete="deleteCategory"
       @refresh="loadCategories"
     />
   </div>

@@ -133,6 +133,16 @@ async function updateCategory(payload: { id: string; name: string; isActive: boo
   }
 }
 
+async function deleteCategory(payload: { id: string }) {
+  try {
+    await api.delete(`/expense-categories/${payload.id}`, {})
+    toast.success(t('toast.expenseCategory.deleted'))
+    await reloadCategories()
+  } catch (caught) {
+    toast.error(api.mapError(caught).message)
+  }
+}
+
 async function loadExpenses() {
   loading.value = true
   error.value = ''
@@ -479,8 +489,10 @@ watch(
       v-model:open="categoryModalOpen"
       :title="t('expenseCategory.manage')"
       :categories="categories"
+      :show-owner="auth.role === 'ADMIN'"
       @create="createCategory"
       @update="updateCategory"
+      @delete="deleteCategory"
       @refresh="reloadCategories"
     />
   </div>

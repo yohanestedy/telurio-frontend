@@ -78,6 +78,13 @@ const quickActions = computed<QuickAction[]>(() => {
         icon: 'expenses',
         to: { path: '/expenses', query: { create: 'new' } },
       },
+      {
+        key: 'create-general-expense',
+        label: t('quick.createGeneralExpense'),
+        description: t('quick.createGeneralExpenseDescription'),
+        icon: 'wallet',
+        to: { path: '/general-expenses', query: { create: 'new' } },
+      },
     ]
   }
 

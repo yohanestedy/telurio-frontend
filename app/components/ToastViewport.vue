@@ -4,7 +4,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div class="pointer-events-none fixed inset-x-0 top-4 z-[60] mx-auto flex max-w-md flex-col gap-3 px-4">
+  <div class="pointer-events-none fixed inset-x-0 top-4 z-[100] mx-auto flex max-w-md flex-col gap-3 px-4">
     <transition-group name="toast">
       <div
         v-for="toast in toasts"
