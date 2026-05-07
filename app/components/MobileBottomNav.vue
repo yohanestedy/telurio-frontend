@@ -23,6 +23,7 @@ const activePanel = ref<'more' | 'quick' | null>(null)
 const morePanelRef = ref<HTMLElement | null>(null)
 const quickPanelRef = ref<HTMLElement | null>(null)
 const logoutDialogOpen = ref(false)
+const expenseChooserOpen = ref(false)
 
 const primaryItems = computed(() =>
   menu.value.mobile.filter((item) => item.icon !== 'more').slice(0, 3),
@@ -43,7 +44,13 @@ const moreItem = computed<MenuItem>(() =>
 
 const moreItems = computed(() => {
   const primaryPaths = new Set(primaryItems.value.map((item) => item.path))
-  return menu.value.desktop.filter((item) => !primaryPaths.has(item.path))
+  // Flatten children so grouped items appear individually in the More panel
+  return menu.value.desktop.flatMap((item) => {
+    if (item.children?.length) {
+      return item.children.filter((child) => !primaryPaths.has(child.path))
+    }
+    return primaryPaths.has(item.path) ? [] : [item]
+  })
 })
 
 const quickActions = computed<QuickAction[]>(() => {
@@ -104,7 +111,18 @@ const isMoreActive = computed(() =>
 )
 
 function isItemActive(path: string) {
+  if (path === '/expenses-chooser') {
+    return route.path === '/expenses' || route.path === '/general-expenses'
+  }
   return route.path === path || route.path.startsWith(`${path}/`)
+}
+
+function handleNavClick(path: string) {
+  if (path === '/expenses-chooser') {
+    expenseChooserOpen.value = true
+    return
+  }
+  navigateTo(path)
 }
 
 function closePanels() {
@@ -292,18 +310,31 @@ watch(
         <div
           class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[30px] border border-white/90 bg-white/96 px-2 pb-2 pt-1.5 shadow-[0_16px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl transition-colors duration-200 max-[380px]:gap-0.5 max-[380px]:rounded-[26px] max-[380px]:px-1.5 max-[380px]:pb-1.5 max-[380px]:pt-1 dark:border-white/10 dark:bg-[#1c1916]/90"
         >
-          <NuxtLink
-            v-for="item in leftItems"
-            :key="item.path"
-            :to="item.path"
-            class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
-            :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
-          >
-            <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
-              <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
-              <span>{{ item.label }}</span>
-            </div>
-          </NuxtLink>
+          <template v-for="item in leftItems" :key="item.path">
+            <button
+              v-if="item.path === '/expenses-chooser'"
+              type="button"
+              class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
+              :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
+              @click="handleNavClick(item.path)"
+            >
+              <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+                <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
+                <span>{{ item.label }}</span>
+              </div>
+            </button>
+            <NuxtLink
+              v-else
+              :to="item.path"
+              class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
+              :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
+            >
+              <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+                <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
+                <span>{{ item.label }}</span>
+              </div>
+            </NuxtLink>
+          </template>
 
           <button
             class="relative z-20 flex flex-col items-center gap-1 text-center text-[11px] font-medium text-ink-600"
@@ -319,18 +350,31 @@ watch(
             <span class="sr-only">{{ t('mobile.quickAction') }}</span>
           </button>
 
-          <NuxtLink
-            v-for="item in rightItems"
-            :key="item.path"
-            :to="item.path"
-            class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
-            :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
-          >
-            <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
-              <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
-              <span>{{ item.label }}</span>
-            </div>
-          </NuxtLink>
+          <template v-for="item in rightItems" :key="item.path">
+            <button
+              v-if="item.path === '/expenses-chooser'"
+              type="button"
+              class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
+              :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
+              @click="handleNavClick(item.path)"
+            >
+              <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+                <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
+                <span>{{ item.label }}</span>
+              </div>
+            </button>
+            <NuxtLink
+              v-else
+              :to="item.path"
+              class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
+              :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
+            >
+              <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+                <UiIcon :name="item.icon" class="h-[1.125rem] w-[1.125rem] transition-colors" />
+                <span>{{ item.label }}</span>
+              </div>
+            </NuxtLink>
+          </template>
 
           <button
             class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
@@ -348,4 +392,37 @@ watch(
   </nav>
 
   <LogoutConfirmDialog v-model:open="logoutDialogOpen" @confirm="confirmLogout" />
+
+  <!-- Expense Chooser Modal (mobile dock) -->
+  <UiDialog v-model:open="expenseChooserOpen" :title="t('menu.label.Expense Group')">
+    <div class="grid gap-3">
+      <NuxtLink
+        to="/expenses"
+        class="flex items-center gap-4 rounded-2xl border border-ink-100 p-4 transition hover:bg-ink-50/50 active:scale-[0.98]"
+        @click="expenseChooserOpen = false"
+      >
+        <div class="rounded-xl bg-orange-50 p-3 text-brand-700">
+          <UiIcon name="expenses" class="h-5 w-5" />
+        </div>
+        <div>
+          <p class="font-semibold text-ink-900">{{ t('menu.label.Expenses') }}</p>
+          <p class="mt-0.5 text-xs text-ink-500">{{ t('expenseHub.coopDescription') }}</p>
+        </div>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/general-expenses"
+        class="flex items-center gap-4 rounded-2xl border border-ink-100 p-4 transition hover:bg-ink-50/50 active:scale-[0.98]"
+        @click="expenseChooserOpen = false"
+      >
+        <div class="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+          <UiIcon name="wallet" class="h-5 w-5" />
+        </div>
+        <div>
+          <p class="font-semibold text-ink-900">{{ t('menu.label.General Expenses') }}</p>
+          <p class="mt-0.5 text-xs text-ink-500">{{ t('expenseHub.personalDescription') }}</p>
+        </div>
+      </NuxtLink>
+    </div>
+  </UiDialog>
 </template>
