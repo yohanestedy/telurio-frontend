@@ -190,25 +190,11 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         icon: "expenses",
       },
       {
-        label: "Expense Categories",
-        path: "/expense-categories",
-        description: "Kategori pengeluaran kandang",
-        permission: "expense-categories.view",
-        icon: "categories",
-      },
-      {
         label: "General Expenses",
         path: "/general-expenses",
         description: "Pengeluaran pribadi",
         permission: "general-expenses.view",
         icon: "wallet",
-      },
-      {
-        label: "General Expense Categories",
-        path: "/general-expense-categories",
-        description: "Kategori pengeluaran pribadi",
-        permission: "general-expense-categories.view",
-        icon: "categories",
       },
       {
         label: "Reports",

@@ -25,6 +25,7 @@ const deleteDialogOpen = ref(false)
 const editing = ref<ExpenseItem | null>(null)
 const deleting = ref<ExpenseItem | null>(null)
 const submitting = ref(false)
+const categoryModalOpen = ref(false)
 
 const coopFilter = ref('')
 const ownerFilter = ref('')
@@ -104,6 +105,32 @@ async function loadSupporting() {
   coops.value = responses[0].data
   categories.value = responses[1]
   owners.value = responses[2].data
+}
+
+async function reloadCategories() {
+  try {
+    categories.value = await api.get<ExpenseCategoryItem[]>('/expense-categories')
+  } catch { /* non-critical */ }
+}
+
+async function createCategory(payload: { name: string }) {
+  try {
+    await api.post('/expense-categories', { name: payload.name })
+    toast.success(t('toast.expenseCategory.created'))
+    await reloadCategories()
+  } catch (caught) {
+    toast.error(t('toast.expenseCategory.saveFailed'), api.mapError(caught).message)
+  }
+}
+
+async function updateCategory(payload: { id: string; name: string; isActive: boolean }) {
+  try {
+    await api.patch(`/expense-categories/${payload.id}`, { name: payload.name, isActive: payload.isActive })
+    toast.success(t('toast.expenseCategory.updated'))
+    await reloadCategories()
+  } catch (caught) {
+    toast.error(t('toast.expenseCategory.saveFailed'), api.mapError(caught).message)
+  }
 }
 
 async function loadExpenses() {
@@ -226,6 +253,13 @@ watch(
       :description="t('expense.description')"
     >
       <template #actions>
+        <UiButton
+          variant="secondary"
+          icon="categories"
+          @click="categoryModalOpen = true"
+        >
+          {{ t('expenseCategory.manage') }}
+        </UiButton>
         <UiButton
           variant="secondary"
           icon="refresh"
@@ -440,5 +474,14 @@ watch(
     >
       <FormsDeleteReasonForm :submitting="submitting" @submit="deleteExpense" />
     </UiDialog>
+
+    <CategoryManageModal
+      v-model:open="categoryModalOpen"
+      :title="t('expenseCategory.manage')"
+      :categories="categories"
+      @create="createCategory"
+      @update="updateCategory"
+      @refresh="reloadCategories"
+    />
   </div>
 </template>

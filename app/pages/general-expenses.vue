@@ -21,6 +21,7 @@ const deleteDialogOpen = ref(false)
 const editing = ref<GeneralExpenseItem | null>(null)
 const deleting = ref<GeneralExpenseItem | null>(null)
 const submitting = ref(false)
+const categoryModalOpen = ref(false)
 
 const categoryFilter = ref('')
 const startDateFilter = ref('')
@@ -72,6 +73,26 @@ async function loadCategories() {
     categories.value = await api.get<GeneralExpenseCategoryItem[]>('/general-expense-categories')
   } catch {
     // non-critical
+  }
+}
+
+async function createCategory(payload: { name: string }) {
+  try {
+    await api.post('/general-expense-categories', { name: payload.name })
+    toast.success(t('toast.expenseCategory.created'))
+    await loadCategories()
+  } catch (caught) {
+    toast.error(t('toast.expenseCategory.saveFailed'), api.mapError(caught).message)
+  }
+}
+
+async function updateCategory(payload: { id: string; name: string; isActive: boolean }) {
+  try {
+    await api.patch(`/general-expense-categories/${payload.id}`, { name: payload.name })
+    toast.success(t('toast.expenseCategory.updated'))
+    await loadCategories()
+  } catch (caught) {
+    toast.error(t('toast.expenseCategory.saveFailed'), api.mapError(caught).message)
   }
 }
 
@@ -162,6 +183,13 @@ watch([sortBy, sortOrder], () => {
       :description="t('generalExpense.description')"
     >
       <template #actions>
+        <UiButton
+          variant="secondary"
+          icon="categories"
+          @click="categoryModalOpen = true"
+        >
+          {{ t('expenseCategory.manage') }}
+        </UiButton>
         <UiButton
           variant="secondary"
           icon="refresh"
@@ -338,5 +366,14 @@ watch([sortBy, sortOrder], () => {
     >
       <FormsDeleteReasonForm :submitting="submitting" @submit="deleteExpense" />
     </UiDialog>
+
+    <CategoryManageModal
+      v-model:open="categoryModalOpen"
+      :title="t('generalExpense.category.title')"
+      :categories="categories"
+      @create="createCategory"
+      @update="updateCategory"
+      @refresh="loadCategories"
+    />
   </div>
 </template>
