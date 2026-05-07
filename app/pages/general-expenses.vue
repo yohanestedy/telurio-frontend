@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { GeneralExpenseCategoryItem, GeneralExpenseItem } from '../types/domain'
+import type { GeneralExpenseCategoryItem, GeneralExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 
 definePageMeta({
@@ -19,6 +19,7 @@ const loading = ref(true)
 const error = ref('')
 const expenses = ref<GeneralExpenseItem[]>([])
 const categories = ref<GeneralExpenseCategoryItem[]>([])
+const owners = ref<UserItem[]>([])
 const dialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
 const editing = ref<GeneralExpenseItem | null>(null)
@@ -49,6 +50,10 @@ const skeletonCells = [
 
 const categoryOptions = computed(() =>
   categories.value.map((item) => ({ label: item.name, value: item.id })),
+)
+
+const ownerOptions = computed(() =>
+  owners.value.map((item) => ({ label: item.name, value: item.id })),
 )
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
@@ -187,8 +192,16 @@ async function consumeCreateQuery(value: unknown) {
   await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
 }
 
+async function loadOwners() {
+  if (auth.role !== 'ADMIN') return
+  try {
+    const res = await api.getPage<UserItem[]>('/users', { all: true, role: 'OWNER' })
+    owners.value = res.data
+  } catch { /* non-critical */ }
+}
+
 onMounted(async () => {
-  await Promise.all([loadExpenses(), loadCategories()])
+  await Promise.all([loadExpenses(), loadCategories(), loadOwners()])
 })
 
 watch([sortBy, sortOrder], () => {
@@ -232,6 +245,14 @@ watch(
         </UiButton>
       </template>
     </ListHeaderCard>
+
+    <ExpenseSummaryCard
+      api-path="/general-expenses/summary"
+      :title="t('expenseSummary.title')"
+      filter-param="ownerId"
+      :filter-options="ownerOptions"
+      :filter-placeholder="t('expense.allOwners')"
+    />
 
     <ListTableShell
       :filter-applied="Boolean(categoryFilter) || Boolean(startDateFilter) || Boolean(endDateFilter)"

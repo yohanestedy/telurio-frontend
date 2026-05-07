@@ -281,6 +281,14 @@ watch(
       </template>
     </ListHeaderCard>
 
+    <ExpenseSummaryCard
+      api-path="/expenses/summary"
+      :title="t('expenseSummary.title')"
+      filter-param="coopId"
+      :filter-options="coopOptions"
+      :filter-placeholder="t('stock.allCoops')"
+    />
+
     <ListTableShell
       :filter-applied="Boolean(coopFilter) || Boolean(ownerFilter) || Boolean(categoryFilter) || Boolean(startDateFilter) || Boolean(endDateFilter)"
       :page-range-label="pageRangeLabel"
