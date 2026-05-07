@@ -23,6 +23,7 @@ import {
   DatePickerRoot,
   DatePickerTrigger,
 } from 'reka-ui'
+import dayjs from 'dayjs'
 
 interface Props {
   modelValue?: string | null
@@ -145,6 +146,64 @@ function selectTomorrow() {
 
   value.value = tomorrowValue.value
 }
+
+// --- Month/Year picker within calendar ---
+type PickerView = 'calendar' | 'month' | 'year'
+const pickerView = ref<PickerView>('calendar')
+
+const monthLabelsShort = computed(() => {
+  if (ui.language === 'id') {
+    return ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+  }
+  return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+})
+
+const viewingYear = ref(dayjs().year())
+const yearRangeStart = ref(dayjs().year() - 4)
+const yearRange = computed(() => Array.from({ length: 12 }, (_, i) => yearRangeStart.value + i))
+
+function openMonthPicker() {
+  // Set viewingYear to the currently displayed calendar month
+  if (value.value) {
+    viewingYear.value = value.value.year
+  } else {
+    viewingYear.value = dayjs().year()
+  }
+  pickerView.value = 'month'
+}
+
+function openYearPicker() {
+  yearRangeStart.value = viewingYear.value - 4
+  pickerView.value = 'year'
+}
+
+function selectMonthFromPicker(monthIndex: number) {
+  // Navigate the calendar to the selected month
+  const targetYear = viewingYear.value
+  const targetMonth = monthIndex + 1
+  const day = value.value?.day ?? 1
+  const dateStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  try {
+    value.value = parseDate(dateStr)
+  } catch {
+    // If day doesn't exist in month (e.g. Feb 31), use first day
+    value.value = parseDate(`${targetYear}-${String(targetMonth).padStart(2, '0')}-01`)
+  }
+  pickerView.value = 'calendar'
+}
+
+function selectYearFromPicker(year: number) {
+  viewingYear.value = year
+  pickerView.value = 'month'
+}
+
+function prevYearRange() {
+  yearRangeStart.value -= 12
+}
+
+function nextYearRange() {
+  yearRangeStart.value += 12
+}
 </script>
 
 <template>
@@ -178,8 +237,79 @@ function selectTomorrow() {
         :side-offset="10"
         data-ui-date-picker-content="true"
         class="z-[80] w-[min(94vw,20rem)] rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-[0_20px_45px_rgba(15,23,42,0.14)] backdrop-blur-md"
+        @open-auto-focus="pickerView = 'calendar'"
       >
+        <!-- Month Picker View -->
+        <div v-if="pickerView === 'month'" class="space-y-3">
+          <div class="flex items-center justify-center">
+            <button
+              type="button"
+              class="rounded-lg px-3 py-1 text-sm font-semibold text-ink-900 transition hover:bg-ink-100"
+              @click="openYearPicker"
+            >
+              {{ viewingYear }}
+            </button>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button
+              v-for="(label, idx) in monthLabelsShort"
+              :key="idx"
+              type="button"
+              class="rounded-xl px-1 py-2.5 text-center text-[13px] font-medium transition"
+              :class="[
+                value && idx + 1 === value.month && viewingYear === value.year
+                  ? 'bg-brand-500 text-white shadow-sm'
+                  : 'text-ink-700 hover:bg-ink-100',
+              ]"
+              @click="selectMonthFromPicker(idx)"
+            >
+              {{ label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Year Picker View -->
+        <div v-else-if="pickerView === 'year'" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <button
+              type="button"
+              class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-ink-700 transition hover:bg-slate-100"
+              @click="prevYearRange"
+            >
+              <UiIcon name="chevronLeft" class="h-3.5 w-3.5" />
+            </button>
+            <span class="text-xs font-medium text-ink-500">
+              {{ yearRange[0] }} — {{ yearRange[yearRange.length - 1] }}
+            </span>
+            <button
+              type="button"
+              class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-ink-700 transition hover:bg-slate-100"
+              @click="nextYearRange"
+            >
+              <UiIcon name="chevronRight" class="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button
+              v-for="y in yearRange"
+              :key="y"
+              type="button"
+              class="rounded-xl px-1 py-2.5 text-center text-[13px] font-medium transition"
+              :class="[
+                y === viewingYear
+                  ? 'bg-brand-500 text-white shadow-sm'
+                  : 'text-ink-700 hover:bg-ink-100',
+              ]"
+              @click="selectYearFromPicker(y)"
+            >
+              {{ y }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Calendar View (default) -->
         <DatePickerCalendar
+          v-else
           v-slot="{ weekDays, grid }"
           :week-starts-on="1"
           class="space-y-3"
@@ -195,7 +325,13 @@ function selectTomorrow() {
               </button>
             </DatePickerPrev>
 
-            <DatePickerHeading class="text-sm font-semibold text-ink-900" />
+            <button
+              type="button"
+              class="rounded-lg px-2 py-1 text-sm font-semibold text-ink-900 transition hover:bg-ink-100"
+              @click="openMonthPicker"
+            >
+              <DatePickerHeading />
+            </button>
 
             <DatePickerNext v-slot="{ disabled: nextDisabled }" as-child>
               <button
