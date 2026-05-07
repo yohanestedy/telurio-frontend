@@ -290,6 +290,7 @@ export interface MonthlySummaryItem {
 export interface GeneralExpenseItem {
   id: string;
   ownerId: string;
+  ownerName: string | null;
   date: string;
   amount: string;
   description: string;
@@ -349,12 +350,18 @@ export interface CalendarDay {
       coopId: string;
       coopName: string;
       totalAmount: string;
+      items: Array<{
+        description: string | null;
+        amount: string;
+        categoryName: string | null;
+      }>;
     }>;
     generalExpenses: Array<{
       id: string;
       description: string;
       amount: string;
       categoryName: string | null;
+      ownerName: string | null;
     }>;
     priceUpdates: Array<{
       pricePerKg: string;

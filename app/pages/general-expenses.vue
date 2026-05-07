@@ -36,6 +36,7 @@ const orderByOptions = computed(() => [
 const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
+  { lines: [{ class: 'w-20' }] },
   { lines: [{ class: 'w-10/12' }] },
   { lines: [{ class: 'w-8/12' }] },
   { lines: [{ class: 'w-20' }] },
@@ -263,6 +264,7 @@ watch([sortBy, sortOrder], () => {
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
               <th class="px-4 py-3 pr-4">{{ t('common.date') }}</th>
+              <th class="px-4 py-3 pr-4">Owner</th>
               <th class="px-4 py-3 pr-4">{{ t('expense.itemDescription') }}</th>
               <th class="px-4 py-3 pr-4">{{ t('expense.category') }}</th>
               <th class="px-4 py-3 pr-4">{{ t('common.amount') }}</th>
@@ -278,13 +280,14 @@ watch([sortBy, sortOrder], () => {
           <ListTableStateBody
             v-else-if="error"
             mode="error"
-            :colspan="5"
+            :colspan="6"
             :message="error"
             @retry="loadExpenses"
           />
           <tbody v-else-if="expenses.length">
             <tr v-for="item in expenses" :key="item.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">{{ formatDate(item.date) }}</td>
+              <td class="px-4 py-4 pr-4 text-ink-600">{{ item.ownerName ?? '-' }}</td>
               <td class="px-4 py-4 pr-4 text-ink-700">
                 <div>{{ item.description }}</div>
                 <div v-if="item.notes" class="mt-0.5 text-xs text-ink-400">{{ item.notes }}</div>
@@ -309,7 +312,7 @@ watch([sortBy, sortOrder], () => {
           <ListTableStateBody
             v-else
             mode="empty"
-            :colspan="5"
+            :colspan="6"
             :message="t('generalExpense.empty')"
           />
         </table>

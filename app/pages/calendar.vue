@@ -51,6 +51,12 @@ const allocationModalMode = ref<'start' | 'edit'>('start')
 const selectedPrice = ref<PriceItem | null>(null)
 const selectedPriceLoading = ref(false)
 const selectedPriceError = ref(false)
+const expenseDetailOpen = ref(false)
+const expenseDetailTitle = ref('')
+const expenseDetailSubtitle = ref('')
+const expenseDetailDate = ref('')
+const expenseDetailItems = ref<Array<{ description: string; amount: string; categoryName?: string | null }>>([])
+const expenseDetailTotal = ref('')
 
 const boardTransitionKey = computed(
   () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
@@ -74,6 +80,58 @@ function emptyCalendarDay(date: string): CalendarDay {
 const activeCoopOptions = computed(() =>
   activeCoops.value.map((item) => ({ label: item.name, value: item.id })),
 )
+
+// Group general expenses by owner for calendar display
+const generalExpensesByOwner = computed(() => {
+  const items = selectedDay.value.events.generalExpenses ?? []
+  const map = new Map<string, { ownerName: string; total: bigint; items: typeof items }>()
+
+  for (const item of items) {
+    const key = item.ownerName ?? '—'
+    const existing = map.get(key)
+    if (existing) {
+      existing.total += BigInt(item.amount)
+      existing.items.push(item)
+    } else {
+      map.set(key, { ownerName: key, total: BigInt(item.amount), items: [item] })
+    }
+  }
+
+  return [...map.values()].map((g) => ({
+    ownerName: g.ownerName,
+    total: g.total.toString(),
+    items: g.items,
+  }))
+})
+
+function openExpenseDetail(title: string, items: Array<{ description: string; amount: string; categoryName?: string | null }>, total: string) {
+  expenseDetailTitle.value = title
+  expenseDetailItems.value = items
+  expenseDetailTotal.value = total
+  expenseDetailOpen.value = true
+}
+
+function openCoopExpenseDetail(expense: { coopName: string; totalAmount: string; items: Array<{ description: string | null; amount: string; categoryName: string | null }> }) {
+  expenseDetailTitle.value = t('calendar.marker.expense')
+  expenseDetailSubtitle.value = expense.coopName
+  expenseDetailDate.value = selectedDateLabel.value
+  expenseDetailItems.value = expense.items.map((item) => ({
+    description: item.description || expense.coopName,
+    amount: item.amount,
+    categoryName: item.categoryName,
+  }))
+  expenseDetailTotal.value = expense.totalAmount
+  expenseDetailOpen.value = true
+}
+
+function openGeneralExpenseDetail(ownerName: string, items: Array<{ description: string; amount: string; categoryName?: string | null }>, total: string) {
+  expenseDetailTitle.value = t('calendar.marker.generalExpense')
+  expenseDetailSubtitle.value = ownerName
+  expenseDetailDate.value = selectedDateLabel.value
+  expenseDetailItems.value = items
+  expenseDetailTotal.value = total
+  expenseDetailOpen.value = true
+}
 
 const activeOrderIsTodayDelivery = computed(() => {
   if (!activeOrder.value) {
@@ -476,33 +534,34 @@ onMounted(() => {
 
             <div class="rounded-2xl border border-white/70 bg-white/80 p-3">
               <p class="text-xs uppercase tracking-wide text-ink-500">{{ t('calendar.marker.expense') }}</p>
-              <div v-if="selectedDay.events.expenses.length" class="mt-2 space-y-1.5">
-                <div
+              <div v-if="selectedDay.events.expenses.length" class="mt-2 space-y-1">
+                <button
                   v-for="expense in selectedDay.events.expenses"
                   :key="expense.coopId"
-                  class="flex items-center justify-between gap-3"
+                  type="button"
+                  class="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ink-100/60 active:bg-ink-100"
+                  @click="openCoopExpenseDetail(expense)"
                 >
-                  <span class="font-medium text-ink-800">{{ expense.coopName }}</span>
-                  <span>{{ formatRupiah(expense.totalAmount) }}</span>
-                </div>
+                  <span class="truncate font-medium text-ink-800">{{ expense.coopName }}</span>
+                  <span class="shrink-0 whitespace-nowrap">{{ formatRupiah(expense.totalAmount) }}</span>
+                </button>
               </div>
               <p v-else class="mt-2 text-ink-500">{{ t('calendar.noExpense') }}</p>
             </div>
 
-            <div v-if="selectedDay.events.generalExpenses?.length" class="rounded-2xl border border-white/70 bg-white/80 p-3">
+            <div v-if="generalExpensesByOwner.length" class="rounded-2xl border border-white/70 bg-white/80 p-3">
               <p class="text-xs uppercase tracking-wide text-ink-500">{{ t('calendar.marker.generalExpense') }}</p>
-              <div class="mt-2 space-y-1.5">
-                <div
-                  v-for="item in selectedDay.events.generalExpenses"
-                  :key="item.id"
-                  class="flex items-center justify-between gap-3"
+              <div class="mt-2 space-y-1">
+                <button
+                  v-for="group in generalExpensesByOwner"
+                  :key="group.ownerName"
+                  type="button"
+                  class="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ink-100/60 active:bg-ink-100"
+                  @click="openGeneralExpenseDetail(group.ownerName, group.items, group.total)"
                 >
-                  <div>
-                    <span class="font-medium text-ink-800">{{ item.description }}</span>
-                    <UiBadge v-if="item.categoryName" tone="neutral" class="ml-1.5">{{ item.categoryName }}</UiBadge>
-                  </div>
-                  <span>{{ formatRupiah(item.amount) }}</span>
-                </div>
+                  <span class="truncate font-medium text-ink-800">{{ group.ownerName }}</span>
+                  <span class="shrink-0 whitespace-nowrap">{{ formatRupiah(group.total) }}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -548,6 +607,38 @@ onMounted(() => {
         :dp-amount="activeOrder.dpAmount"
         @submit="submitPaymentUpdate"
       />
+    </UiDialog>
+
+    <!-- Expense Detail Dialog -->
+    <UiDialog
+      v-model:open="expenseDetailOpen"
+      :title="expenseDetailTitle"
+    >
+      <div class="space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-sm font-medium text-ink-700">{{ expenseDetailSubtitle }}</span>
+          <span class="text-xs text-ink-400">{{ expenseDetailDate }}</span>
+        </div>
+
+        <div class="max-h-[50vh] space-y-1.5 overflow-y-auto">
+          <div
+            v-for="(item, idx) in expenseDetailItems"
+            :key="idx"
+            class="flex items-center justify-between gap-3 rounded-lg bg-ink-50/50 px-3 py-2"
+          >
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-ink-800">{{ item.description }}</p>
+              <p v-if="item.categoryName" class="text-xs text-ink-400">{{ item.categoryName }}</p>
+            </div>
+            <span class="shrink-0 text-sm font-semibold text-ink-900 whitespace-nowrap">{{ formatRupiah(item.amount) }}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-ink-100 pt-3">
+          <span class="text-sm font-medium text-ink-600">Total</span>
+          <span class="text-base font-bold text-ink-900">{{ formatRupiah(expenseDetailTotal) }}</span>
+        </div>
+      </div>
     </UiDialog>
   </div>
 </template>

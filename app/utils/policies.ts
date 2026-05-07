@@ -102,7 +102,7 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
       {
         label: "General Expenses",
         path: "/general-expenses",
-        description: "Pengeluaran non-kandang",
+        description: "Pengeluaran pribadi",
         permission: "general-expenses.view",
         icon: "wallet",
       },
@@ -192,21 +192,21 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
       {
         label: "Expense Categories",
         path: "/expense-categories",
-        description: "Kategori pengeluaran",
+        description: "Kategori pengeluaran kandang",
         permission: "expense-categories.view",
         icon: "categories",
       },
       {
         label: "General Expenses",
         path: "/general-expenses",
-        description: "Pengeluaran non-kandang",
+        description: "Pengeluaran pribadi",
         permission: "general-expenses.view",
         icon: "wallet",
       },
       {
         label: "General Expense Categories",
         path: "/general-expense-categories",
-        description: "Kategori pengeluaran non-kandang",
+        description: "Kategori pengeluaran pribadi",
         permission: "general-expense-categories.view",
         icon: "categories",
       },
@@ -243,7 +243,7 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
       {
         label: "Expenses",
         path: "/expenses",
-        description: "Pengeluaran",
+        description: "Pengeluaran kandang",
         permission: "expenses.view",
         icon: "expenses",
       },
