@@ -42,6 +42,7 @@ const markerLegend = computed(() => [
   { label: t('calendar.marker.order'), className: 'bg-brand-500 dark:!bg-brand-300' },
   { label: t('calendar.marker.production'), className: 'bg-emerald-500 dark:!bg-emerald-300' },
   { label: t('calendar.marker.expense'), className: 'bg-slate-500 dark:!bg-slate-300' },
+  { label: t('calendar.marker.generalExpense'), className: 'bg-indigo-400 dark:!bg-indigo-300' },
 ])
 
 const markerMap = computed(() => new Map(props.markerDays.map((day) => [day.date, day.markers])))
@@ -121,7 +122,7 @@ function buildMarkers(date: string): CalendarMarker[] {
       key: 'generalExpenses',
       label: t('calendar.marker.generalExpense'),
       count: generalExpenseCount,
-      className: 'bg-purple-500 dark:!bg-purple-300',
+      className: 'bg-indigo-400 dark:!bg-indigo-300',
     })
   }
 
