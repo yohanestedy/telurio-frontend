@@ -387,6 +387,7 @@ export interface MenuItem {
   description: string;
   permission: Permission;
   icon: AppIconName;
+  children?: MenuItem[];
 }
 
 export type Permission =

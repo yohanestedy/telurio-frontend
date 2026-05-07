@@ -1,10 +1,29 @@
 <script setup lang="ts">
 const auth = useAuthStore()
 const menu = useRoleMenu()
+const route = useRoute()
 const { logout } = useAuth()
 const { t } = useI18n()
 
 const logoutDialogOpen = ref(false)
+const expandedGroups = ref<Set<string>>(new Set())
+
+function isGroupActive(item: { path: string; children?: Array<{ path: string }> }) {
+  if (!item.children) return false
+  return item.children.some((child) => route.path === child.path || route.path.startsWith(`${child.path}/`))
+}
+
+function toggleGroup(path: string) {
+  if (expandedGroups.value.has(path)) {
+    expandedGroups.value.delete(path)
+  } else {
+    expandedGroups.value.add(path)
+  }
+}
+
+function isGroupExpanded(item: { path: string; children?: Array<{ path: string }> }) {
+  return expandedGroups.value.has(item.path) || isGroupActive(item)
+}
 
 async function confirmLogout() {
   logoutDialogOpen.value = false
@@ -33,21 +52,72 @@ async function confirmLogout() {
       </div> -->
 
       <nav class="glass-panel rounded-[28px] p-3">
-        <NuxtLink
-          v-for="item in menu.desktop"
-          :key="item.path"
-          :to="item.path"
-          class="mb-1 flex items-center gap-3 rounded-2xl px-4 py-3 transition hover:bg-orange-50/70"
-          active-class="bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-[0_16px_36px_rgba(243,95,16,0.18)]"
-        >
-          <div class="rounded-xl bg-orange-50/80 p-2 text-brand-700 transition">
-            <UiIcon :name="item.icon" class="h-4 w-4" />
+        <template v-for="item in menu.desktop" :key="item.path">
+          <!-- Item with children: collapsible group -->
+          <div v-if="item.children?.length">
+            <button
+              type="button"
+              class="mb-1 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-orange-50/70"
+              :class="isGroupActive(item) ? 'bg-orange-50/70' : ''"
+              @click="toggleGroup(item.path)"
+            >
+              <div class="rounded-xl bg-orange-50/80 p-2 text-brand-700 transition">
+                <UiIcon :name="item.icon" class="h-4 w-4" />
+              </div>
+              <div class="flex-1">
+                <div class="font-medium">{{ item.label }}</div>
+                <div class="text-xs opacity-75">{{ item.description }}</div>
+              </div>
+              <UiIcon
+                name="chevronDown"
+                class="h-3.5 w-3.5 text-ink-400 transition-transform duration-200"
+                :class="isGroupExpanded(item) ? 'rotate-180' : ''"
+              />
+            </button>
+            <Transition
+              enter-active-class="transition-all duration-200 ease-out"
+              leave-active-class="transition-all duration-150 ease-in"
+              enter-from-class="max-h-0 opacity-0"
+              enter-to-class="max-h-40 opacity-100"
+              leave-from-class="max-h-40 opacity-100"
+              leave-to-class="max-h-0 opacity-0"
+            >
+              <div v-show="isGroupExpanded(item)" class="overflow-hidden pl-5">
+                <NuxtLink
+                  v-for="child in item.children"
+                  :key="child.path"
+                  :to="child.path"
+                  class="mb-1 flex items-center gap-3 rounded-2xl px-4 py-2.5 transition hover:bg-orange-50/70"
+                  active-class="bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-[0_16px_36px_rgba(243,95,16,0.18)]"
+                >
+                  <div class="rounded-lg bg-orange-50/80 p-1.5 text-brand-700 transition">
+                    <UiIcon :name="child.icon" class="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium">{{ child.label }}</div>
+                    <div class="text-[11px] opacity-75">{{ child.description }}</div>
+                  </div>
+                </NuxtLink>
+              </div>
+            </Transition>
           </div>
-          <div>
-            <div class="font-medium">{{ item.label }}</div>
-            <div class="text-xs opacity-75">{{ item.description }}</div>
-          </div>
-        </NuxtLink>
+
+          <!-- Regular item -->
+          <NuxtLink
+            v-else
+            :to="item.path"
+            class="mb-1 flex items-center gap-3 rounded-2xl px-4 py-3 transition hover:bg-orange-50/70"
+            active-class="bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-[0_16px_36px_rgba(243,95,16,0.18)]"
+          >
+            <div class="rounded-xl bg-orange-50/80 p-2 text-brand-700 transition">
+              <UiIcon :name="item.icon" class="h-4 w-4" />
+            </div>
+            <div>
+              <div class="font-medium">{{ item.label }}</div>
+              <div class="text-xs opacity-75">{{ item.description }}</div>
+            </div>
+          </NuxtLink>
+        </template>
       </nav>
 
       <div v-if="auth.user" class="glass-panel rounded-[28px] p-5">
