@@ -340,6 +340,10 @@ export interface CalendarDay {
       totalInvoice: string | null;
       deliveryStatus: DeliveryStatus;
       paymentStatus: PaymentStatus;
+      allocations: Array<{
+        coopName: string;
+        quantityKg: string;
+      }>;
     }>;
     productions: Array<{
       coopId: string;

@@ -258,6 +258,7 @@ const id: TranslationTable = {
     "Status pengantaran dan pembayaran dipisah sesuai flow bisnis.",
   "order.customerHeader": "Customer",
   "order.totalRp": "Total Rp",
+  "order.Allocations": "Alokasi",
   "order.sourceAllocations": "Alokasi Sumber Telur",
   "order.sourceAllocationsDescription":
     "Gross income per kandang berasal dari alokasi aktual ini.",
@@ -881,6 +882,7 @@ const en: TranslationTable = {
     "Delivery and payment statuses are separated according to the business flow.",
   "order.customerHeader": "Customer",
   "order.totalRp": "Total Rp",
+  "order.Allocations": "Allocations",
   "order.sourceAllocations": "Source Allocations",
   "order.sourceAllocationsDescription":
     "Gross income per coop comes from this actual allocation.",

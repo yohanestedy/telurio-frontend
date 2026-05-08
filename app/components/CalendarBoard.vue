@@ -228,10 +228,80 @@ function changeMode(mode: 'month' | 'week' | 'day') {
   emit('modeChange', mode)
 }
 
+const legendOpen = ref(false)
+const legendRef = ref<HTMLElement | null>(null)
+const legendButtonRef = ref<HTMLElement | null>(null)
+const legendPopoverRef = ref<HTMLElement | null>(null)
+const legendPopoverStyle = ref<Record<string, string>>({})
+
+function updateLegendPopoverPosition() {
+  const button = legendButtonRef.value
+  if (!button || typeof window === 'undefined') {
+    return
+  }
+
+  const rect = button.getBoundingClientRect()
+  const width = 208
+  const margin = 12
+  const left = Math.min(Math.max(rect.right - width, margin), window.innerWidth - width - margin)
+
+  legendPopoverStyle.value = {
+    left: `${left}px`,
+    top: `${rect.bottom + 8}px`,
+    width: `${width}px`,
+  }
+}
+
+function toggleLegend() {
+  legendOpen.value = !legendOpen.value
+  if (legendOpen.value) {
+    nextTick(updateLegendPopoverPosition)
+  }
+}
+
+function closeLegend() {
+  legendOpen.value = false
+}
+
+function handleLegendPointerDown(event: PointerEvent) {
+  const target = event.target
+  if (
+    target instanceof Node
+    && !legendRef.value?.contains(target)
+    && !legendPopoverRef.value?.contains(target)
+  ) {
+    closeLegend()
+  }
+}
+
+function handleLegendKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    closeLegend()
+  }
+}
+
+function handleLegendViewportChange() {
+  if (legendOpen.value) {
+    updateLegendPopoverPosition()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('pointerdown', handleLegendPointerDown)
+  window.addEventListener('keydown', handleLegendKeydown)
+  window.addEventListener('resize', handleLegendViewportChange)
+  window.addEventListener('scroll', handleLegendViewportChange, true)
+})
+
 onBeforeUnmount(() => {
   if (flashTimer) {
     clearTimeout(flashTimer)
   }
+
+  window.removeEventListener('pointerdown', handleLegendPointerDown)
+  window.removeEventListener('keydown', handleLegendKeydown)
+  window.removeEventListener('resize', handleLegendViewportChange)
+  window.removeEventListener('scroll', handleLegendViewportChange, true)
 })
 </script>
 
@@ -375,20 +445,53 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="border-t border-white/70 pt-3 dark:!border-white/10">
-        <div class="flex flex-wrap items-center gap-3 text-xs text-ink-600">
-          <span
-            v-for="item in markerLegend"
-            :key="item.label"
-            class="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 dark:!border-white/10 dark:!bg-white/[0.04] dark:!text-ink-300"
+        <div ref="legendRef" class="relative flex justify-end">
+          <button
+            ref="legendButtonRef"
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-2.5 py-1.5 text-[11px] font-semibold text-ink-600 shadow-[0_8px_18px_rgba(15,23,42,0.06)] transition hover:border-brand-200 hover:text-brand-700 dark:!border-white/10 dark:!bg-white/[0.05] dark:!text-ink-300 dark:hover:!border-brand-400/30 dark:hover:!text-brand-200"
+            :aria-expanded="legendOpen"
+            aria-label="Tampilkan keterangan marker kalender"
+            @click.stop="toggleLegend"
           >
-            <span
-              :class="[
-                'h-2 w-2 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.75)] dark:shadow-[0_0_0_1px_rgba(18,14,11,0.95),0_0_8px_rgba(255,255,255,0.10)]',
-                item.className,
-              ]"
-            />
-            {{ item.label }}
-          </span>
+            <span class="grid h-4 w-4 grid-cols-2 gap-0.5">
+              <span
+                v-for="item in markerLegend"
+                :key="item.label"
+                :class="['h-1.5 w-1.5 rounded-full', item.className]"
+              />
+            </span>
+            <span class="hidden sm:inline">Keterangan</span>
+            <UiIcon name="chevronDown" class="h-3 w-3 transition-transform" :class="legendOpen ? 'rotate-180' : ''" />
+          </button>
+
+          <Teleport to="body">
+            <div
+              v-if="legendOpen"
+              ref="legendPopoverRef"
+              class="fixed z-[9999] rounded-2xl border border-white/80 bg-white/95 p-2.5 text-xs text-ink-700 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:!border-white/10 dark:!bg-[#201b18]/95 dark:!text-ink-200 dark:!shadow-[0_18px_40px_rgba(0,0,0,0.28)]"
+              :style="legendPopoverStyle"
+            >
+              <p class="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-400">
+                Marker kalender
+              </p>
+              <div class="space-y-1">
+                <div
+                  v-for="item in markerLegend"
+                  :key="item.label"
+                  class="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-brand-50/70 dark:hover:!bg-white/[0.06]"
+                >
+                  <span
+                    :class="[
+                      'h-2 w-2 shrink-0 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.75)] dark:shadow-[0_0_0_1px_rgba(18,14,11,0.95),0_0_8px_rgba(255,255,255,0.10)]',
+                      item.className,
+                    ]"
+                  />
+                  <span class="font-medium">{{ item.label }}</span>
+                </div>
+              </div>
+            </div>
+          </Teleport>
         </div>
       </div>
     </div>

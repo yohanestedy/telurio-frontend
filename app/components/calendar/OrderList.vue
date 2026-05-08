@@ -159,6 +159,18 @@ function deliveryAccentClass(order: CalendarOrder) {
           <StatusChip compact kind="payment" :value="order.paymentStatus" />
         </div>
 
+        <div v-if="order.allocations?.length" :class="props.dense ? 'mt-2 flex flex-wrap items-center gap-x-3 gap-y-1' : 'mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1'">
+          <span class="text-[11px] font-medium text-ink-500">{{ t('order.Allocations') }}:</span>
+          <span
+            v-for="(alloc, idx) in order.allocations"
+            :key="idx"
+            class="inline-flex items-center gap-1 text-[11px] text-ink-700"
+          >
+            <span class="font-medium">{{ alloc.coopName }}</span>
+            <span class="font-bold text-ink-500">({{ formatKg(alloc.quantityKg) }} kg)</span>
+          </span>
+        </div>
+
         <div class="order-divider" :class="props.dense ? 'my-2.5 h-px bg-slate-200/80' : 'my-3 h-px bg-slate-200/80'" />
 
         <div class="flex flex-wrap gap-2">
