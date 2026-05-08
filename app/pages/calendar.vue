@@ -51,6 +51,7 @@ const allocationModalMode = ref<'start' | 'edit'>('start')
 const selectedPrice = ref<PriceItem | null>(null)
 const selectedPriceLoading = ref(false)
 const selectedPriceError = ref(false)
+const dayDetailLoading = ref(false)
 const expenseDetailOpen = ref(false)
 const expenseDetailTitle = ref('')
 const expenseDetailSubtitle = ref('')
@@ -58,9 +59,6 @@ const expenseDetailDate = ref('')
 const expenseDetailItems = ref<Array<{ description: string; amount: string; categoryName?: string | null }>>([])
 const expenseDetailTotal = ref('')
 
-const boardTransitionKey = computed(
-  () => `${ui.calendarView}-${focusDate.value}-${selectedDate.value}`,
-)
 const selectedDateLabel = computed(() => formatWeekdayDayMonthYearId(selectedDate.value))
 const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length}`)
 
@@ -213,12 +211,18 @@ async function loadSelectedPriceForDate(date: string) {
   }
 }
 
+async function loadDayDetail(date: string) {
+  dayDetailLoading.value = true
+  await Promise.all([
+    loadSelectedDayDetail(date),
+    loadSelectedPriceForDate(date),
+  ])
+  dayDetailLoading.value = false
+}
+
 async function syncCalendarPanel() {
   await loadCalendar()
-  await Promise.all([
-    loadSelectedDayDetail(selectedDate.value),
-    loadSelectedPriceForDate(selectedDate.value),
-  ])
+  await loadDayDetail(selectedDate.value)
 }
 
 async function selectDate(date: string) {
@@ -237,16 +241,12 @@ async function selectDate(date: string) {
   if (ui.calendarView === 'day') {
     await Promise.all([
       loadCalendar(),
-      loadSelectedDayDetail(selectedDate.value),
-      loadSelectedPriceForDate(selectedDate.value),
+      loadDayDetail(selectedDate.value),
     ])
     return
   }
 
-  await Promise.all([
-    loadSelectedDayDetail(selectedDate.value),
-    loadSelectedPriceForDate(selectedDate.value),
-  ])
+  await loadDayDetail(selectedDate.value)
 }
 
 async function changeMonth(month: string) {
@@ -477,24 +477,43 @@ onMounted(() => {
     </ErrorState>
     <div v-else class="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_minmax(0,1fr)] xl:gap-6">
       <div class="space-y-4">
-        <Transition name="calendar-swap" mode="out-in">
-          <CalendarBoard
-            :key="boardTransitionKey"
-            :marker-days="markerDays"
-            :mode="ui.calendarView"
-            :focus-date="focusDate"
-            :selected-date="selectedDate"
-            :selected-price="selectedPrice"
-            :selected-price-loading="selectedPriceLoading"
-            :selected-price-error="selectedPriceError"
-            @select="selectDate"
-            @period-change="changeMonth"
-            @mode-change="ui.calendarView = $event"
-          />
-        </Transition>
+        <CalendarBoard
+          :marker-days="markerDays"
+          :mode="ui.calendarView"
+          :focus-date="focusDate"
+          :selected-date="selectedDate"
+          :selected-price="selectedPrice"
+          :selected-price-loading="selectedPriceLoading"
+          :selected-price-error="selectedPriceError"
+          @select="selectDate"
+          @period-change="changeMonth"
+          @mode-change="ui.calendarView = $event"
+        />
       </div>
 
       <div class="space-y-4">
+        <!-- Day Detail Skeleton -->
+        <template v-if="dayDetailLoading">
+          <GlassCard class="overflow-hidden animate-pulse">
+            <div class="flex items-center justify-between gap-3 border-b border-white/70 px-4 py-3.5 sm:px-5 sm:py-4">
+              <div class="h-5 w-28 rounded-md bg-slate-200/70" />
+              <div class="h-7 w-20 rounded-full bg-slate-200/60" />
+            </div>
+            <div class="space-y-3 p-3 sm:p-4">
+              <div v-for="i in 2" :key="i" class="h-24 rounded-2xl bg-slate-200/50" />
+            </div>
+          </GlassCard>
+          <GlassCard class="animate-pulse p-4 sm:p-5">
+            <div class="h-5 w-40 rounded-md bg-slate-200/70" />
+            <div class="mt-3 space-y-2">
+              <div class="h-16 rounded-2xl bg-slate-200/50" />
+              <div class="h-16 rounded-2xl bg-slate-200/50" />
+            </div>
+          </GlassCard>
+        </template>
+
+        <!-- Day Detail Content -->
+        <template v-else>
         <GlassCard class="overflow-hidden">
           <div class="flex items-center justify-between gap-2 border-b border-white/70 px-4 py-3.5 sm:px-5 sm:py-4">
             <div>
@@ -566,6 +585,7 @@ onMounted(() => {
             </div>
           </div>
         </GlassCard>
+        </template>
       </div>
     </div>
 
@@ -643,16 +663,4 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
-.calendar-swap-enter-active,
-.calendar-swap-leave-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
-}
 
-.calendar-swap-enter-from,
-.calendar-swap-leave-to {
-  opacity: 0;
-  transform: translateY(6px) scale(0.995);
-}
-
-</style>
