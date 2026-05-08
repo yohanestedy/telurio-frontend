@@ -166,6 +166,11 @@ const id: TranslationTable = {
     "Strain ayam, populasi, dan umur ayam aktif per kandang.",
   "dashboard.card.coopProfile.empty":
     "Belum ada kandang aktif dalam scope akses Anda.",
+  "dashboard.expense.title": "Pengeluaran",
+  "dashboard.expense.description":
+    "Ringkasan pengeluaran kandang dan pribadi bulan ini.",
+  "dashboard.expense.topCoop": "Top Kategori Kandang",
+  "dashboard.expense.topPersonal": "Top Kategori Pribadi",
   "livestock.production": "Produksi",
   "livestock.allocationRelease": "Rilis alokasi",
   "livestock.adjustmentIn": "Penyesuaian (+)",
@@ -784,6 +789,11 @@ const en: TranslationTable = {
     "Chicken strain, population, and active flock age per coop.",
   "dashboard.card.coopProfile.empty":
     "No active coops are available in your access scope.",
+  "dashboard.expense.title": "Expenses",
+  "dashboard.expense.description":
+    "Coop and personal expense overview for this month.",
+  "dashboard.expense.topCoop": "Top Coop Categories",
+  "dashboard.expense.topPersonal": "Top Personal Categories",
   "livestock.production": "Production",
   "livestock.allocationRelease": "Allocation release",
   "livestock.adjustmentIn": "Adjustment (+)",
