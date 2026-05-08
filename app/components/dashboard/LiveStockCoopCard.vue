@@ -111,16 +111,9 @@ const visibleOutFlowRows = computed(() =>
             <p class="truncate text-base font-semibold leading-tight text-ink-900 sm:text-lg">
               {{ props.item.coopName }}
             </p>
-            <span
-              :class="[
-                'inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                isActive
-                  ? 'border-emerald-200 bg-emerald-100/80 text-emerald-700'
-                  : 'border-ink-200 bg-ink-100/70 text-ink-600',
-              ]"
-            >
+            <UiBadge :tone="isActive ? 'success' : 'neutral'">
               {{ isActive ? t('common.active') : t('common.empty') }}
-            </span>
+            </UiBadge>
           </div>
         </div>
       </div>

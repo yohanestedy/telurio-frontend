@@ -60,16 +60,9 @@ const populationLabel = computed(() =>
           </span>
           <div class="flex min-w-0 items-center gap-2">
             <p class="truncate text-sm font-semibold text-ink-900 sm:text-base">{{ props.coop.name }}</p>
-            <span
-              :class="[
-                'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                props.coop.isActive
-                  ? 'border-emerald-200 bg-emerald-100/80 text-emerald-700'
-                  : 'border-ink-200 bg-ink-100/70 text-ink-600',
-              ]"
-            >
+            <UiBadge :tone="props.coop.isActive ? 'success' : 'neutral'">
               {{ props.coop.isActive ? t('common.active') : t('common.inactive') }}
-            </span>
+            </UiBadge>
           </div>
         </div>
         <button
