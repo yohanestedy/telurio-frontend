@@ -158,6 +158,7 @@ async function submitDeliveryAllocation(payload: { allocations: Array<{ coopId: 
     if (allocationModalMode.value === 'edit') {
       await api.patch(`/orders/${route.params.id}/allocations`, {
         allocations: payload.allocations,
+        orderUpdatedAt: order.value?.updatedAt,
       })
       toast.success(t('toast.allocation.updated'))
     } else {

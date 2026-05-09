@@ -107,6 +107,7 @@ export interface OrderItem {
   notes: string | null;
   createdByName: string | null;
   createdAt: string;
+  updatedAt: string | null;
 }
 
 export interface AllocationItem {

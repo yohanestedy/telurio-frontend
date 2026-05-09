@@ -26,6 +26,7 @@ const editing = ref<GeneralExpenseItem | null>(null)
 const deleting = ref<GeneralExpenseItem | null>(null)
 const submitting = ref(false)
 const categoryModalOpen = ref(false)
+const createGeneralExpenseIdempotencyKey = ref<string | null>(null)
 
 const categoryFilter = ref('')
 const startDateFilter = ref('')
@@ -135,6 +136,22 @@ async function loadExpenses() {
   }
 }
 
+function generateIdempotencyKey() {
+  return crypto.randomUUID()
+}
+
+function openCreateDialog() {
+  editing.value = null
+  createGeneralExpenseIdempotencyKey.value = generateIdempotencyKey()
+  dialogOpen.value = true
+}
+
+function openEditDialog(expense: GeneralExpenseItem) {
+  editing.value = expense
+  createGeneralExpenseIdempotencyKey.value = null
+  dialogOpen.value = true
+}
+
 async function submitExpense(payload: Record<string, unknown>) {
   submitting.value = true
   try {
@@ -142,11 +159,14 @@ async function submitExpense(payload: Record<string, unknown>) {
       await api.patch(`/general-expenses/${editing.value.id}`, payload)
       toast.success(t('toast.generalExpense.updated'))
     } else {
-      await api.post('/general-expenses', payload)
+      const idempotencyKey = createGeneralExpenseIdempotencyKey.value ?? generateIdempotencyKey()
+      createGeneralExpenseIdempotencyKey.value = idempotencyKey
+      await api.post('/general-expenses', { ...payload, idempotencyKey })
       toast.success(t('toast.generalExpense.created'))
     }
     dialogOpen.value = false
     editing.value = null
+    createGeneralExpenseIdempotencyKey.value = null
     await loadExpenses()
   } catch (caught) {
     toast.error(t('toast.generalExpense.saveFailed'), api.mapError(caught).message)
@@ -185,8 +205,7 @@ const route = useRoute()
 
 async function consumeCreateQuery(value: unknown) {
   if (value !== 'new') return
-  dialogOpen.value = true
-  editing.value = null
+  openCreateDialog()
   const nextQuery = { ...route.query }
   delete nextQuery.create
   await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
@@ -216,6 +235,14 @@ watch(
   (value) => { consumeCreateQuery(value) },
   { immediate: true },
 )
+
+watch(dialogOpen, (open) => {
+  if (!open) {
+    createGeneralExpenseIdempotencyKey.value = null
+  } else if (!editing.value && !createGeneralExpenseIdempotencyKey.value) {
+    createGeneralExpenseIdempotencyKey.value = generateIdempotencyKey()
+  }
+})
 </script>
 
 <template>
@@ -240,7 +267,7 @@ watch(
           :aria-label="t('common.refresh')"
           @click="loadExpenses"
         />
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">
+        <UiButton icon="plus" @click="openCreateDialog">
           {{ t('generalExpense.add') }}
         </UiButton>
       </template>
@@ -378,7 +405,7 @@ watch(
               <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.amount) }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
-                  <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = item">
+                  <UiButton variant="ghost" size="sm" icon="edit" @click="openEditDialog(item)">
                     {{ t('common.edit') }}
                   </UiButton>
                   <UiButton variant="ghost" size="sm" icon="delete" @click="deleteDialogOpen = true; deleting = item">

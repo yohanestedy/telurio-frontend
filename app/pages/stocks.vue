@@ -32,6 +32,7 @@ const manualAdjustOpen = ref(false)
 const movementDetailOpen = ref(false)
 const selectedMovement = ref<StockMovementItem | null>(null)
 const submittingManualAdjust = ref(false)
+const manualAdjustmentIdempotencyKey = ref<string | null>(null)
 
 const coopFilter = ref('')
 const directionFilter = ref('')
@@ -129,6 +130,20 @@ async function refreshData() {
   await Promise.all([loadSupporting(), loadMovements()])
 }
 
+function generateIdempotencyKey() {
+  return crypto.randomUUID()
+}
+
+function openManualAdjustDialog() {
+  manualAdjustmentIdempotencyKey.value = generateIdempotencyKey()
+  manualAdjustOpen.value = true
+}
+
+function closeManualAdjustDialog() {
+  manualAdjustOpen.value = false
+  manualAdjustmentIdempotencyKey.value = null
+}
+
 async function submitManualAdjustment(payload: {
   coopId: string
   direction: 'IN' | 'OUT'
@@ -138,9 +153,11 @@ async function submitManualAdjustment(payload: {
   submittingManualAdjust.value = true
 
   try {
-    await api.post('/stocks/manual-adjustments', payload)
+    const idempotencyKey = manualAdjustmentIdempotencyKey.value ?? generateIdempotencyKey()
+    manualAdjustmentIdempotencyKey.value = idempotencyKey
+    await api.post('/stocks/manual-adjustments', { ...payload, idempotencyKey })
     toast.success(t('toast.stock.adjustmentSaved'))
-    manualAdjustOpen.value = false
+    closeManualAdjustDialog()
     await refreshData()
   } catch (caught) {
     toast.error(t('toast.stock.adjustmentSaveFailed'), api.mapError(caught).message)
@@ -198,6 +215,14 @@ watch([sortBy, sortOrder], () => {
   pagination.resetPage()
   if (!loading.value) {
     loadMovements()
+  }
+})
+
+watch(manualAdjustOpen, (open) => {
+  if (!open) {
+    manualAdjustmentIdempotencyKey.value = null
+  } else if (!manualAdjustmentIdempotencyKey.value) {
+    manualAdjustmentIdempotencyKey.value = generateIdempotencyKey()
   }
 })
 </script>

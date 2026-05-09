@@ -26,6 +26,7 @@ const editing = ref<ExpenseItem | null>(null)
 const deleting = ref<ExpenseItem | null>(null)
 const submitting = ref(false)
 const categoryModalOpen = ref(false)
+const createExpenseIdempotencyKey = ref<string | null>(null)
 
 const coopFilter = ref('')
 const ownerFilter = ref('')
@@ -166,6 +167,22 @@ async function loadExpenses() {
   }
 }
 
+function generateIdempotencyKey() {
+  return crypto.randomUUID()
+}
+
+function openCreateDialog() {
+  editing.value = null
+  createExpenseIdempotencyKey.value = generateIdempotencyKey()
+  dialogOpen.value = true
+}
+
+function openEditDialog(expense: ExpenseItem) {
+  editing.value = expense
+  createExpenseIdempotencyKey.value = null
+  dialogOpen.value = true
+}
+
 async function submitExpense(payload: Record<string, unknown>) {
   submitting.value = true
   try {
@@ -179,12 +196,14 @@ async function submitExpense(payload: Record<string, unknown>) {
       })
       toast.success(t('toast.expense.updated'))
     } else {
-      await api.post('/expenses', payload)
+      const idempotencyKey = createExpenseIdempotencyKey.value ?? generateIdempotencyKey()
+      createExpenseIdempotencyKey.value = idempotencyKey
+      await api.post('/expenses', { ...payload, idempotencyKey })
       toast.success(t('toast.expense.created'))
     }
     dialogOpen.value = false
     editing.value = null
-    await loadExpenses()
+    createExpenseIdempotencyKey.value = null
   } catch (caught) {
     toast.error(t('toast.expense.saveFailed'), api.mapError(caught).message)
   } finally {
@@ -226,8 +245,7 @@ async function consumeCreateQuery(value: unknown) {
     return
   }
 
-  dialogOpen.value = true
-  editing.value = null
+  openCreateDialog()
 
   const nextQuery = { ...route.query }
   delete nextQuery.create
@@ -253,6 +271,14 @@ watch(
   { immediate: true },
 )
 
+watch(dialogOpen, (open) => {
+  if (!open) {
+    createExpenseIdempotencyKey.value = null
+  } else if (!editing.value && !createExpenseIdempotencyKey.value) {
+    createExpenseIdempotencyKey.value = generateIdempotencyKey()
+  }
+})
+
 </script>
 
 <template>
@@ -277,7 +303,7 @@ watch(
           :aria-label="t('common.refresh')"
           @click="loadExpenses"
         />
-        <UiButton icon="plus" @click="dialogOpen = true; editing = null">{{ t('common.add') }}</UiButton>
+        <UiButton icon="plus" @click="openCreateDialog">{{ t('common.add') }}</UiButton>
       </template>
     </ListHeaderCard>
 
@@ -442,7 +468,7 @@ watch(
               <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.amount) }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
-                  <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = item">
+                  <UiButton variant="ghost" size="sm" icon="edit" @click="openEditDialog(item)">
                     {{ t('common.edit') }}
                   </UiButton>
                   <UiButton variant="ghost" size="sm" icon="delete" @click="deleteDialogOpen = true; deleting = item">
