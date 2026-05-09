@@ -32,6 +32,7 @@ const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
 const latestOrderRequestId = ref(0)
+const createOrderIdempotencyKey = ref<string | null>(null)
 
 const deliveryStatus = computed({
   get: () => ui.orderFilters.deliveryStatus,
@@ -202,6 +203,22 @@ async function loadOrders() {
   }
 }
 
+function generateIdempotencyKey() {
+  return crypto.randomUUID()
+}
+
+function openCreateDialog() {
+  editing.value = null
+  createOrderIdempotencyKey.value = generateIdempotencyKey()
+  dialogOpen.value = true
+}
+
+function openEditDialog(order: OrderItem) {
+  editing.value = order
+  createOrderIdempotencyKey.value = null
+  dialogOpen.value = true
+}
+
 async function submitOrder(payload: Record<string, unknown>) {
   submitting.value = true
   try {
@@ -209,11 +226,14 @@ async function submitOrder(payload: Record<string, unknown>) {
       await api.patch(`/orders/${editing.value.id}`, payload)
       toast.success(t('toast.order.updated'))
     } else {
-      await api.post('/orders', payload)
+      const idempotencyKey = createOrderIdempotencyKey.value ?? generateIdempotencyKey()
+      createOrderIdempotencyKey.value = idempotencyKey
+      await api.post('/orders', { ...payload, idempotencyKey })
       toast.success(t('toast.order.created'))
     }
     dialogOpen.value = false
     editing.value = null
+    createOrderIdempotencyKey.value = null
     await loadOrders()
   } catch (caught) {
     toast.error(t('toast.order.saveFailed'), api.mapError(caught).message)
@@ -260,6 +280,7 @@ async function consumeCreateQuery(value: unknown) {
 
   dialogOpen.value = true
   editing.value = null
+  createOrderIdempotencyKey.value = generateIdempotencyKey()
 
   const nextQuery = { ...route.query }
   delete nextQuery.create
@@ -284,6 +305,13 @@ watch(
   },
   { immediate: true },
 )
+
+watch(dialogOpen, (open) => {
+  if (!open) {
+    editing.value = null
+    createOrderIdempotencyKey.value = null
+  }
+})
 
 </script>
 
@@ -312,7 +340,7 @@ watch(
           :aria-label="t('common.refresh')"
           @click="refreshOrdersContext"
         />
-        <UiButton v-if="can('orders.manage')" icon="plus" @click="dialogOpen = true; editing = null">{{ t('common.add') }}</UiButton>
+        <UiButton v-if="can('orders.manage')" icon="plus" @click="openCreateDialog">{{ t('common.add') }}</UiButton>
       </template>
     </ListHeaderCard>
 
@@ -489,7 +517,7 @@ watch(
                     :title="t('common.edit')"
                     :aria-label="t('common.edit')"
                     class="h-15 w-15 justify-center p-0"
-                    @click="dialogOpen = true; editing = order"
+                    @click="openEditDialog(order)"
                   />
                 </div>
               </td>
