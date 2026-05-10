@@ -14,7 +14,7 @@ type SubmitValues = {
   coopId: string
   direction: 'IN' | 'OUT'
   quantityKg: number
-  notes?: string
+  notes: string
 }
 
 const props = withDefaults(defineProps<{
@@ -30,7 +30,7 @@ const emit = defineEmits<{
       coopId: string
       direction: 'IN' | 'OUT'
       quantityKg: number
-      notes?: string
+      notes: string
     },
   ]
 }>()
@@ -41,7 +41,7 @@ const validationSchema = toTypedSchema(z.object({
   coopId: z.string().min(1, t('validation.required.coop')),
   direction: z.enum(['IN', 'OUT']),
   quantityKg: z.coerce.number().min(0.01, t('validation.min.quantityKg', { min: '0.01' })),
-  notes: z.string().max(255, t('validation.max.characters', { max: '255' })).optional(),
+  notes: z.string().trim().min(1, t('validation.required.notes')).max(255, t('validation.max.characters', { max: '255' })),
 }))
 
 const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
@@ -80,7 +80,7 @@ const onSubmit = handleSubmit((values) => {
     coopId: values.coopId,
     direction: values.direction,
     quantityKg: values.quantityKg,
-    notes: values.notes?.trim() || undefined,
+    notes: values.notes,
   })
 })
 
