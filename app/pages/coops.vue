@@ -28,7 +28,7 @@ const orderByOptions = computed(() => [
   { label: t('common.name'), value: 'name', kind: 'text' as const },
   { label: t('coopProfile.population'), value: 'population', kind: 'number' as const },
 ])
-const pageSizeOptions = defaultPageSizeOptions
+const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-11/12' }, { class: 'mt-2 w-7/12' }] },
   { lines: [{ class: 'w-16' }] },

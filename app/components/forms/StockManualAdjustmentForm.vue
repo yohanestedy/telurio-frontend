@@ -1,13 +1,20 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
-import { mapZodErrors } from '../../utils/form'
 
 type FormValues = {
   coopId: string
   direction: 'IN' | 'OUT'
   quantityKg: string
   notes: string
+}
+
+type SubmitValues = {
+  coopId: string
+  direction: 'IN' | 'OUT'
+  quantityKg: number
+  notes?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -30,7 +37,15 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { defineField, errors, handleSubmit, setErrors, resetForm } = useForm<FormValues>({
+const validationSchema = toTypedSchema(z.object({
+  coopId: z.string().min(1, t('validation.required.coop')),
+  direction: z.enum(['IN', 'OUT']),
+  quantityKg: z.coerce.number().min(0.01, t('validation.min.quantityKg', { min: '0.01' })),
+  notes: z.string().max(255, t('validation.max.characters', { max: '255' })).optional(),
+}))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
+  validationSchema,
   initialValues: {
     coopId: '',
     direction: 'IN',
@@ -61,23 +76,11 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z.object({
-    coopId: z.string().min(1, t('validation.required.coop')),
-    direction: z.enum(['IN', 'OUT']),
-    quantityKg: z.coerce.number().min(0.001, t('validation.min.quantityKg', { min: '0.001' })),
-    notes: z.string().max(255, t('validation.max.characters', { max: '255' })).optional(),
-  })
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   emit('submit', {
-    coopId: parsed.data.coopId,
-    direction: parsed.data.direction,
-    quantityKg: parsed.data.quantityKg,
-    notes: parsed.data.notes?.trim() || undefined,
+    coopId: values.coopId,
+    direction: values.direction,
+    quantityKg: values.quantityKg,
+    notes: values.notes?.trim() || undefined,
   })
 })
 
@@ -133,7 +136,7 @@ function onReset() {
       v-model="quantityKg"
       type="number"
       min="0"
-      step="0.001"
+      step="0.01"
       :label="t('order.quantity') + ' (kg)'"
       placeholder="0.00"
       :error="errors.quantityKg"

@@ -89,6 +89,7 @@ const id: TranslationTable = {
   "validation.required.coop": "Kandang wajib dipilih",
   "validation.required.collectionTime": "Waktu pengambilan wajib diisi",
   "validation.min.zero": "Minimal 0",
+  "validation.min.positive": "Nilai harus lebih dari 0",
   "validation.min.population": "Populasi minimal 1",
   "validation.max.percent": "Maksimal 100",
   "validation.nonNegative.price": "Harga tidak boleh negatif",
@@ -612,7 +613,7 @@ const id: TranslationTable = {
   "menu.description.Ringkasan finansial": "Ringkasan finansial",
   "menu.description.Agenda kandang": "Agenda kandang",
   "menu.description.Order terkait kandang": "Pesanan terkait kandang",
-  "menu.description.Kelola pengeluaran": "Kandang & pribadi",
+  "menu.description.Kelola pengeluaran": "Coop & pribadi",
   "menu.description.Pengeluaran kandang": "Pengeluaran operasional kandang",
   "menu.description.Kategori pengeluaran kandang":
     "Kategori pengeluaran kandang",
@@ -620,7 +621,7 @@ const id: TranslationTable = {
   "menu.description.Kategori pengeluaran pribadi":
     "Kategori pengeluaran pribadi",
   "menu.description.Laporan bulanan": "Laporan bulanan",
-  "menu.description.Ringkasan": "Ringkasan",
+  "menu.description.Ringkasan": "Overview",
   "menu.description.Operasional harian": "Operasional harian",
   "menu.description.Agenda pengantaran": "Agenda pengantaran",
   "menu.description.Delivery dan pembayaran": "Pengantaran dan pembayaran",
@@ -716,6 +717,7 @@ const en: TranslationTable = {
   "validation.required.coop": "Please select a coop",
   "validation.required.collectionTime": "Collection time is required",
   "validation.min.zero": "Minimum is 0",
+  "validation.min.positive": "Value must be greater than 0",
   "validation.min.population": "Population must be at least 1",
   "validation.max.percent": "Maximum is 100",
   "validation.nonNegative.price": "Price cannot be negative",

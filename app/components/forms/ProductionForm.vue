@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
-import { mapZodErrors } from '../../utils/form'
 
 type FormValues = {
   date: string
@@ -11,6 +11,16 @@ type FormValues = {
   goodCount: string
   brokenCount: string
   notes: string
+}
+
+type SubmitValues = {
+  date: string
+  coopId: string
+  collectionTime: string
+  goodKg: number
+  goodCount: number
+  brokenCount?: number
+  notes?: string
 }
 
 const props = defineProps<{
@@ -36,7 +46,23 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
+const positiveMessage = t('validation.min.positive')
+const optionalPositiveInt = z.preprocess(
+  (value) => value === '' || value === null || value === undefined ? undefined : value,
+  z.coerce.number().int().min(1, positiveMessage).optional(),
+)
+const validationSchema = toTypedSchema(z.object({
+  date: z.string().min(1, t('validation.required.date')),
+  coopId: z.string().min(1, t('validation.required.coop')),
+  collectionTime: z.string().min(1, t('validation.required.collectionTime')),
+  goodKg: z.coerce.number().min(0.001, positiveMessage),
+  goodCount: z.coerce.number().int().min(1, positiveMessage),
+  brokenCount: optionalPositiveInt,
+  notes: z.string().optional(),
+}))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
+  validationSchema,
   initialValues: {
     date: '',
     coopId: '',
@@ -76,31 +102,16 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z.object({
-    date: z.string().min(1, t('validation.required.date')),
-    coopId: z.string().min(1, t('validation.required.coop')),
-    collectionTime: z.string().min(1, t('validation.required.collectionTime')),
-    goodKg: z.coerce.number().min(0, t('validation.min.zero')),
-    goodCount: z.coerce.number().int().min(0, t('validation.min.zero')),
-    brokenCount: z.coerce.number().int().min(0, t('validation.min.zero')).optional(),
-    notes: z.string().optional(),
-  })
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   emit('submit', {
     ...(props.isEdit ? {} : {
-      date: parsed.data.date,
-      coopId: parsed.data.coopId,
-      collectionTime: parsed.data.collectionTime,
+      date: values.date,
+      coopId: values.coopId,
+      collectionTime: values.collectionTime,
     }),
-    goodKg: parsed.data.goodKg,
-    goodCount: parsed.data.goodCount,
-    brokenCount: values.brokenCount ? parsed.data.brokenCount : undefined,
-    notes: parsed.data.notes || undefined,
+    goodKg: values.goodKg,
+    goodCount: values.goodCount,
+    brokenCount: values.brokenCount,
+    notes: values.notes || undefined,
   })
 })
 </script>
@@ -129,9 +140,9 @@ const onSubmit = handleSubmit((values) => {
       placeholder="07:00"
       :error="errors.collectionTime"
     />
-    <UiInput v-model="goodKg" type="number" :label="t('form.production.goodWeight')" :error="errors.goodKg" />
-    <UiInput v-model="goodCount" type="number" :label="t('form.production.goodCount')" :error="errors.goodCount" />
-    <UiInput v-model="brokenCount" type="number" :label="t('form.production.brokenCount')" :error="errors.brokenCount" />
+    <UiInput v-model="goodKg" type="number" min="0.001" step="0.001" :label="t('form.production.goodWeight')" :error="errors.goodKg" />
+    <UiInput v-model="goodCount" type="number" min="1" step="1" :label="t('form.production.goodCount')" :error="errors.goodCount" />
+    <UiInput v-model="brokenCount" type="number" min="1" step="1" :label="t('form.production.brokenCount')" :error="errors.brokenCount" />
     <div class="md:col-span-2">
       <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
     </div>

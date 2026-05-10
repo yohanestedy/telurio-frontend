@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../utils/form'
@@ -12,18 +13,20 @@ definePageMeta({
 const { login } = useAuth()
 const toast = useToast()
 const pending = ref(false)
+const loginError = ref('')
 
-const schema = z.object({
+const validationSchema = toTypedSchema(z.object({
   username: z.string().min(1, 'Username wajib diisi'),
   password: z.string().min(1, 'Password wajib diisi'),
-})
+}))
 
 type FormValues = {
   username: string
   password: string
 }
 
-const { defineField, errors, handleSubmit, setErrors } = useForm<FormValues>({
+const { defineField, errors, handleSubmit } = useForm<FormValues>({
+  validationSchema,
   initialValues: {
     username: '',
     password: '',
@@ -33,21 +36,20 @@ const { defineField, errors, handleSubmit, setErrors } = useForm<FormValues>({
 const [username] = defineField('username')
 const [password] = defineField('password')
 
-const onSubmit = handleSubmit(async (values) => {
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
+watch([username, password], () => {
+  loginError.value = ''
+})
 
+const onSubmit = handleSubmit(async (values) => {
+  loginError.value = ''
   pending.value = true
   try {
-    await login(parsed.data)
+    await login(values)
     toast.success('Login berhasil', 'Selamat datang kembali di Telurio')
     await navigateTo('/')
   } catch (error) {
     const mapped = useApi().mapError(error)
-    toast.error('Login gagal', mapped.message)
+    loginError.value = mapped.message
   } finally {
     pending.value = false
   }
@@ -68,10 +70,14 @@ const onSubmit = handleSubmit(async (values) => {
     </div>
 
     <form class="space-y-4" @submit.prevent="onSubmit">
+      <p v-if="loginError" data-field-error="true" class="py-2 text-sm font-medium text-rose-700">
+        {{ loginError }}
+      </p>
       <UiInput v-model="username" label="Username" :error="errors.username" />
       <UiInput v-model="password" label="Password" type="password" :error="errors.password" />
+      
       <UiButton block :disabled="pending" type="submit" icon="key">
-        {{ pending ? 'Memproses...' : 'Masuk' }}
+        {{ pending ? 'Masuk...' : 'Masuk' }}
       </UiButton>
     </form>
   </GlassCard>

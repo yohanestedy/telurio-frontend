@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
@@ -20,7 +21,12 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
+const validationSchema = toTypedSchema(z.object({
+  name: z.string().min(2, t('validation.categoryNameMin', { min: '2' })),
+  isActive: z.boolean().optional(),
+}))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues>({
   initialValues: {
     name: '',
     isActive: true,
@@ -45,17 +51,7 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z.object({
-    name: z.string().min(2, t('validation.categoryNameMin', { min: '2' })),
-    isActive: z.boolean().optional(),
-  })
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
-  emit('submit', parsed.data)
+  emit('submit', values)
 })
 </script>
 

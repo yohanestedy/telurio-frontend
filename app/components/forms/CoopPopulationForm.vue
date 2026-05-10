@@ -1,11 +1,23 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import type { CoopItem } from '../../types/domain'
 
-const schema = z.object({
+type FormValues = {
+  population: string
+  populationChangeReason: string
+}
+
+type SubmitValues = {
+  population: number
+  populationChangeReason?: string
+}
+
+const validationSchema = toTypedSchema(z.object({
   population: z.coerce.number().int().min(1, 'Populasi minimal 1'),
   populationChangeReason: z.string().max(255, 'Maksimal 255 karakter').optional(),
-})
+}))
 
 const props = defineProps<{
   coop: CoopItem
@@ -21,9 +33,16 @@ const emit = defineEmits<{
   ]
 }>()
 
-const population = ref('')
-const populationChangeReason = ref('')
-const errors = ref<Record<string, string>>({})
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
+  validationSchema,
+  initialValues: {
+    population: '',
+    populationChangeReason: '',
+  },
+})
+
+const [population] = defineField('population')
+const [populationChangeReason] = defineField('populationChangeReason')
 
 const nextPopulation = computed(() => Number(population.value))
 const deltaPopulation = computed(() => {
@@ -37,29 +56,22 @@ const deltaPopulation = computed(() => {
 watch(
   () => props.coop.id,
   () => {
-    population.value = String(props.coop.population)
-    populationChangeReason.value = ''
-    errors.value = {}
+    resetForm({
+      values: {
+        population: String(props.coop.population),
+        populationChangeReason: '',
+      },
+    })
   },
   { immediate: true },
 )
 
-function onSubmit() {
-  const parsed = schema.safeParse({
-    population: population.value,
-    populationChangeReason: populationChangeReason.value.trim() || undefined,
+const onSubmit = handleSubmit((values) => {
+  emit('submit', {
+    population: values.population,
+    populationChangeReason: values.populationChangeReason?.trim() || undefined,
   })
-
-  if (!parsed.success) {
-    errors.value = Object.fromEntries(
-      parsed.error.issues.map((issue) => [issue.path.join('.'), issue.message]),
-    )
-    return
-  }
-
-  errors.value = {}
-  emit('submit', parsed.data)
-}
+})
 </script>
 
 <template>

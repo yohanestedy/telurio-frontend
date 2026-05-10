@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
-import { mapZodErrors } from '../../utils/form'
 
 type FormValues = {
   name: string
@@ -10,6 +10,15 @@ type FormValues = {
   chickBirthDate: string
   depreciationPercent: string
   isActive: boolean
+}
+
+type SubmitValues = {
+  name: string
+  population: number
+  chickenStrain?: string
+  chickBirthDate?: string
+  depreciationPercent: number
+  isActive?: boolean
 }
 
 const props = defineProps<{
@@ -32,7 +41,20 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
+const validationSchema = toTypedSchema(z.object({
+  name: z.string().min(2, t('validation.coopNameMin', { min: '2' })),
+  population: z.coerce.number().int().min(1, t('validation.min.population')),
+  chickenStrain: z.string().optional(),
+  chickBirthDate: z.string().optional(),
+  depreciationPercent: z.coerce
+    .number()
+    .min(0, t('validation.min.zero'))
+    .max(100, t('validation.max.percent')),
+  isActive: z.boolean().optional(),
+}))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
+  validationSchema,
   initialValues: {
     name: '',
     population: '',
@@ -69,27 +91,10 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z.object({
-    name: z.string().min(2, t('validation.coopNameMin', { min: '2' })),
-    population: z.coerce.number().int().min(1, t('validation.min.population')),
-    chickenStrain: z.string().optional(),
-    chickBirthDate: z.string().optional(),
-    depreciationPercent: z.coerce
-      .number()
-      .min(0, t('validation.min.zero'))
-      .max(100, t('validation.max.percent')),
-    isActive: z.boolean().optional(),
-  })
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   emit('submit', {
-    ...parsed.data,
-    chickenStrain: parsed.data.chickenStrain || undefined,
-    chickBirthDate: parsed.data.chickBirthDate || undefined,
+    ...values,
+    chickenStrain: values.chickenStrain || undefined,
+    chickBirthDate: values.chickBirthDate || undefined,
   })
 })
 </script>

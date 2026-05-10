@@ -31,7 +31,7 @@ const orderByOptions = computed(() => [
   { label: 'Username', value: 'username', kind: 'text' as const },
   { label: 'Role', value: 'role', kind: 'text' as const },
 ])
-const pageSizeOptions = defaultPageSizeOptions
+const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 
 const coopOptions = computed(() =>
   coops.value.map((item) => ({ label: item.name, value: item.id })),

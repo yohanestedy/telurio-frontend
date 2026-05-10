@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { paymentMethods, paymentStatuses } from '../../types/domain'
-import { mapZodErrors } from '../../utils/form'
 import type { AppIconName } from '../../utils/icons'
 import { formatKg as formatKgValue } from '../../utils/formatters'
 
 const createSchema = z
   .object({
     customerId: z.string().min(1, 'Pelanggan wajib dipilih'),
-    quantityKg: z.coerce.number().min(0.001, 'Jumlah minimal 0.001 kg'),
+    quantityKg: z.coerce.number().min(0.1, 'Jumlah minimal 0.1 kg'),
     deliveryDate: z.string().min(1, 'Tanggal wajib diisi'),
     deliverBefore: z.string().optional(),
     paymentStatus: z.enum(paymentStatuses),
@@ -20,7 +20,7 @@ const createSchema = z
     ),
     dpAmount: z.preprocess(
       (value) => (value === '' ? undefined : value),
-      z.coerce.number().min(0, 'DP tidak boleh negatif').optional(),
+      z.coerce.number().min(1000, 'Nominal DP minimal Rp 1.000').optional(),
     ),
     notes: z.string().optional(),
   })
@@ -61,7 +61,7 @@ const createSchema = z
   })
 
 const updateSchema = z.object({
-  quantityKg: z.coerce.number().min(0.001, 'Jumlah minimal 0.001 kg'),
+  quantityKg: z.coerce.number().min(0.1, 'Jumlah minimal 0.1 kg'),
   deliveryDate: z.string().min(1, 'Tanggal wajib diisi'),
   deliverBefore: z.string().optional(),
   notes: z.string().optional(),
@@ -76,6 +76,17 @@ type FormValues = {
   paymentMethod: string
   dpAmount: string
   notes: string
+}
+
+type SubmitValues = {
+  customerId?: string
+  quantityKg: number
+  deliveryDate: string
+  deliverBefore?: string
+  paymentStatus?: (typeof paymentStatuses)[number]
+  paymentMethod?: (typeof paymentMethods)[number]
+  dpAmount?: number
+  notes?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -94,7 +105,10 @@ const emit = defineEmits<{
   submit: [Record<string, string | number | undefined>]
 }>()
 
-const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
+const validationSchema = computed(() => toTypedSchema(props.isEdit ? updateSchema : createSchema))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
+  validationSchema,
   initialValues: {
     customerId: '',
     quantityKg: '',
@@ -296,12 +310,6 @@ watch(paymentStatus, (value) => {
 const onSubmit = handleSubmit((values) => {
   customPriceError.value = ''
 
-  const parsed = (props.isEdit ? updateSchema : createSchema).safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   if (!props.isEdit && isTodayDelivery.value && todayPricePerKgValue.value === null) {
     customPriceError.value = 'Harga harian hari ini belum tersedia. Hubungi admin untuk input harga hari ini.'
     return
@@ -315,8 +323,8 @@ const onSubmit = handleSubmit((values) => {
     }
 
     const parsedCustom = Number(customPricePerKg.value)
-    if (Number.isNaN(parsedCustom) || !Number.isFinite(parsedCustom) || !Number.isInteger(parsedCustom) || parsedCustom < 0) {
-      customPriceError.value = 'Harga custom harus angka bulat minimal 0'
+    if (Number.isNaN(parsedCustom) || !Number.isFinite(parsedCustom) || !Number.isInteger(parsedCustom) || parsedCustom < 5000) {
+      customPriceError.value = 'Harga custom harus angka bulat minimal Rp 5.000'
       return
     }
 
@@ -325,27 +333,27 @@ const onSubmit = handleSubmit((values) => {
 
   emit('submit', props.isEdit
     ? {
-        quantityKg: parsed.data.quantityKg,
-        deliveryDate: parsed.data.deliveryDate,
-        deliverBefore: parsed.data.deliverBefore || undefined,
-        notes: parsed.data.notes || undefined,
+        quantityKg: values.quantityKg,
+        deliveryDate: values.deliveryDate,
+        deliverBefore: values.deliverBefore || undefined,
+        notes: values.notes || undefined,
       }
     : {
-        customerId: parsed.data.customerId,
-        quantityKg: parsed.data.quantityKg,
-        deliveryDate: parsed.data.deliveryDate,
-        deliverBefore: parsed.data.deliverBefore || undefined,
-        paymentStatus: parsed.data.paymentStatus,
-        ...(parsed.data.paymentStatus === 'BELUM_BAYAR'
+        customerId: values.customerId,
+        quantityKg: values.quantityKg,
+        deliveryDate: values.deliveryDate,
+        deliverBefore: values.deliverBefore || undefined,
+        paymentStatus: values.paymentStatus,
+        ...(values.paymentStatus === 'BELUM_BAYAR'
           ? {}
-          : { paymentMethod: parsed.data.paymentMethod || undefined }),
-        ...(parsed.data.paymentStatus === 'DP'
-          ? { dpAmount: parsed.data.dpAmount }
+          : { paymentMethod: values.paymentMethod || undefined }),
+        ...(values.paymentStatus === 'DP'
+          ? { dpAmount: values.dpAmount }
           : {}),
         ...(customPricePayload !== undefined
           ? { customPricePerKg: customPricePayload }
           : {}),
-        notes: parsed.data.notes || undefined,
+        notes: values.notes || undefined,
       })
 })
 </script>
@@ -361,7 +369,7 @@ const onSubmit = handleSubmit((values) => {
         placeholder="Pilih nama pelanggan..."
         :error="errors.customerId"
       />
-      <UiInput v-model="quantityKg" label="Kuantitas (kg)" type="number" :error="errors.quantityKg" placeholder="0.00" />
+      <UiInput v-model="quantityKg" label="Kuantitas (kg)" type="number" min="0.1" step="0.1" :error="errors.quantityKg" placeholder="0.1" />
     </div>
 
     <div class="rounded-3xl border border-white/50 bg-white/55 p-4 sm:p-5">
@@ -431,9 +439,10 @@ const onSubmit = handleSubmit((values) => {
         v-model="customPricePerKg"
         label="Harga custom per kg"
         type="number"
-        min="0"
+        min="5000"
         step="1"
         placeholder="25000"
+        :error="customPriceError"
       />
 
       <p v-if="todayPricePerKgValue !== null" class="text-xs text-ink-600">
@@ -441,7 +450,11 @@ const onSubmit = handleSubmit((values) => {
         <span class="font-semibold text-ink-900">{{ previewTotalInvoice === null ? '-' : formatRupiah(previewTotalInvoice) }}</span>
       </p>
 
-      <p v-if="customPriceError" class="text-xs font-medium text-rose-600">
+      <p
+        v-if="customPriceError && !(todayPricePerKgValue !== null && priceMode === 'custom')"
+        data-field-error="true"
+        class="text-xs font-medium text-rose-600"
+      >
         {{ customPriceError }}
       </p>
     </div>
@@ -482,6 +495,8 @@ const onSubmit = handleSubmit((values) => {
         v-model="dpAmount"
         label="Nominal DP (Rp)"
         type="number"
+        min="1000"
+        step="1"
         placeholder="500000"
         :error="errors.dpAmount"
       />

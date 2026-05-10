@@ -69,7 +69,7 @@ function handleWheel(event: WheelEvent) {
       @input="handleInput"
       @wheel="handleWheel"
     >
-    <span v-if="error" class="text-xs font-medium text-rose-600">{{ error }}</span>
+    <span v-if="error" data-field-error="true" class="text-xs font-medium text-rose-600">{{ error }}</span>
     <span v-else-if="help" class="text-xs text-ink-500">{{ help }}</span>
   </label>
 </template>

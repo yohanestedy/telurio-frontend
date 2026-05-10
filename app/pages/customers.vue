@@ -28,7 +28,7 @@ const orderByOptions = computed(() => [
   { label: t('common.name'), value: 'name', kind: 'text' as const },
   { label: t('common.phone'), value: 'phone', kind: 'text' as const },
 ])
-const pageSizeOptions = defaultPageSizeOptions
+const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-10/12' }] },
   { lines: [{ class: 'w-8/12' }] },
@@ -109,6 +109,7 @@ async function submitCustomer(payload: Record<string, unknown>) {
     dialogOpen.value = false
     editing.value = null
     createCustomerIdempotencyKey.value = null
+    await loadCustomers()
   } catch (caught) {
     toast.error(t('toast.customer.saveFailed'), api.mapError(caught).message)
   } finally {

@@ -55,7 +55,8 @@ const emit = defineEmits<{
 
 const locale = computed(() => ui.language === 'id' ? 'id-ID' : 'en-US')
 const formatter = computed(() => new DateFormatter(locale.value, { dateStyle: 'long' }))
-const value = ref<DateValue>()
+const value = shallowRef<DateValue>()
+const placeholderValue = shallowRef<DateValue>(today(getLocalTimeZone()))
 
 function parseDateString(input?: string | null) {
   if (!input) {
@@ -82,6 +83,10 @@ watch(
 
     if (current !== next) {
       value.value = parsed
+    }
+
+    if (parsed) {
+      placeholderValue.value = parsed
     }
   },
   { immediate: true },
@@ -163,12 +168,7 @@ const yearRangeStart = ref(dayjs().year() - 4)
 const yearRange = computed(() => Array.from({ length: 12 }, (_, i) => yearRangeStart.value + i))
 
 function openMonthPicker() {
-  // Set viewingYear to the currently displayed calendar month
-  if (value.value) {
-    viewingYear.value = value.value.year
-  } else {
-    viewingYear.value = dayjs().year()
-  }
+  viewingYear.value = placeholderValue.value?.year ?? value.value?.year ?? dayjs().year()
   pickerView.value = 'month'
 }
 
@@ -178,17 +178,9 @@ function openYearPicker() {
 }
 
 function selectMonthFromPicker(monthIndex: number) {
-  // Navigate the calendar to the selected month
   const targetYear = viewingYear.value
   const targetMonth = monthIndex + 1
-  const day = value.value?.day ?? 1
-  const dateStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-  try {
-    value.value = parseDate(dateStr)
-  } catch {
-    // If day doesn't exist in month (e.g. Feb 31), use first day
-    value.value = parseDate(`${targetYear}-${String(targetMonth).padStart(2, '0')}-01`)
-  }
+  placeholderValue.value = parseDate(`${targetYear}-${String(targetMonth).padStart(2, '0')}-01`)
   pickerView.value = 'calendar'
 }
 
@@ -212,6 +204,7 @@ function nextYearRange() {
 
     <DatePickerRoot
       v-model="value"
+      v-model:placeholder="placeholderValue"
       :locale="locale"
       :disabled="disabled"
       :min-value="minValue"
@@ -406,7 +399,7 @@ function nextYearRange() {
       </DatePickerContent>
     </DatePickerRoot>
 
-    <span v-if="error" class="text-xs font-medium text-rose-600">{{ error }}</span>
+    <span v-if="error" data-field-error="true" class="text-xs font-medium text-rose-600">{{ error }}</span>
     <span v-else-if="help" class="text-xs text-ink-500">{{ help }}</span>
   </label>
 </template>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
-import { mapZodErrors } from '../../utils/form'
 
-const schema = z.object({
+const schema = toTypedSchema(z.object({
   cancelReason: z.string().min(3, 'Alasan minimal 3 karakter'),
   cancelNotes: z.string().optional(),
-})
+}))
 
 type FormValues = {
   cancelReason: string
@@ -21,26 +21,21 @@ const emit = defineEmits<{
   submit: [{ cancelReason: string; cancelNotes?: string }]
 }>()
 
-const { defineField, errors, handleSubmit, setErrors, resetForm } = useForm<FormValues>({
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues>({
   initialValues: {
     cancelReason: '',
     cancelNotes: '',
   },
+  validationSchema: schema,
 })
 
 const [cancelReason] = defineField('cancelReason')
 const [cancelNotes] = defineField('cancelNotes')
 
 const onSubmit = handleSubmit((values) => {
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   emit('submit', {
-    cancelReason: parsed.data.cancelReason,
-    cancelNotes: parsed.data.cancelNotes || undefined,
+    cancelReason: values.cancelReason,
+    cancelNotes: values.cancelNotes || undefined,
   })
   resetForm()
 })

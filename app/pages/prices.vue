@@ -31,7 +31,7 @@ const orderByOptions = computed(() => [
   { label: t('common.createdAt'), value: 'createdAt', kind: 'date' as const },
   { label: t('form.price.pricePerKg'), value: 'pricePerKg', kind: 'number' as const },
 ])
-const pageSizeOptions = defaultPageSizeOptions
+const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
   { lines: [{ class: 'w-20' }] },

@@ -1,13 +1,28 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { formatKg as formatKgValue } from '../../utils/formatters'
 
-const allocationSchema = z.array(
-  z.object({
-    coopId: z.string().min(1),
-    quantityKg: z.coerce.number().min(0.001),
-  }),
-)
+const validationSchema = toTypedSchema(z.object({
+  allocations: z.array(
+    z.object({
+      coopId: z.string().min(1),
+      quantityKg: z.coerce.number().min(0.001),
+    }),
+  ).min(1, 'Minimal satu alokasi kandang harus diisi'),
+  customPricePerKg: z.coerce.number().int().min(0).optional(),
+}))
+
+type FormValues = {
+  allocations: Array<{ coopId: string; quantityKg: number }>
+  customPricePerKg?: string
+}
+
+type SubmitValues = {
+  allocations: Array<{ coopId: string; quantityKg: number }>
+  customPricePerKg?: number
+}
 
 interface CoopStockItem {
   coopId: string
@@ -46,6 +61,14 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   submit: [{ allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }]
 }>()
+
+const { handleSubmit, setFieldValue } = useForm<FormValues, SubmitValues>({
+  validationSchema,
+  initialValues: {
+    allocations: [],
+    customPricePerKg: undefined,
+  },
+})
 
 const values = ref<Record<string, string>>({})
 const error = ref('')
@@ -231,6 +254,15 @@ function formatKg(value: number | string | null | undefined) {
   return formatted === '-' ? '0' : formatted
 }
 
+const submitValidated = handleSubmit((formValues) => {
+  emit('submit', {
+    allocations: formValues.allocations,
+    ...(formValues.customPricePerKg !== undefined
+      ? { customPricePerKg: formValues.customPricePerKg }
+      : {}),
+  })
+})
+
 function onSubmit() {
   error.value = ''
   priceError.value = ''
@@ -238,8 +270,7 @@ function onSubmit() {
     .filter(([, qty]) => Number(qty) > 0)
     .map(([coopId, qty]) => ({ coopId, quantityKg: Number(qty) }))
 
-  const parsed = allocationSchema.safeParse(allocations)
-  if (!parsed.success) {
+  if (allocations.length === 0) {
     error.value = 'Minimal satu alokasi kandang harus diisi'
     return
   }
@@ -259,7 +290,7 @@ function onSubmit() {
     return
   }
 
-  let customPricePayload: number | undefined
+  let customPricePayload: string | undefined
   if (requiresPriceLock.value) {
     if (!props.canSetPriceNow) {
       priceError.value = 'Harga order belum bisa dikunci karena tanggal kirim bukan hari ini'
@@ -283,16 +314,13 @@ function onSubmit() {
         return
       }
 
-      customPricePayload = parsedCustom
+      customPricePayload = customPricePerKg.value
     }
   }
 
-  emit('submit', {
-    allocations: parsed.data,
-    ...(customPricePayload !== undefined
-      ? { customPricePerKg: customPricePayload }
-      : {}),
-  })
+  setFieldValue('allocations', allocations)
+  setFieldValue('customPricePerKg', customPricePayload)
+  submitValidated()
 }
 
 function preventNumberScroll(event: WheelEvent) {

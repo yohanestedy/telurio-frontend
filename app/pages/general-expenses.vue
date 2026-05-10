@@ -254,21 +254,22 @@ watch(dialogOpen, (open) => {
     >
       <template #actions>
         <UiButton
-          variant="secondary"
-          icon="categories"
-          @click="categoryModalOpen = true"
-        >
-          {{ t('expenseCategory.manage') }}
-        </UiButton>
-        <UiButton
-          variant="secondary"
+          variant="ghost"
           icon="refresh"
           :title="t('common.refresh')"
           :aria-label="t('common.refresh')"
           @click="loadExpenses"
         />
+        <UiButton
+          variant="ghost"
+          icon="categories"
+          @click="categoryModalOpen = true"
+        >
+          {{ t('expenseCategory.manage') }}
+        </UiButton>
+        
         <UiButton icon="plus" @click="openCreateDialog">
-          {{ t('generalExpense.add') }}
+          {{ t('common.add') }}
         </UiButton>
       </template>
     </ListHeaderCard>

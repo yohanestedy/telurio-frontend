@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
-import { mapZodErrors } from '../utils/form'
 import type { GeneralExpenseCategoryItem, GeneralExpenseItem } from '../types/domain'
 
 type FormValues = {
@@ -10,6 +10,14 @@ type FormValues = {
   amount: string
   categoryId: string
   notes: string
+}
+
+type SubmitValues = {
+  date: string
+  description: string
+  amount: number
+  categoryId?: string
+  notes?: string
 }
 
 const props = defineProps<{
@@ -29,7 +37,16 @@ const categoryOptions = computed(() =>
   props.categories.map((c) => ({ label: c.name, value: c.id })),
 )
 
-const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
+const validationSchema = toTypedSchema(z.object({
+  date: z.string().min(1, t('validation.required.date')),
+  description: z.string().min(1, 'Deskripsi wajib diisi'),
+  amount: z.coerce.number().min(500, 'Nominal minimal Rp 500'),
+  categoryId: z.string().min(1, 'Kategori wajib dipilih'),
+  notes: z.string().optional(),
+}))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
+  validationSchema,
   initialValues: {
     date: '',
     description: '',
@@ -63,26 +80,12 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z.object({
-    date: z.string().min(1, t('validation.required.date')),
-    description: z.string().min(1, t('validation.required.description')),
-    amount: z.coerce.number().min(1, t('validation.min.one')),
-    categoryId: z.string().optional(),
-    notes: z.string().optional(),
-  })
-
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   emit('submit', {
-    date: parsed.data.date,
-    description: parsed.data.description,
-    amount: parsed.data.amount,
-    categoryId: parsed.data.categoryId || null,
-    notes: parsed.data.notes || undefined,
+    date: values.date,
+    description: values.description,
+    amount: values.amount,
+    categoryId: values.categoryId || null,
+    notes: values.notes || undefined,
   })
 })
 </script>
@@ -99,10 +102,10 @@ const onSubmit = handleSubmit((values) => {
       v-model="categoryId"
       :options="categoryOptions"
       :label="t('expense.category')"
-      :placeholder="t('expense.optional')"
+      placeholder="Pilih kategori"
       :error="errors.categoryId"
     />
-    <UiInput v-model="amount" type="number" :label="t('common.amount')" :error="errors.amount" />
+    <UiInput v-model="amount" type="number" min="500" step="1" :label="t('common.amount')" :error="errors.amount" />
     <UiInput v-model="description" :label="t('expense.itemDescription')" :placeholder="t('generalExpense.descriptionPlaceholder')" :error="errors.description" />
     <div class="md:col-span-2">
       <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />

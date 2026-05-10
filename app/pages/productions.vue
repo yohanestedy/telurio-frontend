@@ -38,7 +38,7 @@ const orderByOptions = computed(() => [
   { label: t('production.goodKg'), value: 'goodKg', kind: 'number' as const },
   { label: t('production.goodCount'), value: 'goodCount', kind: 'number' as const },
 ])
-const pageSizeOptions = defaultPageSizeOptions
+const pageSizeOptions: number[] = [...defaultPageSizeOptions]
 const skeletonCells = [
   { lines: [{ class: 'w-24' }] },
   { lines: [{ class: 'w-10/12' }] },

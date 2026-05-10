@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { roles } from '../../types/domain'
-import { mapZodErrors } from '../../utils/form'
 
 type FormValues = {
   name: string
@@ -44,7 +44,26 @@ const selectedCoopIds = ref<string[]>([])
 const shareByCoop = ref<Record<string, string>>({})
 const { t } = useI18n()
 
-const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
+const createSchema = z.object({
+  name: z.string().min(2, t('validation.nameMin', { min: '2' })),
+  username: z.string().min(3, t('validation.usernameMin', { min: '3' })),
+  password: z.string().min(8, t('validation.passwordMin', { min: '8' })),
+  role: z.enum(roles),
+  isActive: z.boolean().optional(),
+})
+
+const updateSchema = z.object({
+  name: z.string().min(2, t('validation.nameMin', { min: '2' })),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  role: z.enum(roles).optional(),
+  isActive: z.boolean().optional(),
+})
+
+const validationSchema = computed(() => toTypedSchema(props.isEdit ? updateSchema : createSchema))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues>({
+  validationSchema,
   initialValues: {
     name: '',
     username: '',
@@ -88,38 +107,25 @@ function toggleCoop(coopId: string, checked: boolean) {
 }
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z.object({
-    name: z.string().min(2, t('validation.nameMin', { min: '2' })),
-    username: z.string().min(3, t('validation.usernameMin', { min: '3' })).optional(),
-    password: z.string().min(8, t('validation.passwordMin', { min: '8' })).optional(),
-    role: z.enum(roles).optional(),
-    isActive: z.boolean().optional(),
-  })
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   const coopAccesses = selectedCoopIds.value.map((coopId) => ({
     coopId,
     ownershipSharePercent:
-      parsed.data.role === 'OWNER' && shareByCoop.value[coopId]
+      values.role === 'OWNER' && shareByCoop.value[coopId]
         ? Number(shareByCoop.value[coopId])
         : undefined,
   }))
 
   emit('submit', props.isEdit
     ? {
-        name: parsed.data.name,
-        isActive: parsed.data.isActive,
+        name: values.name,
+        isActive: values.isActive,
         coopAccesses,
       }
     : {
-        name: parsed.data.name,
-        username: parsed.data.username,
-        password: parsed.data.password,
-        role: parsed.data.role as 'OWNER' | 'OPERATOR',
+        name: values.name,
+        username: values.username,
+        password: values.password,
+        role: values.role as 'OWNER' | 'OPERATOR',
         coopAccesses,
       })
 })
@@ -166,6 +172,9 @@ const onSubmit = handleSubmit((values) => {
               v-model="shareByCoop[coop.value]"
               label=""
               type="number"
+              min="0"
+              max="100"
+              step="0.01"
               placeholder="Share %"
             />
           </div>

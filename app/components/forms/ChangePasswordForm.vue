@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { mapZodErrors } from '../../utils/form'
@@ -19,12 +20,24 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { defineField, errors, handleSubmit, setErrors, resetForm } = useForm<FormValues>({
+const validationSchema = toTypedSchema(z
+  .object({
+    currentPassword: z.string().min(1, t('validation.required.currentPassword')),
+    newPassword: z.string().min(6, t('validation.passwordMin', { min: '6' })),
+    confirmPassword: z.string().min(1, t('validation.required.confirmPassword')),
+  })
+  .refine((value) => value.newPassword === value.confirmPassword, {
+    path: ['confirmPassword'],
+    message: t('validation.passwordMismatch'),
+  }))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues>({
   initialValues: {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   },
+  validationSchema,
 })
 
 const [currentPassword] = defineField('currentPassword')
@@ -32,26 +45,9 @@ const [newPassword] = defineField('newPassword')
 const [confirmPassword] = defineField('confirmPassword')
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z
-    .object({
-      currentPassword: z.string().min(1, t('validation.required.currentPassword')),
-      newPassword: z.string().min(6, t('validation.passwordMin', { min: '6' })),
-      confirmPassword: z.string().min(1, t('validation.required.confirmPassword')),
-    })
-    .refine((value) => value.newPassword === value.confirmPassword, {
-      path: ['confirmPassword'],
-      message: t('validation.passwordMismatch'),
-    })
-
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   emit('submit', {
-    currentPassword: parsed.data.currentPassword,
-    newPassword: parsed.data.newPassword,
+    currentPassword: values.currentPassword,
+    newPassword: values.newPassword,
   })
   resetForm()
 })

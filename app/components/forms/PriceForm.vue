@@ -1,12 +1,18 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
-import { mapZodErrors } from '../../utils/form'
 
 type FormValues = {
   effectiveDate: string
   pricePerKg: string
   notes: string
+}
+
+type SubmitValues = {
+  effectiveDate: string
+  pricePerKg: number
+  notes?: string
 }
 
 const props = defineProps<{
@@ -21,7 +27,14 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const { defineField, errors, handleSubmit, resetForm, setErrors } = useForm<FormValues>({
+const validationSchema = toTypedSchema(z.object({
+  effectiveDate: z.string().min(1, t('validation.required.date')),
+  pricePerKg: z.coerce.number().min(5000, 'Harga per kg minimal Rp 5.000'),
+  notes: z.string().optional(),
+}))
+
+const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
+  validationSchema,
   initialValues: {
     effectiveDate: '',
     pricePerKg: '',
@@ -49,21 +62,10 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
-  const schema = z.object({
-    effectiveDate: z.string().min(1, t('validation.required.date')),
-    pricePerKg: z.coerce.number().min(0, t('validation.nonNegative.price')),
-    notes: z.string().optional(),
-  })
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   emit('submit', {
-    effectiveDate: props.isEdit ? undefined : parsed.data.effectiveDate,
-    pricePerKg: parsed.data.pricePerKg,
-    notes: parsed.data.notes || undefined,
+    effectiveDate: props.isEdit ? undefined : values.effectiveDate,
+    pricePerKg: values.pricePerKg,
+    notes: values.notes || undefined,
   })
 })
 </script>
@@ -77,7 +79,7 @@ const onSubmit = handleSubmit((values) => {
       :placeholder="t('form.price.pickEffectiveDate')"
       :error="errors.effectiveDate"
     />
-    <UiInput v-model="pricePerKg" :label="t('form.price.pricePerKg')" type="number" :error="errors.pricePerKg" />
+    <UiInput v-model="pricePerKg" :label="t('form.price.pricePerKg')" type="number" min="5000" step="1" :error="errors.pricePerKg" />
     <div :class="{ 'md:col-span-2': !isEdit }">
       <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
     </div>

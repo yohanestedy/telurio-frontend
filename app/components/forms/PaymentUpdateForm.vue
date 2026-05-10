@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { paymentMethods, paymentStatuses } from '../../types/domain'
 import type { PaymentStatus } from '../../types/domain'
-import { mapZodErrors } from '../../utils/form'
 
 function toMoneyNumber(value: unknown): number {
   if (value === null || value === undefined || value === '') {
@@ -14,13 +14,46 @@ function toMoneyNumber(value: unknown): number {
   return Number.isFinite(normalized) ? normalized : 0
 }
 
-const schema = z
+type FormValues = {
+  paymentStatus: PaymentStatus
+  paymentMethod: string
+  amountPaid: string
+  notes: string
+}
+
+type SubmitValues = {
+  paymentStatus: PaymentStatus
+  paymentMethod?: string
+  amountPaid?: number
+  notes?: string
+}
+
+const props = defineProps<{
+  submitting?: boolean
+  currentPaymentStatus: PaymentStatus
+  totalInvoice: string | number | null
+  dpAmount: string | number | null
+}>()
+
+const emit = defineEmits<{
+  submit: [{ paymentStatus: string; paymentMethod?: string; amountPaid?: number; notes?: string }]
+}>()
+
+const totalInvoiceValue = computed(() => toMoneyNumber(props.totalInvoice))
+const dpPaidValue = computed(() => toMoneyNumber(props.dpAmount))
+const currentPaidValue = computed(() => (props.currentPaymentStatus === 'DP' ? dpPaidValue.value : 0))
+const remainingBeforeValue = computed(() => Math.max(totalInvoiceValue.value - currentPaidValue.value, 0))
+
+const validationSchema = computed(() => toTypedSchema(z
   .object({
     paymentStatus: z.enum(paymentStatuses),
-    paymentMethod: z.enum(paymentMethods).optional(),
+    paymentMethod: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.enum(paymentMethods).optional(),
+    ),
     amountPaid: z.preprocess(
       (value) => (value === '' || value === null || value === undefined ? undefined : Number(value)),
-      z.number().min(0, 'Jumlah tidak boleh negatif').optional(),
+      z.number().min(1000, 'Nominal DP minimal Rp 1.000').optional(),
     ),
     notes: z.string().optional(),
   })
@@ -63,6 +96,14 @@ const schema = z
           })
         }
 
+        if (value.amountPaid < 1000) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['amountPaid'],
+            message: 'Nominal DP minimal Rp 1.000',
+          })
+        }
+
         if (value.amountPaid <= 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -88,30 +129,7 @@ const schema = z
         message: 'Metode pembayaran wajib diisi',
       })
     }
-  })
-
-type FormValues = {
-  paymentStatus: PaymentStatus
-  paymentMethod: string
-  amountPaid: string
-  notes: string
-}
-
-const props = defineProps<{
-  submitting?: boolean
-  currentPaymentStatus: PaymentStatus
-  totalInvoice: string | number | null
-  dpAmount: string | number | null
-}>()
-
-const emit = defineEmits<{
-  submit: [{ paymentStatus: string; paymentMethod?: string; amountPaid?: number; notes?: string }]
-}>()
-
-const totalInvoiceValue = computed(() => toMoneyNumber(props.totalInvoice))
-const dpPaidValue = computed(() => toMoneyNumber(props.dpAmount))
-const currentPaidValue = computed(() => (props.currentPaymentStatus === 'DP' ? dpPaidValue.value : 0))
-const remainingBeforeValue = computed(() => Math.max(totalInvoiceValue.value - currentPaidValue.value, 0))
+  })))
 
 const statusOptions = computed(() => {
   if (props.currentPaymentStatus === 'BELUM_BAYAR') {
@@ -133,7 +151,8 @@ const defaultNextStatus = computed<PaymentStatus>(() => {
   return 'DP'
 })
 
-const { defineField, errors, handleSubmit, setErrors, resetForm, setFieldValue } = useForm<FormValues>({
+const { defineField, errors, handleSubmit, resetForm, setFieldValue } = useForm<FormValues, SubmitValues>({
+  validationSchema,
   initialValues: {
     paymentStatus: defaultNextStatus.value,
     paymentMethod: '',
@@ -192,22 +211,16 @@ watch(
 )
 
 const onSubmit = handleSubmit((values) => {
-  const parsed = schema.safeParse(values)
-  if (!parsed.success) {
-    setErrors(mapZodErrors(parsed.error))
-    return
-  }
-
   const amountForSubmit =
-    parsed.data.paymentStatus === 'LUNAS'
+    values.paymentStatus === 'LUNAS'
       ? autoLunasAmount.value
-      : parsed.data.amountPaid
+      : values.amountPaid
 
   emit('submit', {
-    paymentStatus: parsed.data.paymentStatus,
-    paymentMethod: parsed.data.paymentMethod || undefined,
+    paymentStatus: values.paymentStatus,
+    paymentMethod: values.paymentMethod || undefined,
     amountPaid: amountForSubmit,
-    notes: parsed.data.notes || undefined,
+    notes: values.notes || undefined,
   })
 
   resetForm({
@@ -264,6 +277,8 @@ const onSubmit = handleSubmit((values) => {
       v-model="amountPaid"
       label="Nominal DP"
       type="number"
+      min="1000"
+      step="1"
       :error="errors.amountPaid"
       placeholder="Contoh: 100000"
     />

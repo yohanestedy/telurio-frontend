@@ -149,6 +149,6 @@ onClickOutside(rootRef, () => {
         {{ option.label }}
       </option>
     </select>
-    <span v-if="error" class="text-xs font-medium text-rose-600">{{ error }}</span>
+    <span v-if="error" data-field-error="true" class="text-xs font-medium text-rose-600">{{ error }}</span>
   </label>
 </template>
