@@ -584,6 +584,20 @@ onMounted(() => {
                 </button>
               </div>
             </div>
+
+            <div class="rounded-2xl border border-white/70 bg-white/80 p-3">
+              <p class="text-xs uppercase tracking-wide text-ink-500">{{ t('calendar.marker.coopHealth') }}</p>
+              <div v-if="selectedDay.events.coopHealth?.length" class="mt-2 space-y-1.5">
+                <div
+                  v-for="record in selectedDay.events.coopHealth"
+                  :key="`${record.coopId}-${record.type}-${record.description}`"
+                  class="flex items-center justify-between gap-3"
+                >
+                  <span class="font-medium text-ink-800">{{ t(`coopHealth.type.${record.type}`) }} — {{ record.coopName }}</span>
+                </div>
+              </div>
+              <p v-else class="mt-2 text-ink-500">{{ t('coopHealth.emptyForDate') }}</p>
+            </div>
           </div>
         </GlassCard>
         </template>

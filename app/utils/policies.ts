@@ -26,6 +26,8 @@ export const permissionMap: Record<Permission, Role[]> = {
   "stocks.manage": ["ADMIN", "OWNER", "OPERATOR"],
   "general-expenses.view": ["ADMIN", "OWNER"],
   "general-expenses.manage": ["ADMIN", "OWNER"],
+  "coop-health.view": ["ADMIN", "OWNER", "OPERATOR"],
+  "coop-health.manage": ["ADMIN"],
   "general-expense-categories.view": ["ADMIN", "OWNER"],
   "general-expense-categories.manage": ["OWNER"],
   "reports.view": ["ADMIN", "OWNER", "OPERATOR"],
@@ -100,6 +102,13 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         description: "Ledger pergerakan stok",
         permission: "stocks.view",
         icon: "layers",
+      },
+      {
+        label: "Coop Health",
+        path: "/coop-health",
+        description: "Riwayat kesehatan kandang",
+        permission: "coop-health.view",
+        icon: "coops",
       },
       {
         label: "Reports",
@@ -220,6 +229,13 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
             icon: "wallet",
           },
         ],
+      },
+      {
+        label: "Coop Health",
+        path: "/coop-health",
+        description: "Riwayat kesehatan kandang",
+        permission: "coop-health.view",
+        icon: "coops",
       },
       {
         label: "Reports",

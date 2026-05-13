@@ -43,6 +43,7 @@ const markerLegend = computed(() => [
   { label: t('calendar.marker.production'), className: 'bg-emerald-500 dark:!bg-emerald-300' },
   { label: t('calendar.marker.expense'), className: 'bg-slate-500 dark:!bg-slate-300' },
   { label: t('calendar.marker.generalExpense'), className: 'bg-indigo-400 dark:!bg-indigo-300' },
+  { label: t('calendar.marker.coopHealth'), className: 'bg-cyan-500 dark:!bg-cyan-300' },
 ])
 
 const markerMap = computed(() => new Map(props.markerDays.map((day) => [day.date, day.markers])))
@@ -123,6 +124,16 @@ function buildMarkers(date: string): CalendarMarker[] {
       label: t('calendar.marker.generalExpense'),
       count: generalExpenseCount,
       className: 'bg-indigo-400 dark:!bg-indigo-300',
+    })
+  }
+
+  const coopHealthCount = payload?.coopHealth ?? 0
+  if (coopHealthCount > 0) {
+    markers.push({
+      key: 'coopHealth',
+      label: t('calendar.marker.coopHealth'),
+      count: coopHealthCount,
+      className: 'bg-cyan-500 dark:!bg-cyan-300',
     })
   }
 
@@ -241,7 +252,7 @@ function updateLegendPopoverPosition() {
   }
 
   const rect = button.getBoundingClientRect()
-  const width = 208
+  const width = Math.max(208, rect.width)
   const margin = 12
   const left = Math.min(Math.max(rect.right - width, margin), window.innerWidth - width - margin)
 
@@ -445,7 +456,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="border-t border-white/70 pt-3 dark:!border-white/10">
-        <div ref="legendRef" class="relative flex justify-end">
+        <div ref="legendRef" class="relative flex justify-start">
           <button
             ref="legendButtonRef"
             type="button"
@@ -454,7 +465,7 @@ onBeforeUnmount(() => {
             aria-label="Tampilkan keterangan marker kalender"
             @click.stop="toggleLegend"
           >
-            <span class="grid h-4 w-4 grid-cols-2 gap-0.5">
+            <span class="flex h-4 items-center gap-0.5">
               <span
                 v-for="item in markerLegend"
                 :key="item.label"

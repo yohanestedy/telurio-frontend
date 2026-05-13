@@ -201,6 +201,27 @@ export interface ExpenseItem {
   createdAt: string;
 }
 
+export const coopHealthRecordTypes = [
+  "VITAMIN",
+  "VACCINE",
+  "MEDICINE",
+] as const;
+export type CoopHealthRecordType = (typeof coopHealthRecordTypes)[number];
+
+export interface CoopHealthRecordItem {
+  id: string;
+  date: string;
+  coopId: string;
+  coopName: string;
+  type: CoopHealthRecordType;
+  description: string;
+  notes: string | null;
+  createdByName: string | null;
+  updatedByName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PriceItem {
   id: string;
   effectiveDate: string;
@@ -372,6 +393,12 @@ export interface CalendarDay {
     priceUpdates: Array<{
       pricePerKg: string;
     }>;
+    coopHealth?: Array<{
+      coopId: string;
+      coopName: string;
+      type: CoopHealthRecordType;
+      description: string;
+    }>;
   };
 }
 
@@ -383,6 +410,7 @@ export interface CalendarMarkerDay {
     expenses: number;
     generalExpenses: number;
     priceUpdates: number;
+    coopHealth?: number;
   };
 }
 
@@ -421,6 +449,8 @@ export type Permission =
   | "stocks.manage"
   | "general-expenses.view"
   | "general-expenses.manage"
+  | "coop-health.view"
+  | "coop-health.manage"
   | "general-expense-categories.view"
   | "general-expense-categories.manage"
   | "reports.view"
