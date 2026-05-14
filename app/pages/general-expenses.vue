@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { GeneralExpenseCategoryItem, GeneralExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { formatAmountNumber, generateIdempotencyKey } from '../utils/expense-helpers'
+import { formatAmountNumber } from '../utils/expense-helpers'
+import { generateIdempotencyKey } from '../utils/idempotency'
 import { useApi } from '../composables/useApi'
 
 definePageMeta({

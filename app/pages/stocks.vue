@@ -11,6 +11,7 @@ import {
   stockMovementDirections,
   stockMovementTypes,
 } from '../types/domain'
+import { generateIdempotencyKey } from '../utils/idempotency'
 import { defaultPageSizeOptions } from '../utils/list'
 
 definePageMeta({
@@ -128,10 +129,6 @@ async function loadMovements() {
 
 async function refreshData() {
   await Promise.all([loadSupporting(), loadMovements()])
-}
-
-function generateIdempotencyKey() {
-  return crypto.randomUUID()
 }
 
 function openManualAdjustDialog() {

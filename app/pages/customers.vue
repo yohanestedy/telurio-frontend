@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CustomerItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
+import { generateIdempotencyKey } from '../utils/idempotency'
 
 definePageMeta({
   title: 'Customers',
@@ -76,10 +77,6 @@ async function loadCustomers() {
   } finally {
     loading.value = false
   }
-}
-
-function generateIdempotencyKey() {
-  return crypto.randomUUID()
 }
 
 function openCreateDialog() {

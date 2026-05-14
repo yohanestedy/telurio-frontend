@@ -2,6 +2,7 @@
 import { useListFilterDrafts } from '../../composables/useListFilterDrafts'
 import type { CustomerItem, LiveStockResponse, OrderItem } from '../../types/domain'
 import { defaultPageSizeOptions } from '../../utils/list'
+import { generateIdempotencyKey } from '../../utils/idempotency'
 import {
   deliveryStatuses,
   paymentStatuses,
@@ -201,10 +202,6 @@ async function loadOrders() {
       loading.value = false
     }
   }
-}
-
-function generateIdempotencyKey() {
-  return crypto.randomUUID()
 }
 
 function openCreateDialog() {
