@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { CustomerItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { generateIdempotencyKey } from '../utils/idempotency'
 import { useListPageActions } from '../composables/useListPageActions'
+import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 
 definePageMeta({
   title: 'Customers',
@@ -21,7 +21,6 @@ const search = ref('')
 const dialogOpen = ref(false)
 const editing = ref<CustomerItem | null>(null)
 const submitting = ref(false)
-const createCustomerIdempotencyKey = ref<string | null>(null)
 const sortBy = ref('createdAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -68,17 +67,12 @@ async function loadCustomers() {
   }
 }
 
-function openCreateDialog() {
-  editing.value = null
-  createCustomerIdempotencyKey.value = generateIdempotencyKey()
-  dialogOpen.value = true
-}
-
-function openEditDialog(customer: CustomerItem) {
-  editing.value = customer
-  createCustomerIdempotencyKey.value = null
-  dialogOpen.value = true
-}
+const {
+  openCreateDialog,
+  openEditDialog,
+  getOrCreateIdempotencyKey,
+  clearIdempotencyKey,
+} = useIdempotentCreateDialog(dialogOpen, editing)
 
 async function submitCustomer(payload: Record<string, unknown>) {
   submitting.value = true
@@ -87,14 +81,13 @@ async function submitCustomer(payload: Record<string, unknown>) {
       await api.patch(`/customers/${editing.value.id}`, payload)
       toast.success(t('toast.customer.updated'))
     } else {
-      const idempotencyKey = createCustomerIdempotencyKey.value ?? generateIdempotencyKey()
-      createCustomerIdempotencyKey.value = idempotencyKey
+      const idempotencyKey = getOrCreateIdempotencyKey()
       await api.post('/customers', { ...payload, idempotencyKey })
       toast.success(t('toast.customer.created'))
     }
     dialogOpen.value = false
     editing.value = null
-    createCustomerIdempotencyKey.value = null
+    clearIdempotencyKey()
     await loadCustomers()
   } catch (caught) {
     toast.error(t('toast.customer.saveFailed'), api.mapError(caught).message)
@@ -116,14 +109,6 @@ const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageA
 })
 
 onMounted(loadCustomers)
-
-watch(dialogOpen, (open) => {
-  if (!open) {
-    createCustomerIdempotencyKey.value = null
-  } else if (!editing.value && !createCustomerIdempotencyKey.value) {
-    createCustomerIdempotencyKey.value = generateIdempotencyKey()
-  }
-})
 
 </script>
 

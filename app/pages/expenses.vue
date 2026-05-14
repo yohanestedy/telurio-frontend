@@ -2,9 +2,9 @@
 import type { CoopItem, ExpenseCategoryItem, ExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { formatAmountNumber } from '../utils/expense-helpers'
-import { generateIdempotencyKey } from '../utils/idempotency'
 import { useApi } from '../composables/useApi'
 import { useListPageActions } from '../composables/useListPageActions'
+import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 
 definePageMeta({
   title: 'Expenses',
@@ -30,7 +30,6 @@ const editing = ref<ExpenseItem | null>(null)
 const deleting = ref<ExpenseItem | null>(null)
 const submitting = ref(false)
 const categoryModalOpen = ref(false)
-const createExpenseIdempotencyKey = ref<string | null>(null)
 const summaryReloadKey = ref(0)
 
 const coopFilter = ref('')
@@ -160,17 +159,12 @@ async function loadExpenses() {
   }
 }
 
-function openCreateDialog() {
-  editing.value = null
-  createExpenseIdempotencyKey.value = generateIdempotencyKey()
-  dialogOpen.value = true
-}
-
-function openEditDialog(expense: ExpenseItem) {
-  editing.value = expense
-  createExpenseIdempotencyKey.value = null
-  dialogOpen.value = true
-}
+const {
+  openCreateDialog,
+  openEditDialog,
+  getOrCreateIdempotencyKey,
+  clearIdempotencyKey,
+} = useIdempotentCreateDialog(dialogOpen, editing)
 
 async function submitExpense(payload: Record<string, unknown>) {
   submitting.value = true
@@ -185,14 +179,13 @@ async function submitExpense(payload: Record<string, unknown>) {
       })
       toast.success(t('toast.expense.updated'))
     } else {
-      const idempotencyKey = createExpenseIdempotencyKey.value ?? generateIdempotencyKey()
-      createExpenseIdempotencyKey.value = idempotencyKey
+      const idempotencyKey = getOrCreateIdempotencyKey()
       await api.post('/expenses', { ...payload, idempotencyKey })
       toast.success(t('toast.expense.created'))
     }
     dialogOpen.value = false
     editing.value = null
-    createExpenseIdempotencyKey.value = null
+    clearIdempotencyKey()
     await loadExpenses()
     summaryReloadKey.value += 1
   } catch (caught) {
@@ -257,14 +250,6 @@ watch(
   },
   { immediate: true },
 )
-
-watch(dialogOpen, (open) => {
-  if (!open) {
-    createExpenseIdempotencyKey.value = null
-  } else if (!editing.value && !createExpenseIdempotencyKey.value) {
-    createExpenseIdempotencyKey.value = generateIdempotencyKey()
-  }
-})
 
 </script>
 

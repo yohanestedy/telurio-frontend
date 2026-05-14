@@ -2,9 +2,9 @@
 import type { GeneralExpenseCategoryItem, GeneralExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { formatAmountNumber } from '../utils/expense-helpers'
-import { generateIdempotencyKey } from '../utils/idempotency'
 import { useApi } from '../composables/useApi'
 import { useListPageActions } from '../composables/useListPageActions'
+import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 
 definePageMeta({
   title: 'General Expenses',
@@ -30,7 +30,6 @@ const editing = ref<GeneralExpenseItem | null>(null)
 const deleting = ref<GeneralExpenseItem | null>(null)
 const submitting = ref(false)
 const categoryModalOpen = ref(false)
-const createGeneralExpenseIdempotencyKey = ref<string | null>(null)
 const summaryReloadKey = ref(0)
 
 const categoryFilter = ref('')
@@ -129,17 +128,12 @@ async function loadExpenses() {
   }
 }
 
-function openCreateDialog() {
-  editing.value = null
-  createGeneralExpenseIdempotencyKey.value = generateIdempotencyKey()
-  dialogOpen.value = true
-}
-
-function openEditDialog(expense: GeneralExpenseItem) {
-  editing.value = expense
-  createGeneralExpenseIdempotencyKey.value = null
-  dialogOpen.value = true
-}
+const {
+  openCreateDialog,
+  openEditDialog,
+  getOrCreateIdempotencyKey,
+  clearIdempotencyKey,
+} = useIdempotentCreateDialog(dialogOpen, editing)
 
 async function submitExpense(payload: Record<string, unknown>) {
   submitting.value = true
@@ -148,14 +142,13 @@ async function submitExpense(payload: Record<string, unknown>) {
       await api.patch(`/general-expenses/${editing.value.id}`, payload)
       toast.success(t('toast.generalExpense.updated'))
     } else {
-      const idempotencyKey = createGeneralExpenseIdempotencyKey.value ?? generateIdempotencyKey()
-      createGeneralExpenseIdempotencyKey.value = idempotencyKey
+      const idempotencyKey = getOrCreateIdempotencyKey()
       await api.post('/general-expenses', { ...payload, idempotencyKey })
       toast.success(t('toast.generalExpense.created'))
     }
     dialogOpen.value = false
     editing.value = null
-    createGeneralExpenseIdempotencyKey.value = null
+    clearIdempotencyKey()
     await loadExpenses()
     summaryReloadKey.value += 1
   } catch (caught) {
@@ -222,13 +215,6 @@ watch(
   { immediate: true },
 )
 
-watch(dialogOpen, (open) => {
-  if (!open) {
-    createGeneralExpenseIdempotencyKey.value = null
-  } else if (!editing.value && !createGeneralExpenseIdempotencyKey.value) {
-    createGeneralExpenseIdempotencyKey.value = generateIdempotencyKey()
-  }
-})
 </script>
 
 <template>

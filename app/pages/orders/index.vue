@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useListFilterDrafts } from '../../composables/useListFilterDrafts'
 import { useListPageActions } from '../../composables/useListPageActions'
+import { useIdempotentCreateDialog } from '../../composables/useIdempotentCreateDialog'
 import type { CustomerItem, LiveStockResponse, OrderItem } from '../../types/domain'
 import { defaultPageSizeOptions } from '../../utils/list'
-import { generateIdempotencyKey } from '../../utils/idempotency'
 import {
   deliveryStatuses,
   paymentStatuses,
@@ -34,7 +34,6 @@ const dialogOpen = ref(false)
 const editing = ref<OrderItem | null>(null)
 const submitting = ref(false)
 const latestOrderRequestId = ref(0)
-const createOrderIdempotencyKey = ref<string | null>(null)
 
 const deliveryStatus = computed({
   get: () => ui.orderFilters.deliveryStatus,
@@ -193,17 +192,12 @@ async function loadOrders() {
   }
 }
 
-function openCreateDialog() {
-  editing.value = null
-  createOrderIdempotencyKey.value = generateIdempotencyKey()
-  dialogOpen.value = true
-}
-
-function openEditDialog(order: OrderItem) {
-  editing.value = order
-  createOrderIdempotencyKey.value = null
-  dialogOpen.value = true
-}
+const {
+  openCreateDialog,
+  openEditDialog,
+  getOrCreateIdempotencyKey,
+  clearIdempotencyKey,
+} = useIdempotentCreateDialog(dialogOpen, editing)
 
 async function submitOrder(payload: Record<string, unknown>) {
   submitting.value = true
@@ -212,14 +206,13 @@ async function submitOrder(payload: Record<string, unknown>) {
       await api.patch(`/orders/${editing.value.id}`, payload)
       toast.success(t('toast.order.updated'))
     } else {
-      const idempotencyKey = createOrderIdempotencyKey.value ?? generateIdempotencyKey()
-      createOrderIdempotencyKey.value = idempotencyKey
+      const idempotencyKey = getOrCreateIdempotencyKey()
       await api.post('/orders', { ...payload, idempotencyKey })
       toast.success(t('toast.order.created'))
     }
     dialogOpen.value = false
     editing.value = null
-    createOrderIdempotencyKey.value = null
+    clearIdempotencyKey()
     await loadOrders()
   } catch (caught) {
     toast.error(t('toast.order.saveFailed'), api.mapError(caught).message)
@@ -268,7 +261,7 @@ async function consumeCreateQuery(value: unknown) {
 
   dialogOpen.value = true
   editing.value = null
-  createOrderIdempotencyKey.value = generateIdempotencyKey()
+  getOrCreateIdempotencyKey()
 
   const nextQuery = { ...route.query }
   delete nextQuery.create
@@ -290,7 +283,7 @@ watch(
 watch(dialogOpen, (open) => {
   if (!open) {
     editing.value = null
-    createOrderIdempotencyKey.value = null
+    clearIdempotencyKey()
   }
 })
 

@@ -11,9 +11,9 @@ import {
   stockMovementDirections,
   stockMovementTypes,
 } from '../types/domain'
-import { generateIdempotencyKey } from '../utils/idempotency'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
+import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 
 definePageMeta({
   title: 'Stocks',
@@ -34,7 +34,7 @@ const manualAdjustOpen = ref(false)
 const movementDetailOpen = ref(false)
 const selectedMovement = ref<StockMovementItem | null>(null)
 const submittingManualAdjust = ref(false)
-const manualAdjustmentIdempotencyKey = ref<string | null>(null)
+const manualAdjustmentEditingPlaceholder = ref<null>(null)
 
 const coopFilter = ref('')
 const directionFilter = ref('')
@@ -120,14 +120,15 @@ async function refreshData() {
   await Promise.all([loadSupporting(), loadMovements()])
 }
 
-function openManualAdjustDialog() {
-  manualAdjustmentIdempotencyKey.value = generateIdempotencyKey()
-  manualAdjustOpen.value = true
-}
+const {
+  openCreateDialog: openManualAdjustDialog,
+  getOrCreateIdempotencyKey,
+  clearIdempotencyKey,
+} = useIdempotentCreateDialog(manualAdjustOpen, manualAdjustmentEditingPlaceholder)
 
 function closeManualAdjustDialog() {
   manualAdjustOpen.value = false
-  manualAdjustmentIdempotencyKey.value = null
+  clearIdempotencyKey()
 }
 
 async function submitManualAdjustment(payload: {
@@ -139,8 +140,7 @@ async function submitManualAdjustment(payload: {
   submittingManualAdjust.value = true
 
   try {
-    const idempotencyKey = manualAdjustmentIdempotencyKey.value ?? generateIdempotencyKey()
-    manualAdjustmentIdempotencyKey.value = idempotencyKey
+    const idempotencyKey = getOrCreateIdempotencyKey()
     await api.post('/stocks/manual-adjustments', { ...payload, idempotencyKey })
     toast.success(t('toast.stock.adjustmentSaved'))
     closeManualAdjustDialog()
@@ -199,13 +199,6 @@ onMounted(async () => {
   await Promise.all([loadSupporting(), loadMovements()])
 })
 
-watch(manualAdjustOpen, (open) => {
-  if (!open) {
-    manualAdjustmentIdempotencyKey.value = null
-  } else if (!manualAdjustmentIdempotencyKey.value) {
-    manualAdjustmentIdempotencyKey.value = generateIdempotencyKey()
-  }
-})
 </script>
 
 <template>
