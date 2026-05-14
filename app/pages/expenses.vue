@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { CoopItem, ExpenseCategoryItem, ExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
+import { formatAmountNumber, generateIdempotencyKey } from '../utils/expense-helpers'
+import { useApi } from '../composables/useApi'
 
 definePageMeta({
   title: 'Expenses',
@@ -27,6 +29,7 @@ const deleting = ref<ExpenseItem | null>(null)
 const submitting = ref(false)
 const categoryModalOpen = ref(false)
 const createExpenseIdempotencyKey = ref<string | null>(null)
+const summaryReloadKey = ref(0)
 
 const coopFilter = ref('')
 const ownerFilter = ref('')
@@ -167,10 +170,6 @@ async function loadExpenses() {
   }
 }
 
-function generateIdempotencyKey() {
-  return crypto.randomUUID()
-}
-
 function openCreateDialog() {
   editing.value = null
   createExpenseIdempotencyKey.value = generateIdempotencyKey()
@@ -205,6 +204,7 @@ async function submitExpense(payload: Record<string, unknown>) {
     editing.value = null
     createExpenseIdempotencyKey.value = null
     await loadExpenses()
+    summaryReloadKey.value += 1
   } catch (caught) {
     toast.error(t('toast.expense.saveFailed'), api.mapError(caught).message)
   } finally {
@@ -224,6 +224,7 @@ async function deleteExpense(payload: { deleteReason: string }) {
     deleteDialogOpen.value = false
     deleting.value = null
     await loadExpenses()
+    summaryReloadKey.value += 1
   } catch (caught) {
     toast.error(t('toast.expense.deleteFailed'), api.mapError(caught).message)
   } finally {
@@ -310,6 +311,7 @@ watch(dialogOpen, (open) => {
     </ListHeaderCard>
 
     <ExpenseSummaryCard
+      :key="summaryReloadKey"
       api-path="/expenses/summary"
       :title="t('expenseSummary.title')"
       filter-param="coopId"
@@ -441,10 +443,10 @@ watch(dialogOpen, (open) => {
           <thead class="sticky top-0 z-10 bg-white/90 text-ink-500 backdrop-blur-sm">
             <tr>
               <th class="px-4 py-3 pr-4">{{ t('common.date') }}</th>
-              <th class="px-4 py-3 pr-4">{{ t('common.coop') }}</th>
-              <th class="px-4 py-3 pr-4">{{ t('expense.category') }}</th>
               <th class="px-4 py-3 pr-4">{{ t('expense.itemDescription') }}</th>
-              <th class="px-4 py-3 pr-4">{{ t('common.amount') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('expense.category') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.amountRp') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.coop') }}</th>
               <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
@@ -464,10 +466,13 @@ watch(dialogOpen, (open) => {
           <tbody v-else-if="expenses.length">
             <tr v-for="item in expenses" :key="item.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">{{ formatDate(item.date) }}</td>
-              <td class="px-4 py-4 pr-4">{{ item.coopName }}</td>
-              <td class="px-4 py-4 pr-4">{{ item.expenseCategoryName || '-' }}</td>
               <td class="px-4 py-4 pr-4 text-ink-700">{{ item.description || '-' }}</td>
-              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.amount) }}</td>
+              <td class="px-4 py-4 pr-4">
+                <UiBadge v-if="item.expenseCategoryName" tone="neutral">{{ item.expenseCategoryName }}</UiBadge>
+                <span v-else class="text-ink-300">—</span>
+              </td>
+              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatAmountNumber(item.amount) }}</td>
+              <td class="px-4 py-4 pr-4">{{ item.coopName }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
                   <UiButton variant="ghost" size="sm" icon="edit" @click="openEditDialog(item)">

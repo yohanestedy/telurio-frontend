@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { GeneralExpenseCategoryItem, GeneralExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
+import { formatAmountNumber, generateIdempotencyKey } from '../utils/expense-helpers'
+import { useApi } from '../composables/useApi'
 
 definePageMeta({
   title: 'General Expenses',
@@ -27,6 +29,7 @@ const deleting = ref<GeneralExpenseItem | null>(null)
 const submitting = ref(false)
 const categoryModalOpen = ref(false)
 const createGeneralExpenseIdempotencyKey = ref<string | null>(null)
+const summaryReloadKey = ref(0)
 
 const categoryFilter = ref('')
 const startDateFilter = ref('')
@@ -136,10 +139,6 @@ async function loadExpenses() {
   }
 }
 
-function generateIdempotencyKey() {
-  return crypto.randomUUID()
-}
-
 function openCreateDialog() {
   editing.value = null
   createGeneralExpenseIdempotencyKey.value = generateIdempotencyKey()
@@ -168,6 +167,7 @@ async function submitExpense(payload: Record<string, unknown>) {
     editing.value = null
     createGeneralExpenseIdempotencyKey.value = null
     await loadExpenses()
+    summaryReloadKey.value += 1
   } catch (caught) {
     toast.error(t('toast.generalExpense.saveFailed'), api.mapError(caught).message)
   } finally {
@@ -184,6 +184,7 @@ async function deleteExpense(payload: { deleteReason: string }) {
     deleteDialogOpen.value = false
     deleting.value = null
     await loadExpenses()
+    summaryReloadKey.value += 1
   } catch (caught) {
     toast.error(t('toast.generalExpense.deleteFailed'), api.mapError(caught).message)
   } finally {
@@ -275,6 +276,7 @@ watch(dialogOpen, (open) => {
     </ListHeaderCard>
 
     <ExpenseSummaryCard
+      :key="summaryReloadKey"
       api-path="/general-expenses/summary"
       :title="t('expenseSummary.title')"
       filter-param="ownerId"
@@ -374,7 +376,7 @@ watch(dialogOpen, (open) => {
               <th v-if="isAdmin" class="px-4 py-3 pr-4">Owner</th>
               <th class="px-4 py-3 pr-4">{{ t('expense.itemDescription') }}</th>
               <th class="px-4 py-3 pr-4">{{ t('expense.category') }}</th>
-              <th class="px-4 py-3 pr-4">{{ t('common.amount') }}</th>
+              <th class="px-4 py-3 pr-4">{{ t('common.amountRp') }}</th>
               <th class="px-4 py-3 pr-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
@@ -403,7 +405,7 @@ watch(dialogOpen, (open) => {
                 <UiBadge v-if="item.categoryName" tone="neutral">{{ item.categoryName }}</UiBadge>
                 <span v-else class="text-ink-300">—</span>
               </td>
-              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.amount) }}</td>
+              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatAmountNumber(item.amount) }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
                   <UiButton variant="ghost" size="sm" icon="edit" @click="openEditDialog(item)">
