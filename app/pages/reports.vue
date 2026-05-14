@@ -141,8 +141,8 @@ onMounted(async () => {
             <tr v-for="item in grossIncome" :key="item.coopId" class="border-t border-white/40">
               <td class="py-4 pr-4">{{ item.coopName }}</td>
               <td class="py-4 pr-4">{{ formatKg(item.totalDeliveredKg) }}</td>
-              <td class="py-4 pr-4">{{ formatRupiah(item.avgPricePerKg) }}</td>
-              <td class="py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.grossIncome) }}</td>
+              <td class="py-4 pr-4">{{ formatMoneyNumber(item.avgPricePerKg) }}</td>
+              <td class="py-4 pr-4 font-medium text-ink-900">{{ formatMoneyNumber(item.grossIncome) }}</td>
             </tr>
           </tbody>
         </table>
@@ -162,10 +162,10 @@ onMounted(async () => {
           <tbody>
             <tr v-for="item in netIncome" :key="item.coopId" class="border-t border-white/40">
               <td class="py-4 pr-4">{{ item.coopName }}</td>
-              <td class="py-4 pr-4">{{ formatRupiah(item.grossIncome) }}</td>
-              <td class="py-4 pr-4">{{ formatRupiah(item.totalExpenses) }}</td>
-              <td class="py-4 pr-4">{{ formatRupiah(item.depreciation) }}</td>
-              <td class="py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.netIncome) }}</td>
+              <td class="py-4 pr-4">{{ formatMoneyNumber(item.grossIncome) }}</td>
+              <td class="py-4 pr-4">{{ formatMoneyNumber(item.totalExpenses) }}</td>
+              <td class="py-4 pr-4">{{ formatMoneyNumber(item.depreciation) }}</td>
+              <td class="py-4 pr-4 font-medium text-ink-900">{{ formatMoneyNumber(item.netIncome) }}</td>
             </tr>
           </tbody>
         </table>
@@ -196,8 +196,8 @@ onMounted(async () => {
               <tr v-for="item in monthlySummary.coops" :key="item.coopId" class="border-t border-white/40">
                 <td class="py-4 pr-4">{{ item.coopName }}</td>
                 <td class="py-4 pr-4">{{ item.ownershipSharePercent }}%</td>
-                <td class="py-4 pr-4">{{ formatRupiah(item.netIncome) }}</td>
-                <td class="py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(item.ownerShare) }}</td>
+                <td class="py-4 pr-4">{{ formatMoneyNumber(item.netIncome) }}</td>
+                <td class="py-4 pr-4 font-medium text-ink-900">{{ formatMoneyNumber(item.ownerShare) }}</td>
               </tr>
             </tbody>
           </table>

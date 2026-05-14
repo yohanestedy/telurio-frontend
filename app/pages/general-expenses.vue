@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { GeneralExpenseCategoryItem, GeneralExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { formatAmountNumber } from '../utils/expense-helpers'
+import { formatMoneyNumber } from '../utils/formatters'
 import { useApi } from '../composables/useApi'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
@@ -376,7 +376,7 @@ watch(
                 <UiBadge v-if="item.categoryName" tone="neutral">{{ item.categoryName }}</UiBadge>
                 <span v-else class="text-ink-300">—</span>
               </td>
-              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatAmountNumber(item.amount) }}</td>
+              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatMoneyNumber(item.amount) }}</td>
               <td class="px-4 py-4 text-right">
                 <div class="flex justify-end gap-1">
                   <UiButton variant="ghost" size="sm" icon="edit" @click="openEditDialog(item)">

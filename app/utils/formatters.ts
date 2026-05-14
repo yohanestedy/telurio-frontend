@@ -100,6 +100,22 @@ export function formatRupiah(value?: string | number | bigint | null) {
   return `Rp ${Number(normalized).toLocaleString("id-ID")}`;
 }
 
+export function formatMoneyNumber(
+  value?: string | number | null,
+  language: "id" | "en" = getCurrentLanguage(),
+) {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  const normalized = Number(String(value).replace(/,/g, ""));
+  if (Number.isNaN(normalized)) {
+    return "-";
+  }
+
+  return normalized.toLocaleString(language === "en" ? "en-US" : "id-ID");
+}
+
 export function roleLabel(role: Role) {
   return translateMessage(getCurrentLanguage(), `role.${role}`);
 }

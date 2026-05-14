@@ -298,7 +298,7 @@ watch(
           <tbody v-else-if="prices.length">
             <tr v-for="price in prices" :key="price.id" class="border-t border-slate-200/70">
               <td class="px-4 py-4 pr-4">{{ formatDate(price.effectiveDate) }}</td>
-              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatRupiah(price.pricePerKg) }}</td>
+              <td class="px-4 py-4 pr-4 font-medium text-ink-900">{{ formatMoneyNumber(price.pricePerKg) }}</td>
               <td class="px-4 py-4 pr-4">{{ price.notes || '-' }}</td>
               <td class="px-4 py-4 text-right">
                 <UiButton variant="ghost" size="sm" icon="edit" @click="dialogOpen = true; editing = price">

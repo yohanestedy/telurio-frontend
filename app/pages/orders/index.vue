@@ -8,7 +8,7 @@ import {
   deliveryStatuses,
   paymentStatuses,
 } from '../../types/domain'
-import { deliveryStatusLabel, paymentStatusLabel } from '../../utils/formatters'
+import { deliveryStatusLabel, formatMoneyNumber, paymentStatusLabel } from '../../utils/formatters'
 
 definePageMeta({
   title: 'Orders',
@@ -232,19 +232,6 @@ const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageA
   applyDrafts,
   resetActive,
 })
-
-function formatMoneyNumber(value?: string | number | null) {
-  if (value === undefined || value === null || value === '') {
-    return '-'
-  }
-
-  const normalized = Number(String(value).replace(/,/g, ''))
-  if (Number.isNaN(normalized)) {
-    return '-'
-  }
-
-  return normalized.toLocaleString(ui.language === 'en' ? 'en-US' : 'id-ID')
-}
 
 async function refreshOrdersContext() {
   await Promise.all([
