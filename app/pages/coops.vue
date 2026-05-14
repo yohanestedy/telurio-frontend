@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CoopItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({
   title: 'Coops',
@@ -43,18 +44,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
   active: activeFilter,
 })
 
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadCoops()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadCoops()
-}
-
 async function loadCoops() {
   loading.value = true
   error.value = ''
@@ -94,24 +83,19 @@ async function submitCoop(payload: Record<string, unknown>) {
   }
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadCoops()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadCoops()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadCoops,
+  applyDrafts,
+  resetActive,
+})
 
 onMounted(loadCoops)
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadCoops()
-  }
-})
 
 </script>
 

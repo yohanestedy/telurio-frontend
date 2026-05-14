@@ -2,6 +2,7 @@
 import type { CustomerItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { generateIdempotencyKey } from '../utils/idempotency'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({
   title: 'Customers',
@@ -47,18 +48,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
     },
   },
 )
-
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadCustomers()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadCustomers()
-}
 
 async function loadCustomers() {
   loading.value = true
@@ -114,24 +103,19 @@ async function submitCustomer(payload: Record<string, unknown>) {
   }
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadCustomers()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadCustomers()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadCustomers,
+  applyDrafts,
+  resetActive,
+})
 
 onMounted(loadCustomers)
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadCustomers()
-  }
-})
 
 watch(dialogOpen, (open) => {
   if (!open) {
