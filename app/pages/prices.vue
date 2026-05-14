@@ -2,6 +2,7 @@
 import type { PriceItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'Daily Prices',
@@ -64,10 +65,13 @@ const createInitialValue = computed(() =>
       : undefined,
 )
 
-async function loadPrices() {
-  loading.value = true
-  error.value = ''
-  try {
+const { load: loadPrices } = usePaginatedLoader<PriceItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    prices.value = data
+  },
+  fetchPage: async () => {
     const [, list] = await Promise.all([
       loadTodayPriceStatus(),
       api.getPage<PriceItem[]>('/prices', {
@@ -78,14 +82,12 @@ async function loadPrices() {
         endDate: endDateFilter.value || undefined,
       }),
     ])
-    prices.value = list.data
-    pagination.applyMeta(list.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+
+    return list
+  },
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 function openCreatePriceDialog() {
   editing.value = null

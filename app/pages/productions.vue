@@ -2,6 +2,7 @@
 import type { CoopItem, ProductionItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'Productions',
@@ -77,11 +78,14 @@ async function loadSupporting() {
   coops.value = response.data
 }
 
-async function loadProductions() {
-  loading.value = true
-  error.value = ''
-  try {
-    const response = await api.getPage<ProductionItem[]>('/productions', {
+const { load: loadProductions } = usePaginatedLoader<ProductionItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    productions.value = data
+  },
+  fetchPage: () =>
+    api.getPage<ProductionItem[]>('/productions', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
@@ -89,15 +93,10 @@ async function loadProductions() {
       date: dateFilter.value || undefined,
       startDate: dateFilter.value ? undefined : startDateFilter.value || undefined,
       endDate: dateFilter.value ? undefined : endDateFilter.value || undefined,
-    })
-    productions.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 async function submitProduction(payload: Record<string, unknown>) {
   submitting.value = true

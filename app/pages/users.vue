@@ -2,6 +2,7 @@
 import type { CoopItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'Users',
@@ -58,26 +59,24 @@ async function loadSupporting() {
   coops.value = response.data
 }
 
-async function loadUsers() {
-  loading.value = true
-  error.value = ''
-  try {
-    const response = await api.getPage<UserItem[]>('/users', {
+const { load: loadUsers } = usePaginatedLoader<UserItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    users.value = data
+  },
+  fetchPage: () =>
+    api.getPage<UserItem[]>('/users', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
       role: roleFilter.value || undefined,
       isActive: activeFilter.value === '' ? undefined : activeFilter.value === 'true',
       coopId: coopFilter.value || undefined,
-    })
-    users.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 async function submitUser(payload: Record<string, unknown>) {
   submitting.value = true

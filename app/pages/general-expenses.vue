@@ -5,6 +5,7 @@ import { formatMoneyNumber } from '../utils/formatters'
 import { useApi } from '../composables/useApi'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'General Expenses',
@@ -107,26 +108,24 @@ async function deleteCategory(payload: { id: string }) {
   }
 }
 
-async function loadExpenses() {
-  loading.value = true
-  error.value = ''
-  try {
-    const response = await api.getPage<GeneralExpenseItem[]>('/general-expenses', {
+const { load: loadExpenses } = usePaginatedLoader<GeneralExpenseItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    expenses.value = data
+  },
+  fetchPage: () =>
+    api.getPage<GeneralExpenseItem[]>('/general-expenses', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
       categoryId: categoryFilter.value || undefined,
       startDate: startDateFilter.value || undefined,
       endDate: endDateFilter.value || undefined,
-    })
-    expenses.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 const {
   openCreateDialog,

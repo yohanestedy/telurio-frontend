@@ -3,6 +3,7 @@ import type { CoopHealthRecordItem, CoopHealthRecordType, CoopItem } from '../ty
 import { coopHealthRecordTypes } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({ title: 'Coop Health Records', roles: ['ADMIN', 'OWNER', 'OPERATOR'] })
 
@@ -47,11 +48,14 @@ async function loadSupporting() {
   coops.value = response.data
 }
 
-async function loadRecords() {
-  loading.value = true
-  error.value = ''
-  try {
-    const response = await api.getPage<CoopHealthRecordItem[]>('/coop-health', {
+const { load: loadRecords } = usePaginatedLoader<CoopHealthRecordItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    records.value = data
+  },
+  fetchPage: () =>
+    api.getPage<CoopHealthRecordItem[]>('/coop-health', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
@@ -59,15 +63,10 @@ async function loadRecords() {
       type: typeFilter.value || undefined,
       startDate: startDateFilter.value || undefined,
       endDate: endDateFilter.value || undefined,
-    })
-    records.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
   loading,

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { CoopItem, ExpenseCategoryItem, ExpenseItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { formatMoneyNumber } from '../utils/formatters'
+import { formatDate, formatMoneyNumber, isoDate } from '../utils/formatters'
 import { useApi } from '../composables/useApi'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'Expenses',
@@ -136,11 +137,14 @@ async function deleteCategory(payload: { id: string }) {
   }
 }
 
-async function loadExpenses() {
-  loading.value = true
-  error.value = ''
-  try {
-    const response = await api.getPage<ExpenseItem[]>('/expenses', {
+const { load: loadExpenses } = usePaginatedLoader<ExpenseItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    expenses.value = data
+  },
+  fetchPage: () =>
+    api.getPage<ExpenseItem[]>('/expenses', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
@@ -149,15 +153,10 @@ async function loadExpenses() {
       expenseCategoryId: categoryFilter.value || undefined,
       startDate: startDateFilter.value || undefined,
       endDate: endDateFilter.value || undefined,
-    })
-    expenses.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 const {
   openCreateDialog,

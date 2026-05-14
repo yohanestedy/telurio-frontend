@@ -3,6 +3,7 @@ import type { CustomerItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'Customers',
@@ -48,24 +49,22 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
   },
 )
 
-async function loadCustomers() {
-  loading.value = true
-  error.value = ''
-  try {
-    const response = await api.getPage<CustomerItem[]>('/customers', {
+const { load: loadCustomers } = usePaginatedLoader<CustomerItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    customers.value = data
+  },
+  fetchPage: () =>
+    api.getPage<CustomerItem[]>('/customers', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
       search: search.value || undefined,
-    })
-    customers.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 const {
   openCreateDialog,

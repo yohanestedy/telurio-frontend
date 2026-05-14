@@ -2,6 +2,7 @@
 import type { CoopItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'Coops',
@@ -44,24 +45,22 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
   active: activeFilter,
 })
 
-async function loadCoops() {
-  loading.value = true
-  error.value = ''
-  try {
-    const response = await api.getPage<CoopItem[]>('/coops', {
+const { load: loadCoops } = usePaginatedLoader<CoopItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    coops.value = data
+  },
+  fetchPage: () =>
+    api.getPage<CoopItem[]>('/coops', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
       isActive: activeFilter.value === '' ? undefined : activeFilter.value === 'true',
-    })
-    coops.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 async function submitCoop(payload: Record<string, unknown>) {
   submitting.value = true
