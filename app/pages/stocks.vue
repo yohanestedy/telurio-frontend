@@ -13,6 +13,7 @@ import {
 } from '../types/domain'
 import { generateIdempotencyKey } from '../utils/idempotency'
 import { defaultPageSizeOptions } from '../utils/list'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({
   title: 'Stocks',
@@ -84,18 +85,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
     endDate: endDateFilter,
   },
 )
-
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadMovements()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadMovements()
-}
 
 async function loadSupporting() {
   const response = await api.getPage<CoopItem[]>('/coops', { all: true })
@@ -178,15 +167,17 @@ async function openLinkedOrder() {
   await navigateTo(`/orders/${orderId}`)
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadMovements()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadMovements()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadMovements,
+  applyDrafts,
+  resetActive,
+})
 
 function directionLabel(value: StockMovementDirection) {
   if (value === 'IN') {
@@ -206,13 +197,6 @@ function sourceLabel(value: StockMovementItem['sourceType']) {
 
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadMovements()])
-})
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadMovements()
-  }
 })
 
 watch(manualAdjustOpen, (open) => {

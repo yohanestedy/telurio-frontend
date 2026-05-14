@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useListFilterDrafts } from '../../composables/useListFilterDrafts'
+import { useListPageActions } from '../../composables/useListPageActions'
 import type { CustomerItem, LiveStockResponse, OrderItem } from '../../types/domain'
 import { defaultPageSizeOptions } from '../../utils/list'
 import { generateIdempotencyKey } from '../../utils/idempotency'
@@ -137,18 +138,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
   },
 )
 
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadOrders()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadOrders()
-}
-
 async function loadSupporting() {
   if (auth.role !== 'ADMIN') {
     return
@@ -239,15 +228,17 @@ async function submitOrder(payload: Record<string, unknown>) {
   }
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadOrders()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadOrders()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadOrders,
+  applyDrafts,
+  resetActive,
+})
 
 function formatMoneyNumber(value?: string | number | null) {
   if (value === undefined || value === null || value === '') {
@@ -286,13 +277,6 @@ async function consumeCreateQuery(value: unknown) {
 
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadTodayPriceStatus(), loadOrders()])
-})
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadOrders()
-  }
 })
 
 watch(

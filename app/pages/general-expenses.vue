@@ -4,6 +4,7 @@ import { defaultPageSizeOptions } from '../utils/list'
 import { formatAmountNumber } from '../utils/expense-helpers'
 import { generateIdempotencyKey } from '../utils/idempotency'
 import { useApi } from '../composables/useApi'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({
   title: 'General Expenses',
@@ -68,18 +69,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
   startDate: startDateFilter,
   endDate: endDateFilter,
 })
-
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadExpenses()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadExpenses()
-}
 
 async function loadCategories() {
   try {
@@ -193,15 +182,17 @@ async function deleteExpense(payload: { deleteReason: string }) {
   }
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadExpenses()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadExpenses()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadExpenses,
+  applyDrafts,
+  resetActive,
+})
 
 const route = useRoute()
 
@@ -223,13 +214,6 @@ async function loadOwners() {
 
 onMounted(async () => {
   await Promise.all([loadExpenses(), loadCategories(), loadOwners()])
-})
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadExpenses()
-  }
 })
 
 watch(

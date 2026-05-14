@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PriceItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({
   title: 'Daily Prices',
@@ -63,18 +64,6 @@ const createInitialValue = computed(() =>
       : undefined,
 )
 
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadPrices()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadPrices()
-}
-
 async function loadPrices() {
   loading.value = true
   error.value = ''
@@ -131,15 +120,17 @@ async function submitPrice(payload: Record<string, unknown>) {
   }
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadPrices()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadPrices()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadPrices,
+  applyDrafts,
+  resetActive,
+})
 
 async function consumeCreateQuery(value: unknown) {
   if (value !== 'today') {
@@ -155,13 +146,6 @@ async function consumeCreateQuery(value: unknown) {
 
 onMounted(async () => {
   await loadPrices()
-})
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadPrices()
-  }
 })
 
 watch(dialogOpen, (isOpen) => {

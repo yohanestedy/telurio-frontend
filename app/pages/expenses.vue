@@ -4,6 +4,7 @@ import { defaultPageSizeOptions } from '../utils/list'
 import { formatAmountNumber } from '../utils/expense-helpers'
 import { generateIdempotencyKey } from '../utils/idempotency'
 import { useApi } from '../composables/useApi'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({
   title: 'Expenses',
@@ -81,18 +82,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
   startDate: startDateFilter,
   endDate: endDateFilter,
 })
-
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadExpenses()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadExpenses()
-}
 
 async function loadSupporting() {
   const requests = [
@@ -233,15 +222,17 @@ async function deleteExpense(payload: { deleteReason: string }) {
   }
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadExpenses()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadExpenses()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadExpenses,
+  applyDrafts,
+  resetActive,
+})
 
 async function consumeCreateQuery(value: unknown) {
   if (value !== 'new') {
@@ -257,13 +248,6 @@ async function consumeCreateQuery(value: unknown) {
 
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadExpenses()])
-})
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadExpenses()
-  }
 })
 
 watch(

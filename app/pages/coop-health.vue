@@ -2,6 +2,7 @@
 import type { CoopHealthRecordItem, CoopHealthRecordType, CoopItem } from '../types/domain'
 import { coopHealthRecordTypes } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({ title: 'Coop Health Records', roles: ['ADMIN', 'OWNER', 'OPERATOR'] })
 
@@ -68,8 +69,17 @@ async function loadRecords() {
   }
 }
 
-async function applyFilters() { applyDrafts(); pagination.resetPage(); await loadRecords() }
-async function resetFilters() { resetActive(); pagination.resetPage(); await loadRecords() }
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadRecords,
+  applyDrafts,
+  resetActive,
+})
 
 function openCreateDialog() { editing.value = null; dialogOpen.value = true }
 function openEditDialog(item: CoopHealthRecordItem) { editing.value = item; dialogOpen.value = true }
@@ -113,7 +123,6 @@ function typeBadgeClass(type: CoopHealthRecordType) {
 }
 
 onMounted(async () => { await Promise.all([loadSupporting(), loadRecords()]) })
-watch([sortBy, sortOrder], () => { pagination.resetPage(); if (!loading.value) loadRecords() })
 </script>
 
 <template>
@@ -133,9 +142,9 @@ watch([sortBy, sortOrder], () => { pagination.resetPage(); if (!loading.value) l
       :loading="loading"
       :has-prev-page="pagination.hasPrevPage.value"
       :has-next-page="pagination.hasNextPage.value"
-      @previous-page="pagination.setPage(pagination.page.value - 1); loadRecords()"
-      @next-page="pagination.setPage(pagination.page.value + 1); loadRecords()"
-      @change-limit="pagination.setLimit($event); loadRecords()"
+      @previous-page="onPageChange(pagination.page.value - 1)"
+      @next-page="onPageChange(pagination.page.value + 1)"
+      @change-limit="onLimitChange"
     >
       <template #sort-menu>
         <div class="mt-2 grid gap-2 sm:grid-cols-2">

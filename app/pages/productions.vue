@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CoopItem, ProductionItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
+import { useListPageActions } from '../composables/useListPageActions'
 
 definePageMeta({
   title: 'Productions',
@@ -71,18 +72,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
   },
 )
 
-async function resetFilters() {
-  resetActive()
-  pagination.resetPage()
-  await loadProductions()
-}
-
-async function applyFilters() {
-  applyDrafts()
-  pagination.resetPage()
-  await loadProductions()
-}
-
 async function loadSupporting() {
   const response = await api.getPage<CoopItem[]>('/coops', { all: true })
   coops.value = response.data
@@ -149,15 +138,17 @@ async function deleteProduction(payload: { deleteReason: string }) {
   }
 }
 
-async function onPageChange(nextPage: number) {
-  pagination.setPage(nextPage)
-  await loadProductions()
-}
-
-async function onLimitChange(nextLimit: number) {
-  pagination.setLimit(nextLimit)
-  await loadProductions()
-}
+const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadProductions,
+  applyDrafts,
+  resetActive,
+})
 
 async function consumeCreateQuery(value: unknown) {
   if (value !== 'new' || !can('productions.manage')) {
@@ -174,13 +165,6 @@ async function consumeCreateQuery(value: unknown) {
 
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadProductions()])
-})
-
-watch([sortBy, sortOrder], () => {
-  pagination.resetPage()
-  if (!loading.value) {
-    loadProductions()
-  }
 })
 
 watch(
