@@ -204,6 +204,7 @@ async function submitExpense(payload: Record<string, unknown>) {
     dialogOpen.value = false
     editing.value = null
     createExpenseIdempotencyKey.value = null
+    await loadExpenses()
   } catch (caught) {
     toast.error(t('toast.expense.saveFailed'), api.mapError(caught).message)
   } finally {
