@@ -3,6 +3,7 @@ import type { CoopItem, ProductionItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
 
 definePageMeta({
   title: 'Productions',
@@ -12,7 +13,6 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
-const route = useRoute()
 const { can } = useAuth()
 const pagination = usePagination()
 const { t } = useI18n()
@@ -149,30 +149,18 @@ const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageA
   resetActive,
 })
 
-async function consumeCreateQuery(value: unknown) {
-  if (value !== 'new' || !can('productions.manage')) {
-    return
-  }
-
-  dialogOpen.value = true
-  editing.value = null
-
-  const nextQuery = { ...route.query }
-  delete nextQuery.create
-  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
-}
+useCreateQueryTrigger({
+  triggerValue: 'new',
+  canOpen: () => can('productions.manage'),
+  open: () => {
+    dialogOpen.value = true
+    editing.value = null
+  },
+})
 
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadProductions()])
 })
-
-watch(
-  () => route.query.create,
-  (value) => {
-    consumeCreateQuery(value)
-  },
-  { immediate: true },
-)
 
 </script>
 

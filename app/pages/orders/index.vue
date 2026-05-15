@@ -2,6 +2,7 @@
 import { useListFilterDrafts } from '../../composables/useListFilterDrafts'
 import { useListPageActions } from '../../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../../composables/useIdempotentCreateDialog'
+import { useCreateQueryTrigger } from '../../composables/useCreateQueryTrigger'
 import type { CustomerItem, LiveStockResponse, OrderItem } from '../../types/domain'
 import { defaultPageSizeOptions } from '../../utils/list'
 import {
@@ -19,7 +20,6 @@ const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
 const ui = useUiStore()
-const route = useRoute()
 const { can } = useAuth()
 const { t } = useI18n()
 const pagination = usePagination()
@@ -241,31 +241,19 @@ async function refreshOrdersContext() {
   ])
 }
 
-async function consumeCreateQuery(value: unknown) {
-  if (value !== 'new' || !can('orders.manage')) {
-    return
-  }
-
-  dialogOpen.value = true
-  editing.value = null
-  getOrCreateIdempotencyKey()
-
-  const nextQuery = { ...route.query }
-  delete nextQuery.create
-  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
-}
+useCreateQueryTrigger({
+  triggerValue: 'new',
+  canOpen: () => can('orders.manage'),
+  open: () => {
+    dialogOpen.value = true
+    editing.value = null
+    getOrCreateIdempotencyKey()
+  },
+})
 
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadTodayPriceStatus(), loadOrders()])
 })
-
-watch(
-  () => route.query.create,
-  (value) => {
-    consumeCreateQuery(value)
-  },
-  { immediate: true },
-)
 
 watch(dialogOpen, (open) => {
   if (!open) {

@@ -6,6 +6,7 @@ import { useApi } from '../composables/useApi'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
 
 definePageMeta({
   title: 'General Expenses',
@@ -186,15 +187,10 @@ const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageA
   resetActive,
 })
 
-const route = useRoute()
-
-async function consumeCreateQuery(value: unknown) {
-  if (value !== 'new') return
-  openCreateDialog()
-  const nextQuery = { ...route.query }
-  delete nextQuery.create
-  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
-}
+useCreateQueryTrigger({
+  triggerValue: 'new',
+  open: openCreateDialog,
+})
 
 async function loadOwners() {
   if (auth.role !== 'ADMIN') return
@@ -207,12 +203,6 @@ async function loadOwners() {
 onMounted(async () => {
   await Promise.all([loadExpenses(), loadCategories(), loadOwners()])
 })
-
-watch(
-  () => route.query.create,
-  (value) => { consumeCreateQuery(value) },
-  { immediate: true },
-)
 
 </script>
 

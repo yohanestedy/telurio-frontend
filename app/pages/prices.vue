@@ -3,6 +3,7 @@ import type { PriceItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
 
 definePageMeta({
   title: 'Daily Prices',
@@ -12,7 +13,6 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const pagination = usePagination()
-const route = useRoute()
 const { t } = useI18n()
 
 const loading = ref(true)
@@ -134,17 +134,10 @@ const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageA
   resetActive,
 })
 
-async function consumeCreateQuery(value: unknown) {
-  if (value !== 'today') {
-    return
-  }
-
-  openTodayPriceDialog()
-
-  const nextQuery = { ...route.query }
-  delete nextQuery.create
-  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
-}
+useCreateQueryTrigger({
+  triggerValue: 'today',
+  open: openTodayPriceDialog,
+})
 
 onMounted(async () => {
   await loadPrices()
@@ -156,14 +149,6 @@ watch(dialogOpen, (isOpen) => {
     prefillTodayPrice.value = false
   }
 })
-
-watch(
-  () => route.query.create,
-  (value) => {
-    consumeCreateQuery(value)
-  },
-  { immediate: true },
-)
 
 </script>
 

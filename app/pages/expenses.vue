@@ -6,6 +6,7 @@ import { useApi } from '../composables/useApi'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
 
 definePageMeta({
   title: 'Expenses',
@@ -15,7 +16,6 @@ definePageMeta({
 const api = useApi()
 const toast = useToast()
 const auth = useAuthStore()
-const route = useRoute()
 const pagination = usePagination()
 const { t } = useI18n()
 
@@ -226,29 +226,14 @@ const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageA
   resetActive,
 })
 
-async function consumeCreateQuery(value: unknown) {
-  if (value !== 'new') {
-    return
-  }
-
-  openCreateDialog()
-
-  const nextQuery = { ...route.query }
-  delete nextQuery.create
-  await navigateTo({ path: route.path, query: nextQuery }, { replace: true })
-}
+useCreateQueryTrigger({
+  triggerValue: 'new',
+  open: openCreateDialog,
+})
 
 onMounted(async () => {
   await Promise.all([loadSupporting(), loadExpenses()])
 })
-
-watch(
-  () => route.query.create,
-  (value) => {
-    consumeCreateQuery(value)
-  },
-  { immediate: true },
-)
 
 </script>
 
