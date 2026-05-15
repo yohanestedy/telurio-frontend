@@ -4,8 +4,7 @@ import type {
   MonthlySummaryResponse,
   NetIncomeItem,
 } from '../types/domain'
-import { useCoopOptions } from '../composables/useCoopOptions'
-import { useOwnerOptions } from '../composables/useOwnerOptions'
+import { useSupportingOptions } from '../composables/useSupportingOptions'
 
 definePageMeta({
   title: 'Reports',
@@ -29,18 +28,10 @@ const year = ref(String(now.getFullYear()))
 const coopId = ref('')
 const ownerId = ref('')
 
-const { coopOptions, loadCoops } = useCoopOptions()
-const { owners, ownerOptions, loadOwners } = useOwnerOptions()
+const { owners, coopOptions, ownerOptions, loadCoopsAndOwners } = useSupportingOptions()
 
 async function loadSupporting() {
-  await Promise.all([
-    loadCoops(),
-    auth.role === 'ADMIN' ? loadOwners().catch(() => undefined) : Promise.resolve(),
-  ])
-
-  if (auth.role !== 'ADMIN') {
-    owners.value = []
-  }
+  await loadCoopsAndOwners()
 }
 
 async function loadReports() {

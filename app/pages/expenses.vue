@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CoopItem, ExpenseCategoryItem, ExpenseItem, UserItem } from '../types/domain'
+import type { ExpenseCategoryItem, ExpenseItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { formatDate, formatMoneyNumber, isoDate } from '../utils/formatters'
 import { useApi } from '../composables/useApi'
@@ -7,7 +7,7 @@ import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
-import { useOwnerOptions } from '../composables/useOwnerOptions'
+import { useSupportingOptions } from '../composables/useSupportingOptions'
 
 definePageMeta({
   title: 'Expenses',
@@ -23,7 +23,6 @@ const { t } = useI18n()
 const loading = ref(true)
 const error = ref('')
 const expenses = ref<ExpenseItem[]>([])
-const coops = ref<CoopItem[]>([])
 const categories = ref<ExpenseCategoryItem[]>([])
 const dialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
@@ -57,11 +56,7 @@ const skeletonCells = [
   { lines: [{ class: 'ml-auto w-24 rounded-xl' }] },
 ]
 
-const coopOptions = computed(() =>
-  coops.value.map((item) => ({ label: item.name, value: item.id })),
-)
-
-const { owners, ownerOptions, loadOwners } = useOwnerOptions()
+const { coops, coopOptions, owners, ownerOptions, loadCoopsAndOwners } = useSupportingOptions()
 
 const categoryOptions = computed(() =>
   categories.value.filter((item) => item.isActive).map((item) => ({ label: item.name, value: item.id })),
@@ -82,22 +77,12 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
 })
 
 async function loadSupporting() {
-  const requests = [
-    api.getPage<CoopItem[]>('/coops', { all: true }),
-    api.get<ExpenseCategoryItem[]>('/expense-categories'),
-  ] as const
-
   const responses = await Promise.all([
-    ...requests,
-    auth.role === 'ADMIN' ? loadOwners().catch(() => undefined) : Promise.resolve(),
+    api.get<ExpenseCategoryItem[]>('/expense-categories'),
+    loadCoopsAndOwners(),
   ])
 
-  coops.value = responses[0].data
-  categories.value = responses[1]
-
-  if (auth.role !== 'ADMIN') {
-    owners.value = []
-  }
+  categories.value = responses[0]
 }
 
 async function reloadCategories() {
