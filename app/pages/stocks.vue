@@ -15,6 +15,7 @@ import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useCoopOptions } from '../composables/useCoopOptions'
 
 definePageMeta({
   title: 'Stocks',
@@ -30,7 +31,6 @@ const { t } = useI18n()
 const loading = ref(true)
 const error = ref('')
 const movements = ref<StockMovementItem[]>([])
-const coops = ref<CoopItem[]>([])
 const manualAdjustOpen = ref(false)
 const movementDetailOpen = ref(false)
 const selectedMovement = ref<StockMovementItem | null>(null)
@@ -71,9 +71,7 @@ const movementTypeOptions = computed(() => stockMovementTypes.map((item) => ({
   label: movementTypeLabel(item),
   value: item,
 })))
-const coopOptions = computed(() =>
-  coops.value.map((item) => ({ label: item.name, value: item.id })),
-)
+const { coopOptions, loadCoops: loadSupporting } = useCoopOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -86,11 +84,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
     endDate: endDateFilter,
   },
 )
-
-async function loadSupporting() {
-  const response = await api.getPage<CoopItem[]>('/coops', { all: true })
-  coops.value = response.data
-}
 
 const { load: loadMovements } = usePaginatedLoader<StockMovementItem[]>({
   loading,

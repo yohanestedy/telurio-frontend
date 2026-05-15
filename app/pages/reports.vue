@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type {
-  CoopItem,
   GrossIncomeItem,
   MonthlySummaryResponse,
   NetIncomeItem,
   UserItem,
 } from '../types/domain'
+import { useCoopOptions } from '../composables/useCoopOptions'
 
 definePageMeta({
   title: 'Reports',
@@ -22,7 +22,6 @@ const error = ref('')
 const grossIncome = ref<GrossIncomeItem[]>([])
 const netIncome = ref<NetIncomeItem[]>([])
 const monthlySummary = ref<MonthlySummaryResponse | null>(null)
-const coops = ref<CoopItem[]>([])
 const owners = ref<UserItem[]>([])
 
 const now = new Date()
@@ -31,22 +30,19 @@ const year = ref(String(now.getFullYear()))
 const coopId = ref('')
 const ownerId = ref('')
 
-const coopOptions = computed(() =>
-  coops.value.map((item) => ({ label: item.name, value: item.id })),
-)
+const { coopOptions, loadCoops } = useCoopOptions()
 const ownerOptions = computed(() =>
   owners.value.map((item) => ({ label: item.name, value: item.id })),
 )
 
 async function loadSupporting() {
-  const [coopList, ownerList] = await Promise.all([
-    api.getPage<CoopItem[]>('/coops', { all: true }),
+  const [, ownerList] = await Promise.all([
+    loadCoops(),
     auth.role === 'ADMIN'
       ? api.getPage<UserItem[]>('/users', { all: true, role: 'OWNER' })
       : Promise.resolve({ data: [] as UserItem[] }),
   ])
 
-  coops.value = coopList.data
   owners.value = ownerList.data
 }
 

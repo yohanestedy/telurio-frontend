@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { CoopHealthRecordItem, CoopHealthRecordType, CoopItem } from '../types/domain'
+import type { CoopHealthRecordItem, CoopHealthRecordType } from '../types/domain'
 import { coopHealthRecordTypes } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useCoopOptions } from '../composables/useCoopOptions'
 
 definePageMeta({ title: 'Coop Health Records', roles: ['ADMIN', 'OWNER', 'OPERATOR'] })
 
@@ -17,7 +18,6 @@ const { t } = useI18n()
 const loading = ref(true)
 const error = ref('')
 const records = ref<CoopHealthRecordItem[]>([])
-const coops = ref<CoopItem[]>([])
 const dialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
 const editing = ref<CoopHealthRecordItem | null>(null)
@@ -38,15 +38,10 @@ const orderByOptions = computed(() => [
 ])
 const pageSizeOptions = [...defaultPageSizeOptions]
 const typeOptions = computed(() => coopHealthRecordTypes.map((item) => ({ label: t(`coopHealth.type.${item}`), value: item })))
-const coopOptions = computed(() => coops.value.map((item) => ({ label: item.name, value: item.id })))
+const { coopOptions, loadCoops: loadSupporting } = useCoopOptions()
 const pageRangeLabel = usePageRangeLabel(pagination)
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({ coopId: coopFilter, type: typeFilter, startDate: startDateFilter, endDate: endDateFilter })
-
-async function loadSupporting() {
-  const response = await api.getPage<CoopItem[]>('/coops', { all: true })
-  coops.value = response.data
-}
 
 const { load: loadRecords } = usePaginatedLoader<CoopHealthRecordItem[]>({
   loading,

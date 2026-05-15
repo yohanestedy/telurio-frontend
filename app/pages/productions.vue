@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { CoopItem, ProductionItem } from '../types/domain'
+import type { ProductionItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
+import { useCoopOptions } from '../composables/useCoopOptions'
 
 definePageMeta({
   title: 'Productions',
@@ -20,7 +21,6 @@ const { t } = useI18n()
 const loading = ref(true)
 const error = ref('')
 const productions = ref<ProductionItem[]>([])
-const coops = ref<CoopItem[]>([])
 const dialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
 const editing = ref<ProductionItem | null>(null)
@@ -50,9 +50,7 @@ const skeletonCells = [
   { lines: [{ class: 'ml-auto w-24 rounded-xl' }] },
 ]
 
-const coopOptions = computed(() =>
-  coops.value.map((item) => ({ label: item.name, value: item.id })),
-)
+const { coopOptions, loadCoops: loadSupporting } = useCoopOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -72,11 +70,6 @@ const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
     },
   },
 )
-
-async function loadSupporting() {
-  const response = await api.getPage<CoopItem[]>('/coops', { all: true })
-  coops.value = response.data
-}
 
 const { load: loadProductions } = usePaginatedLoader<ProductionItem[]>({
   loading,
