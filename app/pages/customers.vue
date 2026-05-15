@@ -4,6 +4,7 @@ import { defaultPageSizeOptions } from '../utils/list'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useListPageController } from '../composables/useListPageController'
+import { useInitialLoad } from '../composables/useInitialLoad'
 
 definePageMeta({
   title: 'Customers',
@@ -103,7 +104,9 @@ async function submitCustomer(payload: Record<string, unknown>) {
   }
 }
 
-onMounted(loadCustomers)
+onMounted(async () => {
+  await useInitialLoad([{ run: loadCustomers }])
+})
 
 </script>
 

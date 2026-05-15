@@ -3,6 +3,7 @@ import type { CoopItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useListPageController } from '../composables/useListPageController'
+import { useInitialLoad } from '../composables/useInitialLoad'
 
 definePageMeta({
   title: 'Coops',
@@ -92,7 +93,9 @@ async function submitCoop(payload: Record<string, unknown>) {
   }
 }
 
-onMounted(loadCoops)
+onMounted(async () => {
+  await useInitialLoad([{ run: loadCoops }])
+})
 
 </script>
 

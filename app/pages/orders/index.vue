@@ -4,6 +4,7 @@ import { useListPageActions } from '../../composables/useListPageActions'
 import { useListPageController } from '../../composables/useListPageController'
 import { useIdempotentCreateDialog } from '../../composables/useIdempotentCreateDialog'
 import { useCreateQueryTrigger } from '../../composables/useCreateQueryTrigger'
+import { useInitialLoad } from '../../composables/useInitialLoad'
 import type { CustomerItem, LiveStockResponse, OrderItem } from '../../types/domain'
 import { defaultPageSizeOptions } from '../../utils/list'
 import {
@@ -232,10 +233,10 @@ async function submitOrder(payload: Record<string, unknown>) {
 }
 
 async function refreshOrdersContext() {
-  await Promise.all([
-    loadTodayPriceStatus(),
-    loadOrders(),
-    auth.role === 'ADMIN' ? loadSupporting() : Promise.resolve(),
+  await useInitialLoad([
+    { run: loadTodayPriceStatus },
+    { run: loadOrders },
+    { run: loadSupporting, optional: auth.role !== 'ADMIN' },
   ])
 }
 
@@ -250,7 +251,11 @@ useCreateQueryTrigger({
 })
 
 onMounted(async () => {
-  await Promise.all([loadSupporting(), loadTodayPriceStatus(), loadOrders()])
+  await useInitialLoad([
+    { run: loadSupporting, optional: auth.role !== 'ADMIN' },
+    { run: loadTodayPriceStatus },
+    { run: loadOrders },
+  ])
 })
 
 watch(dialogOpen, (open) => {
