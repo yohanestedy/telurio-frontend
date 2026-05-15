@@ -12,9 +12,10 @@ import type {
   ProductionAnalyticsResponse,
   ProductionItem,
   StockMovementItem,
-  UserItem,
 } from '../types/domain'
 import type { CalendarOrder, CalendarOrderAction } from '../types/calendar-orders'
+import { useCoopOptions } from '../composables/useCoopOptions'
+import { useOwnerOptions } from '../composables/useOwnerOptions'
 
 definePageMeta({
   title: 'Dashboard',
@@ -32,7 +33,7 @@ const loading = ref(true)
 const error = ref('')
 const todayCalendar = ref<CalendarDay | null>(null)
 const tomorrowCalendar = ref<CalendarDay | null>(null)
-const dashboardCoops = ref<CoopItem[]>([])
+const { coops: dashboardCoops, loadCoops: loadDashboardCoops } = useCoopOptions()
 const grossIncome = ref<GrossIncomeItem[]>([])
 const liveStock = ref<LiveStockResponse | null>(null)
 const todayStockMovements = ref<StockMovementItem[]>([])
@@ -57,7 +58,7 @@ const paymentModalLoading = ref(false)
 const activeOrder = ref<OrderItem | null>(null)
 const activePopulationCoop = ref<CoopItem | null>(null)
 const activeCoops = ref<CoopItem[]>([])
-const dashboardOwners = ref<UserItem[]>([])
+const { owners: dashboardOwners, loadOwners: loadDashboardOwners } = useOwnerOptions()
 const activeLiveStock = ref<LiveStockResponse | null>(null)
 const activeAllocations = ref<AllocationItem[]>([])
 const allocationModalMode = ref<'start' | 'edit'>('start')
@@ -79,13 +80,11 @@ async function loadDashboard() {
       api.get<CalendarDay>(`/calendar/${tomorrow}`).then((value) => {
         tomorrowCalendar.value = value
       }),
-      api.getPage<CoopItem[]>('/coops', {
+      loadDashboardCoops({
         all: true,
         isActive: true,
         sortBy: 'name',
         order: 'asc',
-      }).then((value) => {
-        dashboardCoops.value = value.data
       }),
       api.get<GrossIncomeItem[]>('/reports/gross-income').then((value) => {
         grossIncome.value = value
@@ -114,11 +113,7 @@ async function loadDashboard() {
     }
 
     if (auth.role === 'ADMIN') {
-      tasks.push(
-        api.getPage<UserItem[]>('/users', { all: true, role: 'OWNER' }).then((value) => {
-          dashboardOwners.value = value.data
-        }),
-      )
+      tasks.push(loadDashboardOwners())
     }
 
     await Promise.all(tasks)
