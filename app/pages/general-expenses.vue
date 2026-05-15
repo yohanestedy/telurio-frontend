@@ -3,11 +3,13 @@ import type { GeneralExpenseCategoryItem, GeneralExpenseItem, UserItem } from '.
 import { defaultPageSizeOptions } from '../utils/list'
 import { formatMoneyNumber } from '../utils/formatters'
 import { useApi } from '../composables/useApi'
-import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
 import { useSupportingOptions } from '../composables/useSupportingOptions'
+import { useSummaryReload } from '../composables/useSummaryReload'
+import { useInitialLoad } from '../composables/useInitialLoad'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'General Expenses',
@@ -32,7 +34,7 @@ const editing = ref<GeneralExpenseItem | null>(null)
 const deleting = ref<GeneralExpenseItem | null>(null)
 const submitting = ref(false)
 const categoryModalOpen = ref(false)
-const summaryReloadKey = ref(0)
+const { summaryReloadKey, bumpSummaryReloadKey } = useSummaryReload()
 
 const categoryFilter = ref('')
 const startDateFilter = ref('')
@@ -63,12 +65,6 @@ const { owners, ownerOptions, loadOwnersForAdmin } = useSupportingOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
-  categoryId: categoryFilter,
-  startDate: startDateFilter,
-  endDate: endDateFilter,
-})
-
 async function loadCategories() {
   try {
     categories.value = await api.get<GeneralExpenseCategoryItem[]>('/general-expense-categories')
@@ -126,6 +122,21 @@ const { load: loadExpenses } = usePaginatedLoader<GeneralExpenseItem[]>({
   mapError: api.mapError,
 })
 
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: {
+    categoryId: categoryFilter,
+    startDate: startDateFilter,
+    endDate: endDateFilter,
+  },
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadExpenses,
+})
+
 const {
   openCreateDialog,
   openEditDialog,
@@ -148,7 +159,7 @@ async function submitExpense(payload: Record<string, unknown>) {
     editing.value = null
     clearIdempotencyKey()
     await loadExpenses()
-    summaryReloadKey.value += 1
+    bumpSummaryReloadKey()
   } catch (caught) {
     toast.error(t('toast.generalExpense.saveFailed'), api.mapError(caught).message)
   } finally {
@@ -165,7 +176,7 @@ async function deleteExpense(payload: { deleteReason: string }) {
     deleteDialogOpen.value = false
     deleting.value = null
     await loadExpenses()
-    summaryReloadKey.value += 1
+    bumpSummaryReloadKey()
   } catch (caught) {
     toast.error(t('toast.generalExpense.deleteFailed'), api.mapError(caught).message)
   } finally {
@@ -173,28 +184,16 @@ async function deleteExpense(payload: { deleteReason: string }) {
   }
 }
 
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadExpenses,
-  applyDrafts,
-  resetActive,
-})
-
 useCreateQueryTrigger({
   triggerValue: 'new',
   open: openCreateDialog,
 })
 
 onMounted(async () => {
-  await Promise.all([
-    loadExpenses(),
-    loadCategories(),
-    loadOwnersForAdmin(),
+  await useInitialLoad([
+    { run: loadExpenses },
+    { run: loadCategories, optional: true },
+    { run: loadOwnersForAdmin, optional: true },
   ])
 })
 

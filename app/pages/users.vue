@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { CoopItem, UserItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useInitialLoad } from '../composables/useInitialLoad'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'Users',
@@ -48,11 +49,6 @@ const skeletonCells = [
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
-  role: roleFilter,
-  active: activeFilter,
-  coopId: coopFilter,
-})
 
 async function loadSupporting() {
   const response = await api.getPage<CoopItem[]>('/coops', { all: true })
@@ -78,6 +74,21 @@ const { load: loadUsers } = usePaginatedLoader<UserItem[]>({
   mapError: api.mapError,
 })
 
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: {
+    role: roleFilter,
+    active: activeFilter,
+    coopId: coopFilter,
+  },
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadUsers,
+})
+
 async function submitUser(payload: Record<string, unknown>) {
   submitting.value = true
   try {
@@ -98,20 +109,11 @@ async function submitUser(payload: Record<string, unknown>) {
   }
 }
 
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadUsers,
-  applyDrafts,
-  resetActive,
-})
-
 onMounted(async () => {
-  await Promise.all([loadSupporting(), loadUsers()])
+  await useInitialLoad([
+    { run: loadSupporting },
+    { run: loadUsers },
+  ])
 })
 
 </script>

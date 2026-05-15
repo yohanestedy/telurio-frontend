@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { CustomerItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'Customers',
@@ -40,14 +40,6 @@ const skeletonCells = [
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
-  { search },
-  {
-    apply: (draftValues, activeFilters) => {
-      activeFilters.search.value = draftValues.search.trim()
-    },
-  },
-)
 
 const { load: loadCustomers } = usePaginatedLoader<CustomerItem[]>({
   loading,
@@ -64,6 +56,22 @@ const { load: loadCustomers } = usePaginatedLoader<CustomerItem[]>({
     }),
   applyMeta: (meta) => pagination.applyMeta(meta as any),
   mapError: api.mapError,
+})
+
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: { search },
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadCustomers,
+  draftOptions: {
+    apply: (draftValues, activeFilters) => {
+      activeFilters.search.value = draftValues.search.trim()
+    },
+  },
 })
 
 const {
@@ -94,18 +102,6 @@ async function submitCustomer(payload: Record<string, unknown>) {
     submitting.value = false
   }
 }
-
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadCustomers,
-  applyDrafts,
-  resetActive,
-})
 
 onMounted(loadCustomers)
 

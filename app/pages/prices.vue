@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { PriceItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
+import { useInitialLoad } from '../composables/useInitialLoad'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'Daily Prices',
@@ -44,10 +45,6 @@ const skeletonCells = [
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
 const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
-  startDate: startDateFilter,
-  endDate: endDateFilter,
-})
 
 const createInitialValue = computed(() =>
   editing.value
@@ -89,6 +86,20 @@ const { load: loadPrices } = usePaginatedLoader<PriceItem[]>({
   mapError: api.mapError,
 })
 
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: {
+    startDate: startDateFilter,
+    endDate: endDateFilter,
+  },
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadPrices,
+})
+
 function openCreatePriceDialog() {
   editing.value = null
   prefillTodayPrice.value = false
@@ -122,25 +133,13 @@ async function submitPrice(payload: Record<string, unknown>) {
   }
 }
 
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadPrices,
-  applyDrafts,
-  resetActive,
-})
-
 useCreateQueryTrigger({
   triggerValue: 'today',
   open: openTodayPriceDialog,
 })
 
 onMounted(async () => {
-  await loadPrices()
+  await useInitialLoad([{ run: loadPrices }])
 })
 
 watch(dialogOpen, (isOpen) => {

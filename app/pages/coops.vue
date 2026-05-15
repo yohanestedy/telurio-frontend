@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { CoopItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'Coops',
@@ -41,9 +41,6 @@ const skeletonCells = [
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({
-  active: activeFilter,
-})
 
 const { load: loadCoops } = usePaginatedLoader<CoopItem[]>({
   loading,
@@ -60,6 +57,19 @@ const { load: loadCoops } = usePaginatedLoader<CoopItem[]>({
     }),
   applyMeta: (meta) => pagination.applyMeta(meta as any),
   mapError: api.mapError,
+})
+
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: {
+    active: activeFilter,
+  },
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadCoops,
 })
 
 async function submitCoop(payload: Record<string, unknown>) {
@@ -81,18 +91,6 @@ async function submitCoop(payload: Record<string, unknown>) {
     submitting.value = false
   }
 }
-
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadCoops,
-  applyDrafts,
-  resetActive,
-})
 
 onMounted(loadCoops)
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useListFilterDrafts } from '../../composables/useListFilterDrafts'
 import { useListPageActions } from '../../composables/useListPageActions'
+import { useListPageController } from '../../composables/useListPageController'
 import { useIdempotentCreateDialog } from '../../composables/useIdempotentCreateDialog'
 import { useCreateQueryTrigger } from '../../composables/useCreateQueryTrigger'
 import type { CustomerItem, LiveStockResponse, OrderItem } from '../../types/domain'
@@ -118,21 +119,30 @@ const skeletonCells = [
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController(
   {
-    deliveryStatus,
-    paymentStatus,
-    deliveryDate: deliveryDateFilter,
-    startDate: startDateFilter,
-    endDate: endDateFilter,
-  },
-  {
-    apply: (draftValues, activeFilters) => {
-      activeFilters.deliveryStatus.value = draftValues.deliveryStatus
-      activeFilters.paymentStatus.value = draftValues.paymentStatus
-      activeFilters.deliveryDate.value = draftValues.deliveryDate
-      activeFilters.startDate.value = draftValues.deliveryDate ? '' : draftValues.startDate
-      activeFilters.endDate.value = draftValues.deliveryDate ? '' : draftValues.endDate
+    filters: {
+      deliveryStatus,
+      paymentStatus,
+      deliveryDate: deliveryDateFilter,
+      startDate: startDateFilter,
+      endDate: endDateFilter,
+    },
+    loading,
+    sortBy,
+    sortOrder,
+    resetPage: pagination.resetPage,
+    setPage: pagination.setPage,
+    setLimit: pagination.setLimit,
+    load: loadOrders,
+    draftOptions: {
+      apply: (draftValues, activeFilters) => {
+        activeFilters.deliveryStatus.value = draftValues.deliveryStatus
+        activeFilters.paymentStatus.value = draftValues.paymentStatus
+        activeFilters.deliveryDate.value = draftValues.deliveryDate
+        activeFilters.startDate.value = draftValues.deliveryDate ? '' : draftValues.startDate
+        activeFilters.endDate.value = draftValues.deliveryDate ? '' : draftValues.endDate
+      },
     },
   },
 )
@@ -220,18 +230,6 @@ async function submitOrder(payload: Record<string, unknown>) {
     submitting.value = false
   }
 }
-
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadOrders,
-  applyDrafts,
-  resetActive,
-})
 
 async function refreshOrdersContext() {
   await Promise.all([

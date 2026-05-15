@@ -2,9 +2,10 @@
 import type { CoopHealthRecordItem, CoopHealthRecordType } from '../types/domain'
 import { coopHealthRecordTypes } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCoopOptions } from '../composables/useCoopOptions'
+import { useInitialLoad } from '../composables/useInitialLoad'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({ title: 'Coop Health Records', roles: ['ADMIN', 'OWNER', 'OPERATOR'] })
 
@@ -41,7 +42,6 @@ const typeOptions = computed(() => coopHealthRecordTypes.map((item) => ({ label:
 const { coopOptions, loadCoops } = useCoopOptions()
 const pageRangeLabel = usePageRangeLabel(pagination)
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({ coopId: coopFilter, type: typeFilter, startDate: startDateFilter, endDate: endDateFilter })
 
 const { load: loadRecords } = usePaginatedLoader<CoopHealthRecordItem[]>({
   loading,
@@ -63,7 +63,8 @@ const { load: loadRecords } = usePaginatedLoader<CoopHealthRecordItem[]>({
   mapError: api.mapError,
 })
 
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: { coopId: coopFilter, type: typeFilter, startDate: startDateFilter, endDate: endDateFilter },
   loading,
   sortBy,
   sortOrder,
@@ -71,8 +72,6 @@ const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageA
   setPage: pagination.setPage,
   setLimit: pagination.setLimit,
   load: loadRecords,
-  applyDrafts,
-  resetActive,
 })
 
 function openCreateDialog() { editing.value = null; dialogOpen.value = true }
@@ -116,7 +115,12 @@ function typeBadgeClass(type: CoopHealthRecordType) {
   return 'bg-amber-100 text-amber-700'
 }
 
-onMounted(async () => { await Promise.all([loadCoops(), loadRecords()]) })
+onMounted(async () => {
+  await useInitialLoad([
+    { run: loadCoops },
+    { run: loadRecords },
+  ])
+})
 </script>
 
 <template>

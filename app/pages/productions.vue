@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { ProductionItem } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { useListPageActions } from '../composables/useListPageActions'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
 import { useCoopOptions } from '../composables/useCoopOptions'
+import { useInitialLoad } from '../composables/useInitialLoad'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'Productions',
@@ -54,22 +55,6 @@ const { coopOptions, loadCoops } = useCoopOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
-  {
-    coopId: coopFilter,
-    date: dateFilter,
-    startDate: startDateFilter,
-    endDate: endDateFilter,
-  },
-  {
-    apply: (draftValues, activeFilters) => {
-      activeFilters.coopId.value = draftValues.coopId
-      activeFilters.date.value = draftValues.date
-      activeFilters.startDate.value = draftValues.date ? '' : draftValues.startDate
-      activeFilters.endDate.value = draftValues.date ? '' : draftValues.endDate
-    },
-  },
-)
 
 const { load: loadProductions } = usePaginatedLoader<ProductionItem[]>({
   loading,
@@ -89,6 +74,30 @@ const { load: loadProductions } = usePaginatedLoader<ProductionItem[]>({
     }),
   applyMeta: (meta) => pagination.applyMeta(meta as any),
   mapError: api.mapError,
+})
+
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: {
+    coopId: coopFilter,
+    date: dateFilter,
+    startDate: startDateFilter,
+    endDate: endDateFilter,
+  },
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadProductions,
+  draftOptions: {
+    apply: (draftValues, activeFilters) => {
+      activeFilters.coopId.value = draftValues.coopId
+      activeFilters.date.value = draftValues.date
+      activeFilters.startDate.value = draftValues.date ? '' : draftValues.startDate
+      activeFilters.endDate.value = draftValues.date ? '' : draftValues.endDate
+    },
+  },
 })
 
 async function submitProduction(payload: Record<string, unknown>) {
@@ -130,18 +139,6 @@ async function deleteProduction(payload: { deleteReason: string }) {
   }
 }
 
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadProductions,
-  applyDrafts,
-  resetActive,
-})
-
 useCreateQueryTrigger({
   triggerValue: 'new',
   canOpen: () => can('productions.manage'),
@@ -152,7 +149,10 @@ useCreateQueryTrigger({
 })
 
 onMounted(async () => {
-  await Promise.all([loadCoops(), loadProductions()])
+  await useInitialLoad([
+    { run: loadCoops },
+    { run: loadProductions },
+  ])
 })
 
 </script>

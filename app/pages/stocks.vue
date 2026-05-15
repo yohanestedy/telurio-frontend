@@ -12,10 +12,11 @@ import {
   stockMovementTypes,
 } from '../types/domain'
 import { defaultPageSizeOptions } from '../utils/list'
-import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCoopOptions } from '../composables/useCoopOptions'
+import { useInitialLoad } from '../composables/useInitialLoad'
+import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'Stocks',
@@ -75,15 +76,6 @@ const { coopOptions, loadCoops } = useCoopOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
-const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts(
-  {
-    coopId: coopFilter,
-    direction: directionFilter,
-    movementType: movementTypeFilter,
-    startDate: startDateFilter,
-    endDate: endDateFilter,
-  },
-)
 
 const { load: loadMovements } = usePaginatedLoader<StockMovementItem[]>({
   loading,
@@ -104,6 +96,23 @@ const { load: loadMovements } = usePaginatedLoader<StockMovementItem[]>({
     }),
   applyMeta: (meta) => pagination.applyMeta(meta as any),
   mapError: api.mapError,
+})
+
+const { draftFilters, resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageController({
+  filters: {
+    coopId: coopFilter,
+    direction: directionFilter,
+    movementType: movementTypeFilter,
+    startDate: startDateFilter,
+    endDate: endDateFilter,
+  },
+  loading,
+  sortBy,
+  sortOrder,
+  resetPage: pagination.resetPage,
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit,
+  load: loadMovements,
 })
 
 async function refreshData() {
@@ -157,18 +166,6 @@ async function openLinkedOrder() {
   await navigateTo(`/orders/${orderId}`)
 }
 
-const { resetFilters, applyFilters, onPageChange, onLimitChange } = useListPageActions({
-  loading,
-  sortBy,
-  sortOrder,
-  resetPage: pagination.resetPage,
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
-  load: loadMovements,
-  applyDrafts,
-  resetActive,
-})
-
 function directionLabel(value: StockMovementDirection) {
   if (value === 'IN') {
     return t('stock.in')
@@ -186,7 +183,10 @@ function sourceLabel(value: StockMovementItem['sourceType']) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadCoops(), loadMovements()])
+  await useInitialLoad([
+    { run: loadCoops },
+    { run: loadMovements },
+  ])
 })
 
 </script>

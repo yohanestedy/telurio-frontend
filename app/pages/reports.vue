@@ -5,6 +5,7 @@ import type {
   NetIncomeItem,
 } from '../types/domain'
 import { useSupportingOptions } from '../composables/useSupportingOptions'
+import { useInitialLoad } from '../composables/useInitialLoad'
 
 definePageMeta({
   title: 'Reports',
@@ -80,7 +81,10 @@ async function loadReports() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadSupporting(), loadReports()])
+  await useInitialLoad([
+    { run: loadSupporting },
+    { run: loadReports },
+  ])
 })
 </script>
 
