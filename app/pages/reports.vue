@@ -35,7 +35,7 @@ const { owners, ownerOptions, loadOwners } = useOwnerOptions()
 async function loadSupporting() {
   await Promise.all([
     loadCoops(),
-    auth.role === 'ADMIN' ? loadOwners() : Promise.resolve(),
+    auth.role === 'ADMIN' ? loadOwners().catch(() => undefined) : Promise.resolve(),
   ])
 
   if (auth.role !== 'ADMIN') {

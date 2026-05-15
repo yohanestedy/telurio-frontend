@@ -113,7 +113,7 @@ async function loadDashboard() {
     }
 
     if (auth.role === 'ADMIN') {
-      tasks.push(loadDashboardOwners())
+      tasks.push(loadDashboardOwners().catch(() => undefined))
     }
 
     await Promise.all(tasks)

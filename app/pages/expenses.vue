@@ -89,7 +89,7 @@ async function loadSupporting() {
 
   const responses = await Promise.all([
     ...requests,
-    auth.role === 'ADMIN' ? loadOwners() : Promise.resolve(),
+    auth.role === 'ADMIN' ? loadOwners().catch(() => undefined) : Promise.resolve(),
   ])
 
   coops.value = responses[0].data
