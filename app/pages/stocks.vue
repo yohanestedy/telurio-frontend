@@ -363,12 +363,9 @@ onMounted(async () => {
               <td class="px-4 py-4 pr-4">{{ item.coopName }}</td>
               <td class="px-4 py-4 pr-4">{{ movementTypeLabel(item.movementType) }}</td>
               <td class="px-4 py-4 pr-4">
-                <span
-                  class="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
-                  :class="item.direction === 'IN' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
-                >
+                <UiBadge :tone="item.direction === 'IN' ? 'success' : 'danger'">
                   {{ directionLabel(item.direction) }}
-                </span>
+                </UiBadge>
               </td>
               <td class="px-4 py-4 pr-4">{{ formatKg(item.quantityKg) }}</td>
               <td class="px-4 py-4 pr-4">{{ sourceLabel(item.sourceType) }}</td>
