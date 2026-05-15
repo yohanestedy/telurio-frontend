@@ -50,7 +50,7 @@ const skeletonCells = [
   { lines: [{ class: 'ml-auto w-24 rounded-xl' }] },
 ]
 
-const { coopOptions, loadCoops: loadSupporting } = useCoopOptions()
+const { coopOptions, loadCoops } = useCoopOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -152,7 +152,7 @@ useCreateQueryTrigger({
 })
 
 onMounted(async () => {
-  await Promise.all([loadSupporting(), loadProductions()])
+  await Promise.all([loadCoops(), loadProductions()])
 })
 
 </script>

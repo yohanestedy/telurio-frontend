@@ -38,7 +38,7 @@ const orderByOptions = computed(() => [
 ])
 const pageSizeOptions = [...defaultPageSizeOptions]
 const typeOptions = computed(() => coopHealthRecordTypes.map((item) => ({ label: t(`coopHealth.type.${item}`), value: item })))
-const { coopOptions, loadCoops: loadSupporting } = useCoopOptions()
+const { coopOptions, loadCoops } = useCoopOptions()
 const pageRangeLabel = usePageRangeLabel(pagination)
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const { draftFilters, applyDrafts, resetActive } = useListFilterDrafts({ coopId: coopFilter, type: typeFilter, startDate: startDateFilter, endDate: endDateFilter })
@@ -116,7 +116,7 @@ function typeBadgeClass(type: CoopHealthRecordType) {
   return 'bg-amber-100 text-amber-700'
 }
 
-onMounted(async () => { await Promise.all([loadSupporting(), loadRecords()]) })
+onMounted(async () => { await Promise.all([loadCoops(), loadRecords()]) })
 </script>
 
 <template>

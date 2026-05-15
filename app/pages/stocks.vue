@@ -71,7 +71,7 @@ const movementTypeOptions = computed(() => stockMovementTypes.map((item) => ({
   label: movementTypeLabel(item),
   value: item,
 })))
-const { coopOptions, loadCoops: loadSupporting } = useCoopOptions()
+const { coopOptions, loadCoops } = useCoopOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -107,7 +107,7 @@ const { load: loadMovements } = usePaginatedLoader<StockMovementItem[]>({
 })
 
 async function refreshData() {
-  await Promise.all([loadSupporting(), loadMovements()])
+  await Promise.all([loadCoops(), loadMovements()])
 }
 
 const {
@@ -186,7 +186,7 @@ function sourceLabel(value: StockMovementItem['sourceType']) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadSupporting(), loadMovements()])
+  await Promise.all([loadCoops(), loadMovements()])
 })
 
 </script>
