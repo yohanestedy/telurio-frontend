@@ -7,7 +7,7 @@ import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
-import { useOwnerOptions } from '../composables/useOwnerOptions'
+import { useSupportingOptions } from '../composables/useSupportingOptions'
 
 definePageMeta({
   title: 'General Expenses',
@@ -59,7 +59,7 @@ const categoryOptions = computed(() =>
   categories.value.map((item) => ({ label: item.name, value: item.id })),
 )
 
-const { owners, ownerOptions, loadOwners } = useOwnerOptions()
+const { owners, ownerOptions, loadOwnersForAdmin } = useSupportingOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -194,12 +194,8 @@ onMounted(async () => {
   await Promise.all([
     loadExpenses(),
     loadCategories(),
-    auth.role === 'ADMIN' ? loadOwners().catch(() => undefined) : Promise.resolve(),
+    loadOwnersForAdmin(),
   ])
-
-  if (auth.role !== 'ADMIN') {
-    owners.value = []
-  }
 })
 
 </script>

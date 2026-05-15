@@ -3,17 +3,17 @@ export function useSupportingOptions() {
   const { coops, coopOptions, loadCoops } = useCoopOptions();
   const { owners, ownerOptions, loadOwners } = useOwnerOptions();
 
-  async function loadCoopsAndOwners() {
-    await Promise.all([
-      loadCoops(),
-      auth.role === "ADMIN"
-        ? loadOwners().catch(() => undefined)
-        : Promise.resolve(),
-    ]);
-
-    if (auth.role !== "ADMIN") {
-      owners.value = [];
+  async function loadOwnersForAdmin() {
+    if (auth.role === "ADMIN") {
+      await loadOwners().catch(() => undefined);
+      return;
     }
+
+    owners.value = [];
+  }
+
+  async function loadCoopsAndOwners() {
+    await Promise.all([loadCoops(), loadOwnersForAdmin()]);
   }
 
   return {
@@ -23,6 +23,7 @@ export function useSupportingOptions() {
     ownerOptions,
     loadCoops,
     loadOwners,
+    loadOwnersForAdmin,
     loadCoopsAndOwners,
   };
 }
