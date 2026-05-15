@@ -86,40 +86,40 @@ onClickOutside(perPageMenuRef, () => {
       :class="activeMenu || perPageMenuOpen ? 'z-[55]' : 'z-20'"
     >
       <div class="flex items-center gap-2">
-        <button
-          type="button"
+        <UiButton
+          variant="ghost"
+          size="sm"
+          icon="sort"
           :title="t('common.sort')"
           :aria-label="t('common.sort')"
-          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-          :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeMenu === 'sort' }"
+          class="h-9 w-9 !rounded-xl !px-0 !py-0"
+          :class="{ '!border-brand-300 !bg-brand-50 !text-brand-700 dark:!border-brand-400/60 dark:!bg-brand-500/20 dark:!text-brand-200': activeMenu === 'sort' }"
           @click="toggleMenu('sort')"
-        >
-          <UiIcon name="sort" class="h-4 w-4" />
-        </button>
-        <button
-          type="button"
+        />
+        <UiButton
+          variant="ghost"
+          size="sm"
+          icon="filter"
           :title="t('common.filter')"
           :aria-label="t('common.filter')"
-          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-          :class="{ 'border-brand-300 bg-brand-50 text-brand-700': activeMenu === 'filter' || filterApplied }"
+          class="h-9 w-9 !rounded-xl !px-0 !py-0"
+          :class="{ '!border-brand-300 !bg-brand-50 !text-brand-700 dark:!border-brand-400/60 dark:!bg-brand-500/20 dark:!text-brand-200': activeMenu === 'filter' || filterApplied }"
           @click="toggleMenu('filter')"
-        >
-          <UiIcon name="filter" class="h-4 w-4" />
-        </button>
+        />
       </div>
 
       <div class="relative flex items-center gap-1.5">
         <div class="h-6 w-px bg-slate-200" />
-        <button
-          type="button"
+        <UiButton
+          variant="ghost"
+          size="sm"
+          icon="layers"
           :title="t('common.perPage')"
           :aria-label="t('common.perPage')"
-          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white/70 text-ink-700 transition hover:bg-white"
-          :class="{ 'border-brand-300 bg-brand-50 text-brand-700': perPageMenuOpen }"
+          class="h-9 w-9 !rounded-xl !px-0 !py-0"
+          :class="{ '!border-brand-300 !bg-brand-50 !text-brand-700 dark:!border-brand-400/60 dark:!bg-brand-500/20 dark:!text-brand-200': perPageMenuOpen }"
           @click="togglePerPageMenu"
-        >
-          <UiIcon name="layers" class="h-4 w-4" />
-        </button>
+        />
         <p class="text-sm text-ink-700">{{ pageRangeLabel }}</p>
         <button
           type="button"
