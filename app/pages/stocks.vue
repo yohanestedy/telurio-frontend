@@ -14,6 +14,7 @@ import {
 import { defaultPageSizeOptions } from '../utils/list'
 import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
+import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 
 definePageMeta({
   title: 'Stocks',
@@ -91,12 +92,14 @@ async function loadSupporting() {
   coops.value = response.data
 }
 
-async function loadMovements() {
-  loading.value = true
-  error.value = ''
-
-  try {
-    const response = await api.getPage<StockMovementItem[]>('/stocks/movements', {
+const { load: loadMovements } = usePaginatedLoader<StockMovementItem[]>({
+  loading,
+  error,
+  assignData: (data) => {
+    movements.value = data
+  },
+  fetchPage: () =>
+    api.getPage<StockMovementItem[]>('/stocks/movements', {
       ...pagination.query.value,
       sortBy: sortBy.value,
       order: sortOrder.value,
@@ -105,16 +108,10 @@ async function loadMovements() {
       movementType: movementTypeFilter.value || undefined,
       startDate: startDateFilter.value || undefined,
       endDate: endDateFilter.value || undefined,
-    })
-
-    movements.value = response.data
-    pagination.applyMeta(response.meta)
-  } catch (caught) {
-    error.value = api.mapError(caught).message
-  } finally {
-    loading.value = false
-  }
-}
+    }),
+  applyMeta: (meta) => pagination.applyMeta(meta as any),
+  mapError: api.mapError,
+})
 
 async function refreshData() {
   await Promise.all([loadSupporting(), loadMovements()])

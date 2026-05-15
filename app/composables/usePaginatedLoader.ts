@@ -9,6 +9,13 @@ interface UsePaginatedLoaderOptions<TData> {
   mapError: (caught: unknown) => { message: string };
 }
 
+/**
+ * Standardizes paginated page loading flow:
+ * - toggles loading
+ * - resets/sets error message
+ * - assigns list data
+ * - applies pagination meta
+ */
 export function usePaginatedLoader<TData>(
   options: UsePaginatedLoaderOptions<TData>,
 ) {
