@@ -3,9 +3,9 @@ import type {
   GrossIncomeItem,
   MonthlySummaryResponse,
   NetIncomeItem,
-  UserItem,
 } from '../types/domain'
 import { useCoopOptions } from '../composables/useCoopOptions'
+import { useOwnerOptions } from '../composables/useOwnerOptions'
 
 definePageMeta({
   title: 'Reports',
@@ -22,7 +22,6 @@ const error = ref('')
 const grossIncome = ref<GrossIncomeItem[]>([])
 const netIncome = ref<NetIncomeItem[]>([])
 const monthlySummary = ref<MonthlySummaryResponse | null>(null)
-const owners = ref<UserItem[]>([])
 
 const now = new Date()
 const month = ref(String(now.getMonth() + 1))
@@ -31,19 +30,17 @@ const coopId = ref('')
 const ownerId = ref('')
 
 const { coopOptions, loadCoops } = useCoopOptions()
-const ownerOptions = computed(() =>
-  owners.value.map((item) => ({ label: item.name, value: item.id })),
-)
+const { owners, ownerOptions, loadOwners } = useOwnerOptions()
 
 async function loadSupporting() {
-  const [, ownerList] = await Promise.all([
+  await Promise.all([
     loadCoops(),
-    auth.role === 'ADMIN'
-      ? api.getPage<UserItem[]>('/users', { all: true, role: 'OWNER' })
-      : Promise.resolve({ data: [] as UserItem[] }),
+    auth.role === 'ADMIN' ? loadOwners() : Promise.resolve(),
   ])
 
-  owners.value = ownerList.data
+  if (auth.role !== 'ADMIN') {
+    owners.value = []
+  }
 }
 
 async function loadReports() {

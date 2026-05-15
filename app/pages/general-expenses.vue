@@ -7,6 +7,7 @@ import { useListPageActions } from '../composables/useListPageActions'
 import { useIdempotentCreateDialog } from '../composables/useIdempotentCreateDialog'
 import { usePaginatedLoader } from '../composables/usePaginatedLoader'
 import { useCreateQueryTrigger } from '../composables/useCreateQueryTrigger'
+import { useOwnerOptions } from '../composables/useOwnerOptions'
 
 definePageMeta({
   title: 'General Expenses',
@@ -25,7 +26,6 @@ const loading = ref(true)
 const error = ref('')
 const expenses = ref<GeneralExpenseItem[]>([])
 const categories = ref<GeneralExpenseCategoryItem[]>([])
-const owners = ref<UserItem[]>([])
 const dialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
 const editing = ref<GeneralExpenseItem | null>(null)
@@ -59,9 +59,7 @@ const categoryOptions = computed(() =>
   categories.value.map((item) => ({ label: item.name, value: item.id })),
 )
 
-const ownerOptions = computed(() =>
-  owners.value.map((item) => ({ label: item.name, value: item.id })),
-)
+const { owners, ownerOptions, loadOwners } = useOwnerOptions()
 
 const { sortOrderOptions } = useListSort(sortBy, orderByOptions)
 const pageRangeLabel = usePageRangeLabel(pagination)
@@ -192,16 +190,16 @@ useCreateQueryTrigger({
   open: openCreateDialog,
 })
 
-async function loadOwners() {
-  if (auth.role !== 'ADMIN') return
-  try {
-    const res = await api.getPage<UserItem[]>('/users', { all: true, role: 'OWNER' })
-    owners.value = res.data
-  } catch { /* non-critical */ }
-}
-
 onMounted(async () => {
-  await Promise.all([loadExpenses(), loadCategories(), loadOwners()])
+  await Promise.all([
+    loadExpenses(),
+    loadCategories(),
+    auth.role === 'ADMIN' ? loadOwners().catch(() => undefined) : Promise.resolve(),
+  ])
+
+  if (auth.role !== 'ADMIN') {
+    owners.value = []
+  }
 })
 
 </script>
