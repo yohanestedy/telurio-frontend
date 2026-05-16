@@ -7,6 +7,11 @@ const { t } = useI18n()
 
 const logoutDialogOpen = ref(false)
 const expandedGroups = ref<Set<string>>(new Set())
+const isLogoutDisabled = computed(() => auth.loading)
+
+onMounted(() => {
+  void auth.bootstrap()
+})
 
 function isGroupActive(item: { path: string; children?: Array<{ path: string }> }) {
   if (!item.children) return false
@@ -104,7 +109,7 @@ async function confirmLogout() {
 
           <!-- Regular item -->
           <NuxtLink
-            v-else
+            v-if="!item.children?.length"
             :to="item.path"
             class="mb-1 flex items-center gap-3 rounded-2xl px-4 py-3 transition hover:bg-orange-50/70"
             active-class="bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-[0_16px_36px_rgba(243,95,16,0.18)]"
@@ -127,7 +132,7 @@ async function confirmLogout() {
           {{ t('common.scopeCoop') }}: {{ auth.user?.coopAccesses.length ?? 0 }}
         </p>
         <div class="mt-4 flex justify-end">
-          <UiButton variant="ghost" size="sm" icon="logout" :disabled="!auth.user" @click="logoutDialogOpen = true">
+          <UiButton variant="ghost" size="sm" icon="logout" :disabled="isLogoutDisabled" @click="logoutDialogOpen = true">
             {{ t('common.logout') }}
           </UiButton>
         </div>
