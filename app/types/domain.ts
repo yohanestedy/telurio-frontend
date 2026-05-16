@@ -36,7 +36,8 @@ export interface UserProfile {
 }
 
 export interface LoginResponse {
-  token: string;
+  token?: string;
+  accessToken?: string;
   user: UserProfile;
 }
 

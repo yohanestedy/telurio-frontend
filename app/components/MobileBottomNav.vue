@@ -29,8 +29,11 @@ const primaryItems = computed(() =>
   menu.value.mobile.filter((item) => item.icon !== 'more').slice(0, 3),
 )
 
-const leftItems = computed(() => primaryItems.value.slice(0, 2))
-const rightItems = computed(() => primaryItems.value.slice(2))
+const leftSlots = computed<(MenuItem | null)[]>(() => [
+  primaryItems.value[0] ?? null,
+  primaryItems.value[1] ?? null,
+])
+const rightSlots = computed<(MenuItem | null)[]>(() => [primaryItems.value[2] ?? null])
 
 const moreItem = computed<MenuItem>(() =>
   menu.value.mobile.find((item) => item.icon === 'more') ?? {
@@ -310,9 +313,21 @@ watch(
         <div
           class="relative z-10 grid grid-cols-5 items-end gap-1 rounded-[30px] border border-white/90 bg-white/96 px-2 pb-2 pt-1.5 shadow-[0_16px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl transition-colors duration-200 max-[380px]:gap-0.5 max-[380px]:rounded-[26px] max-[380px]:px-1.5 max-[380px]:pb-1.5 max-[380px]:pt-1 dark:border-white/10 dark:bg-[#1c1916]/90"
         >
-          <template v-for="item in leftItems" :key="item.path">
+          <template v-for="(item, index) in leftSlots" :key="item?.path ?? `left-placeholder-${index}`">
             <button
-              v-if="item.path === '/expenses-chooser'"
+              v-if="!item"
+              type="button"
+              class="invisible pointer-events-none px-2.5 py-1.5 text-center text-[11px] font-medium max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
+              aria-hidden="true"
+              tabindex="-1"
+            >
+              <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+                <UiIcon name="dashboard" class="h-[1.125rem] w-[1.125rem]" />
+                <span>&nbsp;</span>
+              </div>
+            </button>
+            <button
+              v-else-if="item.path === '/expenses-chooser'"
               type="button"
               class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
               :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"
@@ -350,9 +365,21 @@ watch(
             <span class="sr-only">{{ t('mobile.quickAction') }}</span>
           </button>
 
-          <template v-for="item in rightItems" :key="item.path">
+          <template v-for="(item, index) in rightSlots" :key="item?.path ?? `right-placeholder-${index}`">
             <button
-              v-if="item.path === '/expenses-chooser'"
+              v-if="!item"
+              type="button"
+              class="invisible pointer-events-none px-2.5 py-1.5 text-center text-[11px] font-medium max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
+              aria-hidden="true"
+              tabindex="-1"
+            >
+              <div class="flex flex-col items-center gap-1 max-[380px]:gap-0.5">
+                <UiIcon name="dashboard" class="h-[1.125rem] w-[1.125rem]" />
+                <span>&nbsp;</span>
+              </div>
+            </button>
+            <button
+              v-else-if="item.path === '/expenses-chooser'"
               type="button"
               class="px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors max-[380px]:px-1.5 max-[380px]:py-1 max-[380px]:text-[10px]"
               :class="isItemActive(item.path) ? 'text-[#ef5e17]' : 'text-ink-500'"

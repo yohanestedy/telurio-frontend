@@ -120,14 +120,14 @@ async function confirmLogout() {
         </template>
       </nav>
 
-      <div v-if="auth.user" class="glass-panel rounded-[28px] p-5">
-        <p class="text-sm font-semibold text-ink-900">{{ auth.user.name }}</p>
-        <p class="text-xs uppercase tracking-[0.2em] text-ink-500">{{ t(`role.${auth.user.role}`) }}</p>
+      <div v-if="auth.user || auth.role" class="glass-panel rounded-[28px] p-5">
+        <p class="text-sm font-semibold text-ink-900">{{ auth.user?.name ?? ' ' }}</p>
+        <p class="text-xs uppercase tracking-[0.2em] text-ink-500">{{ auth.role ? t(`role.${auth.role}`) : ' ' }}</p>
         <p class="mt-3 text-xs text-ink-500">
-          {{ t('common.scopeCoop') }}: {{ auth.user.coopAccesses.length || 0 }}
+          {{ t('common.scopeCoop') }}: {{ auth.user?.coopAccesses.length ?? 0 }}
         </p>
         <div class="mt-4 flex justify-end">
-          <UiButton variant="ghost" size="sm" icon="logout" @click="logoutDialogOpen = true">
+          <UiButton variant="ghost" size="sm" icon="logout" :disabled="!auth.user" @click="logoutDialogOpen = true">
             {{ t('common.logout') }}
           </UiButton>
         </div>
