@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
   loading: false,
   hasPrevPage: false,
   hasNextPage: false,
-  tableHeightClass: 'h-[420px]',
+  tableHeightClass: 'h-[min(65vh,640px)] min-h-[420px]',
   sortMenuWidthClass: 'w-[min(92vw,22rem)]',
   filterMenuWidthClass: 'w-[min(92vw,24rem)]',
 })
