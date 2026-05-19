@@ -2,7 +2,7 @@
 import { cn } from '../../utils/cn'
 
 interface Props {
-  tone?: 'brand' | 'alternative' | 'gray' | 'neutral' | 'success' | 'warning' | 'danger' | 'info'
+  tone?: 'brand' | 'alternative' | 'gray' | 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'orange'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -28,6 +28,8 @@ const props = withDefaults(defineProps<Props>(), {
             props.tone === 'warning',
           'border-rose-200 bg-rose-100 text-rose-700 dark:border-rose-400/30 dark:bg-rose-500/15 dark:text-rose-300':
             props.tone === 'danger',
+          'border-brand-200 bg-brand-100 text-brand-700 dark:border-brand-400/30 dark:bg-brand-500/15 dark:text-brand-300':
+            props.tone === 'orange',
         },
       )
     "

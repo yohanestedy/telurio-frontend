@@ -63,6 +63,8 @@ const activeLiveStock = ref<LiveStockResponse | null>(null)
 const activeAllocations = ref<AllocationItem[]>([])
 const allocationModalMode = ref<'start' | 'edit'>('start')
 
+const scheduledOrdersTab = ref<'today' | 'tomorrow'>('today')
+
 const orderDetailCache = ref<Record<string, OrderItem>>({})
 
 async function loadDashboard() {
@@ -809,15 +811,41 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           icon="orders"
           class="min-[1024px]:order-2 min-[1024px]:col-span-4 min-[1024px]:h-full min-[1866px]:col-span-3"
         >
-          <div class="space-y-4 min-[1024px]:max-h-[37rem] min-[1024px]:overflow-y-auto min-[1024px]:pr-1">
-            <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
+          <div class="flex flex-col min-[1024px]:h-full">
+            <div class="mb-3 flex border-b-2 border-white/70">
+              <button
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all border-b-2 -mb-px"
+                :class="scheduledOrdersTab === 'today' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-400 hover:text-ink-600'"
+                @click="scheduledOrdersTab = 'today'"
+              >
+                {{ t('common.today') }}
+                <UiBadge :tone="scheduledOrdersTab === 'today' ? 'orange' : 'gray'" class="!rounded-md !px-1.5 !py-0.5 !text-[10px]">
+                  {{ todayCalendar?.events.orders.length ?? 0 }}
+                </UiBadge>
+              </button>
+              <button
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all border-b-2 -mb-px"
+                :class="scheduledOrdersTab === 'tomorrow' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-400 hover:text-ink-600'"
+                @click="scheduledOrdersTab = 'tomorrow'"
+              >
+                {{ t('common.tomorrow') }}
+                <UiBadge :tone="scheduledOrdersTab === 'tomorrow' ? 'orange' : 'gray'" class="!rounded-md !px-1.5 !py-0.5 !text-[10px]">
+                  {{ tomorrowCalendar?.events.orders.length ?? 0 }}
+                </UiBadge>
+              </button>
+            </div>
+
+            <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55 min-[1024px]:max-h-[37rem] min-[1024px]:overflow-y-auto">
               <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
-                <p class="text-base font-bold text-ink-900 sm:text-lg">{{ t('common.today') }}</p>
+                <p class="text-sm font-semibold text-ink-700">
+                  Total: <span class="text-base font-bold text-ink-900">{{ formatKg((scheduledOrdersTab === 'today' ? todayCalendar?.events.orders : tomorrowCalendar?.events.orders)?.reduce((sum, o) => sum + Number(o.quantityKg), 0) ?? 0) }}</span> kg
+                </p>
                 <span class="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-ink-600 sm:text-xs">
-                  {{ formatWeekdayDayMonthYearId(todayDate) }}
+                  {{ formatWeekdayDayMonthYearId(scheduledOrdersTab === 'today' ? todayDate : tomorrowDate) }}
                 </span>
               </div>
               <CalendarOrderList
+                v-if="scheduledOrdersTab === 'today'"
                 dense
                 :orders="todayCalendar?.events.orders ?? []"
                 :order-actions="dashboardOrderActions"
@@ -825,16 +853,8 @@ async function submitPopulationUpdate(payload: { population: number; populationC
                 :empty-message="t('dashboard.card.scheduledOrders.emptyToday')"
                 @action="handleDashboardOrderAction"
               />
-            </section>
-
-            <section class="overflow-hidden rounded-2xl border border-white/70 bg-white/55">
-              <div class="flex items-center justify-between gap-2 border-b border-white/70 px-3 py-2.5">
-                <p class="text-base font-bold text-ink-900 sm:text-lg">{{ t('common.tomorrow') }}</p>
-                <span class="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-ink-600 sm:text-xs">
-                  {{ formatWeekdayDayMonthYearId(tomorrowDate) }}
-                </span>
-              </div>
               <CalendarOrderList
+                v-else
                 dense
                 :orders="tomorrowCalendar?.events.orders ?? []"
                 :order-actions="dashboardOrderActions"
