@@ -891,19 +891,11 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           />
         </TableCard>
 
-        <!-- Expense Overview (ADMIN + OWNER only) -->
-        <DashboardExpenseCard
-          v-if="can('expenses.view')"
-          :coops="activeCoops"
-          :owners="dashboardOwners"
-          class="min-[1024px]:order-4 min-[1024px]:col-span-10 min-[1866px]:col-span-12"
-        />
-
         <TableCard
           :title="t('dashboard.card.coopProfile.title')"
           :description="t('dashboard.card.coopProfile.description')"
           icon="coops"
-          class="min-[1024px]:order-5 min-[1024px]:col-span-10 min-[1581px]:col-span-4 min-[1866px]:col-span-12"
+          class="min-[1024px]:order-4 min-[1024px]:col-span-10 min-[1581px]:col-span-4 min-[1866px]:col-span-12"
         >
           <div v-if="dashboardCoops.length" class="grid gap-3 md:grid-cols-2 min-[1581px]:grid-cols-1 min-[1866px]:grid-cols-2">
             <DashboardCoopProfileCard
@@ -916,6 +908,14 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           </div>
           <p v-else class="text-sm text-ink-500">{{ t('dashboard.card.coopProfile.empty') }}</p>
         </TableCard>
+
+        <!-- Expense Overview (ADMIN + OWNER only) -->
+        <DashboardExpenseCard
+          v-if="can('expenses.view')"
+          :coops="activeCoops"
+          :owners="dashboardOwners"
+          class="min-[1024px]:order-5 min-[1024px]:col-span-10 min-[1866px]:col-span-12"
+        />
       </div>
 
       <DashboardCoopFlowDetailDialog
