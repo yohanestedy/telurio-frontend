@@ -29,7 +29,7 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const { can } = useAuth()
 const { currentPrice, loadTodayPriceStatus } = useTodayPriceStatus()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -59,7 +59,14 @@ const expenseDetailDate = ref('')
 const expenseDetailItems = ref<Array<{ description: string; amount: string; categoryName?: string | null }>>([])
 const expenseDetailTotal = ref('')
 
-const selectedDateLabel = computed(() => formatWeekdayDayMonthYearId(selectedDate.value))
+const selectedDateLabel = computed(() =>
+  new Intl.DateTimeFormat(locale.value === 'id' ? 'id-ID' : 'en-US', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(selectedDate.value)),
+)
 const orderCountLabel = computed(() => `${selectedDay.value.events.orders.length}`)
 
 function emptyCalendarDay(date: string): CalendarDay {
@@ -515,14 +522,20 @@ onMounted(() => {
 
         <!-- Day Detail Content -->
         <template v-else>
-        <GlassCard class="overflow-hidden">
+        <GlassCard class="overflow-hidden !px-2 sm:!px-6">
           <div class="flex items-center justify-between gap-2 border-b border-white/70 px-4 py-3.5 sm:px-5 sm:py-4">
-            <div>
-              <p class="text-base font-semibold text-ink-900">{{ t('calendar.ordersCount', { count: orderCountLabel }) }}</p>
+            <div class="flex items-center gap-3">
+              <div>
+                <p class="text-[10px] uppercase tracking-wide text-ink-500">{{ t('common.orders') }}</p>
+                <p class="text-sm font-bold text-ink-900">{{ orderCountLabel }}</p>
+              </div>
+              <div class="h-8 w-px bg-white/70" />
+              <div>
+                <p class="text-[10px] uppercase tracking-wide text-ink-500">{{ t('common.total') }}</p>
+                <p class="text-sm font-bold text-ink-900">{{ formatKg(selectedDay.events.orders.reduce((sum, o) => sum + Number(o.quantityKg), 0)) }} kg</p>
+              </div>
             </div>
-            <span class="rounded-full border border-white/70 bg-white/80 px-2 py-1 text-xs text-ink-600">
-              {{ selectedDateLabel }}
-            </span>
+            <UiBadge tone="neutral">{{ selectedDateLabel }}</UiBadge>
           </div>
 
           <CalendarOrderList

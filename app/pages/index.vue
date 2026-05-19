@@ -27,7 +27,7 @@ const auth = useAuthStore()
 const toast = useToast()
 const { can } = useAuth()
 const { currentPrice, todayPriceMissing, loadTodayPriceStatus } = useTodayPriceStatus()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -522,6 +522,16 @@ async function openCoopFlowDetail(coop: LiveStockCoopItem) {
 const todayDate = computed(() => isoDate(new Date()))
 const tomorrowDate = computed(() => isoDate(new Date(Date.now() + 24 * 60 * 60 * 1000)))
 
+const scheduledOrdersDateLabel = computed(() => {
+  const date = scheduledOrdersTab.value === 'today' ? todayDate.value : tomorrowDate.value
+  return new Intl.DateTimeFormat(locale.value === 'id' ? 'id-ID' : 'en-US', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(date))
+})
+
 const activeCoopOptions = computed(() =>
   activeCoops.value.map((item) => ({ label: item.name, value: item.id })),
 )
@@ -840,9 +850,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
                 <p class="text-sm font-semibold text-ink-700">
                   Total: <span class="text-base font-bold text-ink-900">{{ formatKg((scheduledOrdersTab === 'today' ? todayCalendar?.events.orders : tomorrowCalendar?.events.orders)?.reduce((sum, o) => sum + Number(o.quantityKg), 0) ?? 0) }}</span> kg
                 </p>
-                <span class="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-ink-600 sm:text-xs">
-                  {{ formatWeekdayDayMonthYearId(scheduledOrdersTab === 'today' ? todayDate : tomorrowDate) }}
-                </span>
+                <UiBadge tone="neutral">{{ scheduledOrdersDateLabel }}</UiBadge>
               </div>
               <CalendarOrderList
                 v-if="scheduledOrdersTab === 'today'"

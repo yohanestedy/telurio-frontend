@@ -11,7 +11,7 @@ import {
   weekdayLongLabelId,
 } from '../utils/calendar'
 import { formatRupiah } from '../utils/formatters'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps<{
   markerDays: CalendarMarkerDay[]
@@ -30,6 +30,7 @@ const emit = defineEmits<{
 }>()
 
 const weekDays = computed(() => {
+  void locale.value
   const start = startOfWeekMonday(props.focusDate)
   return Array.from({ length: 7 }, (_, index) => weekdayShortLabelId(start.add(index, 'day').toDate()))
 })
@@ -50,11 +51,13 @@ const markerMap = computed(() => new Map(props.markerDays.map((day) => [day.date
 const focus = computed(() => dayjs(props.focusDate))
 const flashedDate = ref('')
 let flashTimer: ReturnType<typeof setTimeout> | null = null
-const selectedDateCompactLabel = computed(
-  () => `${weekdayShortLabelId(props.selectedDate)}, ${formatDayMonthId(props.selectedDate)}`,
-)
+const selectedDateCompactLabel = computed(() => {
+  void locale.value
+  return `${weekdayShortLabelId(props.selectedDate)}, ${formatDayMonthId(props.selectedDate)}`
+})
 
 const titleLabel = computed(() => {
+  void locale.value
   if (props.mode === 'week') {
     const start = startOfWeekMonday(props.focusDate)
     const end = endOfWeekMonday(props.focusDate)
@@ -472,7 +475,7 @@ onBeforeUnmount(() => {
                 :class="['h-1.5 w-1.5 rounded-full', item.className]"
               />
             </span>
-            <span class="hidden sm:inline">Keterangan</span>
+            <span class="inline">{{ t('calendar.legend') }}</span>
             <UiIcon name="chevronDown" class="h-3 w-3 transition-transform" :class="legendOpen ? 'rotate-180' : ''" />
           </button>
 
@@ -484,7 +487,7 @@ onBeforeUnmount(() => {
               :style="legendPopoverStyle"
             >
               <p class="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-400">
-                Marker kalender
+                {{ t('calendar.legend') }}
               </p>
               <div class="space-y-1">
                 <div
