@@ -152,6 +152,7 @@ export interface ProductionAnalyticsPoint {
   date: string;
   hasProduction: boolean;
   goodCount: number;
+  goodKg: number;
   averagePopulation: number | null;
   performancePercent: number | null;
 }

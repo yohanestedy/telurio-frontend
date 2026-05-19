@@ -208,20 +208,44 @@ function buildLinePath<T extends { x: number; y: number | null }>(
   points: T[],
   isDrawable: (point: T) => boolean,
 ) {
-  let path = ''
-  let drawing = false
+  const drawable: Array<{ x: number; y: number }> = []
+  const segments: string[] = []
+
+  const flush = () => {
+    if (drawable.length === 0) return
+    if (drawable.length === 1) {
+      segments.push(`M ${drawable[0]!.x} ${drawable[0]!.y}`)
+      drawable.length = 0
+      return
+    }
+
+    let path = `M ${drawable[0]!.x} ${drawable[0]!.y}`
+    for (let i = 0; i < drawable.length - 1; i++) {
+      const p0 = drawable[i - 1] ?? drawable[i]!
+      const p1 = drawable[i]!
+      const p2 = drawable[i + 1]!
+      const p3 = drawable[i + 2] ?? p2
+      const tension = 0.2
+      const cp1x = p1.x + (p2.x - p0.x) * tension
+      const cp1y = p1.y + (p2.y - p0.y) * tension
+      const cp2x = p2.x - (p3.x - p1.x) * tension
+      const cp2y = p2.y - (p3.y - p1.y) * tension
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+    }
+    segments.push(path)
+    drawable.length = 0
+  }
 
   for (const point of points) {
     if (!isDrawable(point) || point.y === null) {
-      drawing = false
+      flush()
       continue
     }
-
-    path += `${drawing ? ' L' : path ? ' M' : 'M'} ${point.x} ${point.y}`
-    drawing = true
+    drawable.push({ x: point.x, y: point.y })
   }
+  flush()
 
-  return path
+  return segments.join(' ')
 }
 
 function showTooltip(date: string, pinned = false) {
@@ -431,11 +455,11 @@ function formatPerformance(value: number | null) {
                   v-if="point.hasProduction"
                   :cx="point.x"
                   :cy="point.y"
-                  r="9"
+                  r="14"
                   fill="transparent"
                 />
                 <circle
-                  v-if="point.hasProduction"
+                  v-if="point.hasProduction && point.date === activeTooltipDate"
                   :cx="point.x"
                   :cy="point.y"
                   r="3.8"
@@ -467,8 +491,16 @@ function formatPerformance(value: number | null) {
                 @keydown.enter.prevent="toggleTooltip(point.date)"
                 @keydown.space.prevent="toggleTooltip(point.date)"
               >
-                <circle :cx="point.x" :cy="point.y" r="8" fill="transparent" />
-                <circle :cx="point.x" :cy="point.y" r="3" fill="#F97316" stroke="white" stroke-width="1.6" />
+                <circle :cx="point.x" :cy="point.y" r="12" fill="transparent" />
+                <circle
+                  v-if="point.date === activeTooltipDate"
+                  :cx="point.x"
+                  :cy="point.y"
+                  r="3"
+                  fill="#F97316"
+                  stroke="white"
+                  stroke-width="1.6"
+                />
               </g>
 
               <text
@@ -496,6 +528,13 @@ function formatPerformance(value: number | null) {
                     {{ t('calendar.marker.production') }}
                   </span>
                   <span class="font-semibold text-ink-900">{{ formatCount(activeTooltipPoint.goodCount) }} {{ t('production.unit.eggs') }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <span class="inline-flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400" />
+                    {{ t('common.total') }} kg
+                  </span>
+                  <span class="font-semibold text-ink-900">{{ formatKg(activeTooltipPoint.goodKg) }} kg</span>
                 </div>
                 <div class="flex items-center justify-between gap-3">
                   <span class="inline-flex items-center gap-2">
