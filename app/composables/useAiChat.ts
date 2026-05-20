@@ -24,6 +24,7 @@ const availableModels = ref<AiModel[]>([])
 const selectedModel = ref<string>('')
 const modelsLoaded = ref(false)
 const activeTools = ref<string[]>([])
+let activeAbortController: AbortController | null = null
 
 export function useAiChat() {
   const auth = useAuthStore()
@@ -84,6 +85,10 @@ export function useAiChat() {
   }
 
   function resetState() {
+    if (activeAbortController) {
+      activeAbortController.abort()
+      activeAbortController = null
+    }
     open.value = false
     messages.value = []
     error.value = null
@@ -108,6 +113,9 @@ export function useAiChat() {
       .slice(0, -1)
       .map((m) => ({ role: m.role, content: m.content }))
 
+    const controller = new AbortController()
+    activeAbortController = controller
+
     try {
       const response = await fetch(buildUrl('/ai-chat/completions'), {
         method: 'POST',
@@ -117,6 +125,7 @@ export function useAiChat() {
           model: selectedModel.value,
           messages: payloadMessages,
         }),
+        signal: controller.signal,
       })
 
       if (!response.ok || !response.body) {
@@ -149,16 +158,33 @@ export function useAiChat() {
         }
       }
     } catch (caught) {
-      const message =
-        caught instanceof Error ? caught.message : 'Gagal mengirim pesan'
-      error.value = message
-      const last = messages.value[messages.value.length - 1]
-      if (last && last.role === 'assistant' && !last.content) {
-        last.content = `(${message})`
+      const isAbort =
+        (caught instanceof DOMException && caught.name === 'AbortError') ||
+        (caught instanceof Error && caught.name === 'AbortError')
+      if (isAbort) {
+        const last = messages.value[messages.value.length - 1]
+        if (last && last.role === 'assistant' && !last.content) {
+          last.content = '_(Permintaan dihentikan)_'
+        }
+      } else {
+        const message =
+          caught instanceof Error ? caught.message : 'Gagal mengirim pesan'
+        error.value = message
+        const last = messages.value[messages.value.length - 1]
+        if (last && last.role === 'assistant' && !last.content) {
+          last.content = `(${message})`
+        }
       }
     } finally {
+      activeAbortController = null
       streaming.value = false
       activeTools.value = []
+    }
+  }
+
+  function stopStreaming() {
+    if (activeAbortController) {
+      activeAbortController.abort()
     }
   }
 
@@ -188,6 +214,7 @@ export function useAiChat() {
     clearChat,
     resetState,
     sendMessage,
+    stopStreaming,
     loadModels,
   }
 }

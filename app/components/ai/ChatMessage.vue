@@ -37,17 +37,17 @@ const renderedContent = computed(() => {
       class="max-w-[85%] break-words rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed"
       :class="role === 'user'
         ? 'whitespace-pre-wrap bg-gradient-to-br from-brand-500 to-brand-600 text-white'
-        : 'border border-slate-200/80 bg-white/90 text-ink-800'"
+        : 'border border-slate-200/80 bg-white/90 text-ink-800 dark:!border-white/10 dark:!text-slate-100'"
     >
       <template v-if="role === 'user'">
         <template v-if="content">{{ content }}</template>
       </template>
       <template v-else>
         <div v-if="content" class="ai-markdown" v-html="renderedContent" />
-        <span v-else-if="streaming" class="inline-flex items-center gap-1">
-          <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400" style="animation-delay: 0ms" />
-          <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400" style="animation-delay: 150ms" />
-          <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400" style="animation-delay: 300ms" />
+        <span v-else-if="streaming" class="inline-flex items-center gap-1.5 py-0.5">
+          <span class="ai-bounce-dot" />
+          <span class="ai-bounce-dot" style="animation-delay: 150ms" />
+          <span class="ai-bounce-dot" style="animation-delay: 300ms" />
         </span>
       </template>
     </div>
@@ -55,6 +55,23 @@ const renderedContent = computed(() => {
 </template>
 
 <style scoped>
+.ai-bounce-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background-color: rgb(116 109 96);
+  animation: ai-bounce-up 0.9s infinite cubic-bezier(0.42, 0, 0.58, 1);
+}
+@keyframes ai-bounce-up {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
 .ai-markdown :deep(p) {
   margin: 0;
 }
@@ -148,11 +165,6 @@ const renderedContent = computed(() => {
   overscroll-behavior-x: contain;
   border-radius: 0.5rem;
   border: 1px solid rgb(226 232 240);
-  background:
-    linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0)) left center / 16px 100% no-repeat local,
-    linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1)) right center / 16px 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0)) left center / 14px 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0)) right center / 14px 100% no-repeat scroll;
   scrollbar-width: thin;
 }
 .ai-markdown :deep(.ai-table-wrap)::-webkit-scrollbar {
@@ -194,5 +206,68 @@ const renderedContent = computed(() => {
 }
 .ai-markdown :deep(tbody tr:nth-child(even)) {
   background: rgba(15, 23, 42, 0.02);
+}
+</style>
+
+<style>
+.dark .ai-markdown strong,
+.dark .ai-markdown b,
+.dark .ai-markdown h1,
+.dark .ai-markdown h2,
+.dark .ai-markdown h3,
+.dark .ai-markdown h4 {
+  color: rgb(246 241 235);
+}
+.ai-markdown .ai-table-wrap strong,
+.ai-markdown .ai-table-wrap b,
+.ai-markdown .ai-table-wrap h1,
+.ai-markdown .ai-table-wrap h2,
+.ai-markdown .ai-table-wrap h3,
+.ai-markdown .ai-table-wrap h4 {
+  color: rgb(67 63 57) !important;
+}
+.dark .ai-markdown blockquote {
+  color: rgb(218 217 212);
+}
+.dark .ai-markdown hr {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+.dark .ai-markdown code {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgb(241 245 249);
+}
+
+.ai-markdown .ai-table-wrap {
+  background-color: rgb(255 255 255) !important;
+}
+.ai-markdown .ai-table-wrap table,
+.ai-markdown .ai-table-wrap thead,
+.ai-markdown .ai-table-wrap tbody,
+.ai-markdown .ai-table-wrap tr {
+  background-color: transparent !important;
+}
+.ai-markdown .ai-table-wrap thead {
+  background-color: rgba(255, 138, 67, 0.1) !important;
+}
+.ai-markdown .ai-table-wrap tbody tr:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.03) !important;
+}
+.ai-markdown .ai-table-wrap th,
+.ai-markdown .ai-table-wrap td {
+  background-color: transparent !important;
+  color: rgb(67 63 57) !important;
+  border-bottom: 1px solid rgb(226 232 240) !important;
+  border-right: 1px solid rgb(226 232 240) !important;
+}
+.ai-markdown .ai-table-wrap th:last-child,
+.ai-markdown .ai-table-wrap td:last-child {
+  border-right: 0 !important;
+}
+.ai-markdown .ai-table-wrap tr:last-child td {
+  border-bottom: 0 !important;
+}
+.ai-markdown .ai-table-wrap th {
+  color: rgb(67 63 57) !important;
+  font-weight: 600;
 }
 </style>

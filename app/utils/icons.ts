@@ -37,6 +37,7 @@ import {
   ShoppingCart,
   Sparkles,
   Send,
+  Square,
   Sun,
   Truck,
   Trash2,
@@ -100,6 +101,7 @@ export const appIcons = {
   chevronDown: ChevronDown,
   sparkles: Sparkles,
   send: Send,
+  stop: Square,
 } satisfies Record<string, LucideIcon>;
 
 export type AppIconName = keyof typeof appIcons;

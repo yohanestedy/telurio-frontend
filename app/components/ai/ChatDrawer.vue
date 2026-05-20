@@ -10,6 +10,7 @@ const {
   setModel,
   clearChat,
   sendMessage,
+  stopStreaming,
 } = useAiChat()
 const { t } = useI18n()
 
@@ -161,7 +162,7 @@ function onKeyDown(event: KeyboardEvent) {
     >
       <aside
         v-if="open"
-        class="ai-chat-drawer fixed inset-y-0 right-0 z-[65] flex w-full flex-col border-l border-slate-200/70 bg-white/96 backdrop-blur-xl dark:!border-white/10 dark:!bg-[#1a1614]/96"
+        class="ai-chat-drawer fixed inset-y-0 right-0 z-[65] flex w-full flex-col border-l border-slate-200/70 bg-white/50 backdrop-blur-md dark:!border-white/10 dark:!bg-[#1a1614]/70"
         :style="drawerStyle"
       >
         <div
@@ -244,7 +245,7 @@ function onKeyDown(event: KeyboardEvent) {
             <textarea
               ref="textareaEl"
               v-model="inputText"
-              :disabled="streaming || !selectedModel"
+              :disabled="!selectedModel"
               :placeholder="t('aiChat.placeholder')"
               rows="1"
               class="field-shell flex-1 resize-none overflow-y-auto overscroll-contain !py-2 !text-sm"
@@ -252,9 +253,19 @@ function onKeyDown(event: KeyboardEvent) {
               @keydown="onKeyDown"
             />
             <button
+              v-if="streaming"
+              type="button"
+              class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-ink-800 text-white shadow-sm transition hover:bg-ink-900"
+              :title="t('aiChat.stop')"
+              @click="stopStreaming"
+            >
+              <UiIcon name="stop" class="h-3.5 w-3.5" />
+            </button>
+            <button
+              v-else
               type="button"
               class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-sm transition hover:from-brand-600 hover:to-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
-              :disabled="streaming || !inputText.trim() || !selectedModel"
+              :disabled="!inputText.trim() || !selectedModel"
               :title="t('aiChat.send')"
               @click="submit"
             >
