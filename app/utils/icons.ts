@@ -35,6 +35,8 @@ import {
   Share2,
   ShieldCheck,
   ShoppingCart,
+  Sparkles,
+  Send,
   Sun,
   Truck,
   Trash2,
@@ -96,6 +98,8 @@ export const appIcons = {
   chevronRight: ChevronRight,
   chevronLeft: ChevronLeft,
   chevronDown: ChevronDown,
+  sparkles: Sparkles,
+  send: Send,
 } satisfies Record<string, LucideIcon>;
 
 export type AppIconName = keyof typeof appIcons;

@@ -14,5 +14,7 @@ const hideTopbarOnMobile = computed(() => Boolean(route.meta.hideMobileTopbar))
       </main>
       <MobileBottomNav />
     </div>
+    <AiFloatingChatButton />
+    <AiChatDrawer />
   </div>
 </template>
