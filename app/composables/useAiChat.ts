@@ -83,6 +83,17 @@ export function useAiChat() {
     activeTools.value = []
   }
 
+  function resetState() {
+    open.value = false
+    messages.value = []
+    error.value = null
+    activeTools.value = []
+    availableModels.value = []
+    selectedModel.value = ''
+    modelsLoaded.value = false
+    streaming.value = false
+  }
+
   async function sendMessage(text: string) {
     const trimmed = text.trim()
     if (!trimmed || streaming.value) return
@@ -175,6 +186,7 @@ export function useAiChat() {
     toggleOpen,
     setModel,
     clearChat,
+    resetState,
     sendMessage,
     loadModels,
   }
