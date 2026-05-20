@@ -28,6 +28,7 @@ let activeAbortController: AbortController | null = null
 
 export function useAiChat() {
   const auth = useAuthStore()
+  const ui = useUiStore()
   const config = useRuntimeConfig()
 
   const baseUrl = computed(
@@ -46,12 +47,40 @@ export function useAiChat() {
     return headers
   }
 
+  async function fetchWithAuthRetry(
+    url: string,
+    init: RequestInit,
+    extraHeaders: Record<string, string> = {},
+  ): Promise<Response> {
+    const headers = buildHeaders(extraHeaders)
+    const response = await fetch(url, {
+      ...init,
+      headers,
+      credentials: 'include',
+    })
+
+    if (response.status === 401) {
+      const refreshed = await auth.refreshSession()
+      if (refreshed) {
+        const retryHeaders = buildHeaders(extraHeaders)
+        return fetch(url, {
+          ...init,
+          headers: retryHeaders,
+          credentials: 'include',
+        })
+      }
+      auth.clearSession()
+      ui.requireUnauthorizedLogout('Session expired')
+    }
+
+    return response
+  }
+
   async function loadModels() {
     if (modelsLoaded.value) return
     try {
-      const res = await fetch(buildUrl('/ai-chat/models'), {
-        headers: buildHeaders(),
-        credentials: 'include',
+      const res = await fetchWithAuthRetry(buildUrl('/ai-chat/models'), {
+        method: 'GET',
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json()
@@ -117,16 +146,18 @@ export function useAiChat() {
     activeAbortController = controller
 
     try {
-      const response = await fetch(buildUrl('/ai-chat/completions'), {
-        method: 'POST',
-        headers: buildHeaders({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({
-          model: selectedModel.value,
-          messages: payloadMessages,
-        }),
-        signal: controller.signal,
-      })
+      const response = await fetchWithAuthRetry(
+        buildUrl('/ai-chat/completions'),
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            model: selectedModel.value,
+            messages: payloadMessages,
+          }),
+          signal: controller.signal,
+        },
+        { 'Content-Type': 'application/json' },
+      )
 
       if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}`)
