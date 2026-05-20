@@ -214,7 +214,7 @@ function onKeyDown(event: KeyboardEvent) {
 
         <div
           ref="messagesEl"
-          class="flex-1 space-y-3 overflow-y-auto px-4 py-4"
+          class="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4"
         >
           <div v-if="messages.length === 0" class="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-ink-500">
             <div class="rounded-2xl bg-gradient-to-br from-brand-100 to-brand-50 p-3 text-brand-600">
@@ -247,7 +247,7 @@ function onKeyDown(event: KeyboardEvent) {
               :disabled="streaming || !selectedModel"
               :placeholder="t('aiChat.placeholder')"
               rows="1"
-              class="field-shell flex-1 resize-none overflow-y-auto !py-2 !text-sm"
+              class="field-shell flex-1 resize-none overflow-y-auto overscroll-contain !py-2 !text-sm"
               style="min-height: 2.5rem; max-height: 316px;"
               @keydown="onKeyDown"
             />

@@ -145,6 +145,7 @@ const renderedContent = computed(() => {
   position: relative;
   margin: 0.5rem 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   border-radius: 0.5rem;
   border: 1px solid rgb(226 232 240);
   background:
