@@ -72,10 +72,10 @@ function handleChoiceClick(choice: string) {
     :class="role === 'user' ? 'justify-end' : 'justify-start'"
   >
     <div
-      class="max-w-[85%] break-words rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed"
+      class="max-w-[85%] break-words px-3.5 text-sm leading-relaxed"
       :class="role === 'user'
-        ? 'whitespace-pre-wrap bg-gradient-to-br from-brand-500 to-brand-600 text-white'
-        : 'border border-slate-200/80 bg-white/90 text-ink-800 dark:!border-white/10 dark:!text-slate-100'"
+        ? 'whitespace-pre-wrap rounded-3xl py-2 bg-gradient-to-br from-brand-500/90 to-brand-600/90 text-white font-medium'
+        : 'rounded-2xl py-2.5 border border-slate-200/80 bg-white/90 text-ink-800 dark:!border-white/10 dark:!text-slate-100'"
     >
       <template v-if="role === 'user'">
         <template v-if="content">{{ content }}</template>
