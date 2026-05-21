@@ -6,6 +6,11 @@ const props = defineProps<{
   role: 'user' | 'assistant'
   content: string
   streaming?: boolean
+  canPickChoice?: boolean
+}>()
+
+const emit = defineEmits<{
+  pickChoice: [choice: string]
 }>()
 
 marked.setOptions({
@@ -13,10 +18,39 @@ marked.setOptions({
   gfm: true,
 })
 
-const renderedContent = computed(() => {
-  if (props.role === 'user') return props.content
+const CHOICES_REGEX = /<choices>([\s\S]*?)<\/choices>/i
+
+const parsedChoices = computed<string[]>(() => {
+  if (props.role !== 'assistant' || !props.content) return []
+  const match = props.content.match(CHOICES_REGEX)
+  if (!match) return []
+  return match[1]
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('-') || line.startsWith('*'))
+    .map((line) => line.replace(/^[-*]\s*/, '').trim())
+    .filter((line) => line.length > 0)
+    .slice(0, 3)
+})
+
+const showChoices = computed(
+  () =>
+    parsedChoices.value.length > 0 && !props.streaming && props.canPickChoice,
+)
+
+const visibleContent = computed(() => {
+  if (props.role !== 'assistant') return props.content
   if (!props.content) return ''
-  let html = marked.parse(props.content, { async: false }) as string
+  if (props.streaming && /<choices>/i.test(props.content) && !CHOICES_REGEX.test(props.content)) {
+    return props.content.replace(/<choices>[\s\S]*$/i, '').trimEnd()
+  }
+  return props.content.replace(CHOICES_REGEX, '').trimEnd()
+})
+
+const renderedContent = computed(() => {
+  if (props.role === 'user') return visibleContent.value
+  if (!visibleContent.value) return ''
+  let html = marked.parse(visibleContent.value, { async: false }) as string
   html = html.replace(
     /<table>/g,
     '<div class="ai-table-wrap"><table>',
@@ -26,6 +60,10 @@ const renderedContent = computed(() => {
     ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'align'],
   })
 })
+
+function handleChoiceClick(choice: string) {
+  emit('pickChoice', choice)
+}
 </script>
 
 <template>
@@ -43,12 +81,27 @@ const renderedContent = computed(() => {
         <template v-if="content">{{ content }}</template>
       </template>
       <template v-else>
-        <div v-if="content" class="ai-markdown" v-html="renderedContent" />
+        <div v-if="visibleContent" class="ai-markdown" v-html="renderedContent" />
         <span v-else-if="streaming" class="inline-flex items-center gap-1.5 py-0.5">
           <span class="ai-bounce-dot" />
           <span class="ai-bounce-dot" style="animation-delay: 150ms" />
           <span class="ai-bounce-dot" style="animation-delay: 300ms" />
         </span>
+
+        <div
+          v-if="showChoices"
+          class="mt-2.5 flex flex-wrap gap-1.5"
+        >
+          <button
+            v-for="choice in parsedChoices"
+            :key="choice"
+            type="button"
+            class="rounded-full border border-brand-300/70 bg-brand-50/80 px-3 py-1.5 text-xs font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-100 dark:!border-brand-400/40 dark:!bg-brand-500/15 dark:!text-brand-200 dark:!hover:bg-brand-500/25"
+            @click="handleChoiceClick(choice)"
+          >
+            {{ choice }}
+          </button>
+        </div>
       </template>
     </div>
   </div>

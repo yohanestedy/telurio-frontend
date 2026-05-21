@@ -137,6 +137,11 @@ function onKeyDown(event: KeyboardEvent) {
     void submit()
   }
 }
+
+async function onPickChoice(choice: string) {
+  if (streaming.value) return
+  await sendMessage(choice)
+}
 </script>
 
 <template>
@@ -232,6 +237,12 @@ function onKeyDown(event: KeyboardEvent) {
               :role="msg.role"
               :content="msg.content"
               :streaming="streaming && index === messages.length - 1"
+              :can-pick-choice="
+                msg.role === 'assistant' &&
+                index === messages.length - 1 &&
+                !streaming
+              "
+              @pick-choice="onPickChoice"
             />
           </template>
 
