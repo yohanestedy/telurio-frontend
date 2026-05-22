@@ -38,9 +38,9 @@ const todayLabel = computed(() =>
           <UiIcon :name="pageIcon" class="h-5 w-5" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-medium uppercase tracking-[0.24em] text-brand-700/80">
+          <!-- <p class="text-xs font-medium uppercase tracking-[0.24em] text-brand-700/80">
             {{ t('topbar.appLabel') }}
-          </p>
+          </p> -->
           <h1 class="truncate text-xl font-semibold text-ink-900">{{ title }}</h1>
           <p class="truncate text-sm text-ink-600">{{ subtitle }}</p>
         </div>

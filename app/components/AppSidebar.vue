@@ -46,13 +46,11 @@ async function confirmLogout() {
 
 <template>
   <aside class="hidden border-r border-slate-200/70 bg-white/64 backdrop-blur-xl lg:block">
-    <div class="sticky top-0 flex h-screen flex-col gap-6 px-4 pb-4 pt-2">
-      <div class="glass-panel shrink-0 rounded-[28px] p-4">
+    <div class="sticky top-0 flex h-screen flex-col gap-4 px-4 pb-4 pt-2">
+      <div class="shrink-0 rounded-[28px] bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 p-4">
         <div class="flex items-center gap-3">
-          <div class="rounded-xl bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 p-1.5 text-white">
-            <UiIcon name="productions" class="h-4 w-4" />
-          </div>
-          <h1 class="text-base font-bold uppercase tracking-[0.2em] text-ink-900">{{ t('topbar.appLabel') }}</h1>
+          <img src="/telurio-logo-2.svg" alt="Telurio" class="h-10 w-10 object-contain" />
+          <h1 class="text-lg font-bold uppercase tracking-[0.3em] text-white">{{ t('topbar.appLabel') }}</h1>
         </div>
       </div>
 
