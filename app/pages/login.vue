@@ -12,12 +12,13 @@ definePageMeta({
 
 const { login } = useAuth()
 const toast = useToast()
+const { t } = useI18n()
 const pending = ref(false)
 const loginError = ref('')
 
 const validationSchema = toTypedSchema(z.object({
-  username: z.string().min(1, 'Username wajib diisi'),
-  password: z.string().min(1, 'Password wajib diisi'),
+  username: z.string().min(1, t('login.validation.username')),
+  password: z.string().min(1, t('login.validation.password')),
 }))
 
 type FormValues = {
@@ -45,7 +46,7 @@ const onSubmit = handleSubmit(async (values) => {
   pending.value = true
   try {
     await login(values)
-    toast.success('Login berhasil', 'Selamat datang kembali di Telurio')
+    toast.success(t('login.success'), t('login.successMessage'))
     await navigateTo('/')
   } catch (error) {
     const mapped = useApi().mapError(error)
@@ -63,21 +64,19 @@ const onSubmit = handleSubmit(async (values) => {
         <img src="/telurio-logo-2.svg" alt="Telurio" class="h-10 w-10 object-contain" />
       </div>
       <p class="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Telurio</p>
-      <h1 class="mt-3 text-3xl font-semibold text-ink-900">Sistem Manajemen Peternakan Telur</h1>
-      <p class="mt-3 text-sm text-ink-600">
-        Kelola produksi, stok, order, dan laporan dalam satu platform terintegrasi dengan AI Assistant.
-      </p>
+      <h1 class="mt-3 text-3xl font-semibold text-ink-900">{{ t('login.title') }}</h1>
+      <p class="mt-3 text-sm text-ink-600">{{ t('login.subtitle') }}</p>
     </div>
 
-    <form class="space-y-4" @submit.prevent="onSubmit"> 
+    <form class="space-y-4" @submit.prevent="onSubmit">
       <p v-if="loginError" data-field-error="true" class="py-2 text-sm font-medium text-rose-700">
         {{ loginError }}
       </p>
-      <UiInput v-model="username" label="Username" :error="errors.username" />
-      <UiInput v-model="password" label="Password" type="password" :error="errors.password" />
-      
+      <UiInput v-model="username" :label="t('login.username')" :error="errors.username" />
+      <UiInput v-model="password" :label="t('login.password')" type="password" :error="errors.password" />
+
       <UiButton block :disabled="pending" type="submit" icon="key">
-        {{ pending ? 'Masuk...' : 'Masuk' }}
+        {{ pending ? t('login.submitting') : t('login.submit') }}
       </UiButton>
     </form>
   </GlassCard>
