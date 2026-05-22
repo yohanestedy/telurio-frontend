@@ -59,8 +59,8 @@ const onSubmit = handleSubmit(async (values) => {
 <template>
   <GlassCard>
     <div class="mb-8 text-center">
-      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 text-white shadow-[0_20px_40px_rgba(243,95,16,0.22)]">
-        <UiIcon name="profile" class="h-7 w-7" />
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 shadow-[0_20px_40px_rgba(243,95,16,0.22)]">
+        <img src="/telurio-logo-2.svg" alt="Telurio" class="h-10 w-10 object-contain" />
       </div>
       <p class="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Telurio</p>
       <h1 class="mt-3 text-3xl font-semibold text-ink-900">Egg Farm Management</h1>
