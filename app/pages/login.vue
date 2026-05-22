@@ -63,13 +63,13 @@ const onSubmit = handleSubmit(async (values) => {
         <img src="/telurio-logo-2.svg" alt="Telurio" class="h-10 w-10 object-contain" />
       </div>
       <p class="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Telurio</p>
-      <h1 class="mt-3 text-3xl font-semibold text-ink-900">Egg Farm Management</h1>
+      <h1 class="mt-3 text-3xl font-semibold text-ink-900">Sistem Manajemen Peternakan Telur</h1>
       <p class="mt-3 text-sm text-ink-600">
-        Masuk untuk mengelola order, produksi, pengeluaran, dan laporan kandang.
+        Kelola produksi, stok, order, dan laporan dalam satu platform terintegrasi dengan AI Assistant.
       </p>
     </div>
 
-    <form class="space-y-4" @submit.prevent="onSubmit">
+    <form class="space-y-4" @submit.prevent="onSubmit"> 
       <p v-if="loginError" data-field-error="true" class="py-2 text-sm font-medium text-rose-700">
         {{ loginError }}
       </p>
