@@ -153,6 +153,7 @@ export function useAiChat() {
           body: JSON.stringify({
             model: selectedModel.value,
             messages: payloadMessages,
+            clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           }),
           signal: controller.signal,
         },
