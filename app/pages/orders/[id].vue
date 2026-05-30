@@ -405,6 +405,7 @@ watch(
           :submitting="submitting"
           :current-payment-status="order.paymentStatus"
           :total-invoice="order.totalInvoice"
+          :price-per-kg="order.pricePerKg"
           :dp-amount="order.dpAmount"
           @submit="updatePayment"
         />

@@ -1025,6 +1025,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         :submitting="modalSubmitting"
         :current-payment-status="activeOrder.paymentStatus"
         :total-invoice="activeOrder.totalInvoice"
+        :price-per-kg="activeOrder.pricePerKg"
         :dp-amount="activeOrder.dpAmount"
         @submit="submitPaymentUpdate"
       />

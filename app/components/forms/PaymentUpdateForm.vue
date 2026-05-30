@@ -3,7 +3,10 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { paymentMethods, paymentStatuses } from '../../types/domain'
-import type { PaymentStatus } from '../../types/domain'
+import type { PaymentMethod, PaymentStatus } from '../../types/domain'
+import type { AppIconName } from '../../utils/icons'
+
+const { t } = useI18n()
 
 function toMoneyNumber(value: unknown): number {
   if (value === null || value === undefined || value === '') {
@@ -32,6 +35,7 @@ const props = defineProps<{
   submitting?: boolean
   currentPaymentStatus: PaymentStatus
   totalInvoice: string | number | null
+  pricePerKg: string | number | null
   dpAmount: string | number | null
 }>()
 
@@ -39,7 +43,12 @@ const emit = defineEmits<{
   submit: [{ paymentStatus: string; paymentMethod?: string; amountPaid?: number; notes?: string }]
 }>()
 
+const hasPrice = computed(() =>
+  props.pricePerKg !== null && props.pricePerKg !== '' && toMoneyNumber(props.pricePerKg) > 0,
+)
+const dpRecorded = computed(() => props.dpAmount !== null && props.dpAmount !== '')
 const totalInvoiceValue = computed(() => toMoneyNumber(props.totalInvoice))
+const pricePerKgValue = computed(() => toMoneyNumber(props.pricePerKg))
 const dpPaidValue = computed(() => toMoneyNumber(props.dpAmount))
 const currentPaidValue = computed(() => (props.currentPaymentStatus === 'DP' ? dpPaidValue.value : 0))
 const remainingBeforeValue = computed(() => Math.max(totalInvoiceValue.value - currentPaidValue.value, 0))
@@ -53,23 +62,35 @@ const validationSchema = computed(() => toTypedSchema(z
     ),
     amountPaid: z.preprocess(
       (value) => (value === '' || value === null || value === undefined ? undefined : Number(value)),
-      z.number().min(1000, 'Nominal DP minimal Rp 1.000').optional(),
+      z.number().min(1000, t('validation.payment.amountMin')).optional(),
     ),
     notes: z.string().optional(),
   })
   .superRefine((value, ctx) => {
     const allowed =
       props.currentPaymentStatus === 'BELUM_BAYAR'
-        ? ['DP', 'LUNAS']
+        ? hasPrice.value
+          ? ['DP', 'LUNAS']
+          : ['DP']
         : props.currentPaymentStatus === 'DP'
-          ? ['LUNAS']
+          ? hasPrice.value
+            ? ['LUNAS']
+            : []
           : []
 
     if (!allowed.includes(value.paymentStatus)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['paymentStatus'],
-        message: 'Status pembayaran tidak valid untuk kondisi saat ini',
+        message: t('validation.payment.statusInvalid'),
+      })
+    }
+
+    if (value.paymentStatus === 'LUNAS' && !hasPrice.value) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['paymentStatus'],
+        message: t('validation.payment.priceRequiredForLunas'),
       })
     }
 
@@ -78,21 +99,21 @@ const validationSchema = computed(() => toTypedSchema(z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['paymentMethod'],
-          message: 'Metode pembayaran wajib diisi',
+          message: t('validation.payment.methodRequired'),
         })
       }
       if (value.amountPaid === undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['amountPaid'],
-          message: 'Jumlah dibayar wajib diisi',
+          message: t('validation.payment.amountRequired'),
         })
       } else {
         if (!Number.isInteger(value.amountPaid)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['amountPaid'],
-            message: 'Jumlah dibayar harus bilangan bulat',
+            message: t('validation.payment.amountInteger'),
           })
         }
 
@@ -100,7 +121,7 @@ const validationSchema = computed(() => toTypedSchema(z
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['amountPaid'],
-            message: 'Nominal DP minimal Rp 1.000',
+            message: t('validation.payment.amountMin'),
           })
         }
 
@@ -108,7 +129,7 @@ const validationSchema = computed(() => toTypedSchema(z
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['amountPaid'],
-            message: 'Jumlah DP harus lebih dari 0',
+            message: t('validation.payment.amountPositive'),
           })
         }
 
@@ -116,7 +137,7 @@ const validationSchema = computed(() => toTypedSchema(z
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['amountPaid'],
-            message: 'Jumlah DP tidak boleh melebihi sisa pembayaran',
+            message: t('validation.payment.amountExceedsRemaining'),
           })
         }
       }
@@ -126,18 +147,20 @@ const validationSchema = computed(() => toTypedSchema(z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['paymentMethod'],
-        message: 'Metode pembayaran wajib diisi',
+        message: t('validation.payment.methodRequired'),
       })
     }
   })))
 
 const statusOptions = computed(() => {
   if (props.currentPaymentStatus === 'BELUM_BAYAR') {
-    return ['DP', 'LUNAS'] as PaymentStatus[]
+    return hasPrice.value
+      ? (['DP', 'LUNAS'] as PaymentStatus[])
+      : (['DP'] as PaymentStatus[])
   }
 
   if (props.currentPaymentStatus === 'DP') {
-    return ['LUNAS'] as PaymentStatus[]
+    return hasPrice.value ? (['LUNAS'] as PaymentStatus[]) : ([] as PaymentStatus[])
   }
 
   return [] as PaymentStatus[]
@@ -150,6 +173,33 @@ const defaultNextStatus = computed<PaymentStatus>(() => {
 
   return 'DP'
 })
+
+const statusIcons: Record<PaymentStatus, AppIconName> = {
+  BELUM_BAYAR: 'clock',
+  DP: 'money',
+  LUNAS: 'wallet',
+}
+
+const methodIcons: Record<PaymentMethod, AppIconName> = {
+  CASH: 'money',
+  TRANSFER: 'wallet',
+}
+
+const statusCards = computed(() =>
+  statusOptions.value.map((value) => ({
+    value,
+    label: paymentStatusLabel(value),
+    icon: statusIcons[value],
+  })),
+)
+
+const methodCards = computed(() =>
+  paymentMethods.map((value) => ({
+    value,
+    label: t(`form.payment.method.${value}`),
+    icon: methodIcons[value],
+  })),
+)
 
 const { defineField, errors, handleSubmit, resetForm, setFieldValue } = useForm<FormValues, SubmitValues>({
   validationSchema,
@@ -237,80 +287,128 @@ const onSubmit = handleSubmit((values) => {
 <template>
   <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
     <div class="md:col-span-2 rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
-      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Ringkasan pembayaran</p>
-      <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-xl bg-white/80 p-3">
-          <p class="text-[11px] uppercase tracking-wide text-ink-500">Status saat ini</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">{{ t('form.payment.summaryTitle') }}</p>
+      <div class="mt-3 flex flex-wrap gap-3">
+        <div class="min-w-[140px] flex-1 rounded-xl bg-white/80 p-3">
+          <p class="text-[11px] uppercase tracking-wide text-ink-500">{{ t('form.payment.currentStatus') }}</p>
           <p class="mt-1 text-sm font-semibold text-ink-900">{{ paymentStatusLabel(currentPaymentStatus) }}</p>
         </div>
-        <div class="rounded-xl bg-white/80 p-3">
-          <p class="text-[11px] uppercase tracking-wide text-ink-500">Total invoice</p>
-          <p class="mt-1 text-sm font-semibold text-ink-900">{{ formatRupiah(totalInvoiceValue) }}</p>
+        <div class="min-w-[140px] flex-1 rounded-xl bg-white/80 p-3">
+          <p class="text-[11px] uppercase tracking-wide text-ink-500">{{ t('form.payment.pricePerKg') }}</p>
+          <p class="mt-1 text-sm font-semibold text-ink-900">{{ hasPrice ? formatRupiah(pricePerKgValue) : t('form.payment.priceNotLocked') }}</p>
         </div>
-        <div class="rounded-xl bg-white/80 p-3">
-          <p class="text-[11px] uppercase tracking-wide text-ink-500">DP masuk</p>
+        <div class="min-w-[140px] flex-1 rounded-xl bg-white/80 p-3">
+          <p class="text-[11px] uppercase tracking-wide text-ink-500">{{ t('form.payment.totalInvoice') }}</p>
+          <p class="mt-1 text-sm font-semibold text-ink-900">{{ hasPrice ? formatRupiah(totalInvoiceValue) : t('form.payment.invoicePending') }}</p>
+        </div>
+        <div v-if="dpRecorded" class="min-w-[140px] flex-1 rounded-xl bg-white/80 p-3">
+          <p class="text-[11px] uppercase tracking-wide text-ink-500">{{ t('form.payment.dpReceived') }}</p>
           <p class="mt-1 text-sm font-semibold text-ink-900">{{ formatRupiah(currentPaidValue) }}</p>
         </div>
-        <div class="rounded-xl bg-white/80 p-3">
-          <p class="text-[11px] uppercase tracking-wide text-ink-500">Sisa bayar</p>
+        <div v-if="dpRecorded" class="min-w-[140px] flex-1 rounded-xl bg-white/80 p-3">
+          <p class="text-[11px] uppercase tracking-wide text-ink-500">{{ t('form.payment.remaining') }}</p>
           <p class="mt-1 text-sm font-semibold text-ink-900">{{ formatRupiah(remainingBeforeValue) }}</p>
         </div>
       </div>
     </div>
 
-    <UiSelect
-      v-model="paymentStatus"
-      :options="statusOptions.map((value) => ({ label: paymentStatusLabel(value), value }))"
-      label="Status pembayaran"
-      :error="errors.paymentStatus"
-    />
-    <UiSelect
-      v-model="paymentMethod"
-      :options="paymentMethods.map((value) => ({ label: value, value }))"
-      label="Metode pembayaran"
-      placeholder="Pilih metode"
-      :error="errors.paymentMethod"
-    />
+    <div
+      v-if="!hasPrice"
+      class="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50/70 p-3"
+    >
+      <p class="text-xs font-medium text-amber-800">
+        {{ t('form.payment.priceLockedHint') }}
+      </p>
+    </div>
+
+    <div class="md:col-span-2 space-y-3">
+      <p class="text-sm font-semibold text-ink-800">{{ t('form.payment.statusLabel') }}</p>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <button
+          v-for="option in statusCards"
+          :key="option.value"
+          type="button"
+          class="rounded-2xl border px-4 py-3 text-left transition"
+          :class="paymentStatus === option.value
+            ? 'border-amber-400 bg-amber-50 shadow-[0_8px_20px_rgba(251,191,36,0.22)]'
+            : 'border-white/60 bg-white/60 hover:bg-white/85'"
+          @click="paymentStatus = option.value"
+        >
+          <div class="flex items-center gap-2">
+            <UiIcon :name="option.icon" class="h-4 w-4 text-ink-600" />
+            <p class="text-sm font-semibold text-ink-900">{{ option.label }}</p>
+          </div>
+        </button>
+      </div>
+      <p v-if="errors.paymentStatus" class="text-xs font-medium text-rose-600">
+        {{ errors.paymentStatus }}
+      </p>
+    </div>
+
+    <div class="md:col-span-2 space-y-3">
+      <p class="text-sm font-semibold text-ink-800">{{ t('form.payment.methodLabel') }}</p>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <button
+          v-for="option in methodCards"
+          :key="option.value"
+          type="button"
+          class="rounded-2xl border px-4 py-3 text-left transition"
+          :class="paymentMethod === option.value
+            ? 'border-amber-400 bg-amber-50 shadow-[0_8px_20px_rgba(251,191,36,0.22)]'
+            : 'border-white/60 bg-white/60 hover:bg-white/85'"
+          @click="paymentMethod = option.value"
+        >
+          <div class="flex items-center gap-2">
+            <UiIcon :name="option.icon" class="h-4 w-4 text-ink-600" />
+            <p class="text-sm font-semibold text-ink-900">{{ option.label }}</p>
+          </div>
+        </button>
+      </div>
+      <p v-if="errors.paymentMethod" class="text-xs font-medium text-rose-600">
+        {{ errors.paymentMethod }}
+      </p>
+    </div>
 
     <UiInput
       v-if="showAmountInput"
       v-model="amountPaid"
-      label="Nominal DP"
+      :label="t('form.payment.dpAmount')"
       type="number"
       min="1000"
       step="1"
       :error="errors.amountPaid"
-      placeholder="Contoh: 100000"
+      :placeholder="t('form.payment.dpAmountPlaceholder')"
+      class="md:col-span-2"
     />
 
     <div
       v-else
-      class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3"
+      class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 md:col-span-2"
     >
-      <p class="text-xs uppercase tracking-wide text-emerald-700">Nominal pelunasan otomatis</p>
+      <p class="text-xs uppercase tracking-wide text-emerald-700">{{ t('form.payment.autoLunasTitle') }}</p>
       <p class="mt-1 text-sm font-semibold text-emerald-900">{{ formatRupiah(autoLunasAmount) }}</p>
       <p class="mt-1 text-xs text-emerald-700">
-        Nominal pelunasan dihitung otomatis dari sisa pembayaran.
+        {{ t('form.payment.autoLunasHint') }}
       </p>
     </div>
 
     <div class="rounded-2xl border border-white/70 bg-white/70 p-3 md:col-span-2">
-      <p class="text-xs uppercase tracking-wide text-ink-500">Preview pembayaran</p>
+      <p class="text-xs uppercase tracking-wide text-ink-500">{{ t('form.payment.previewTitle') }}</p>
       <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
-        <span class="font-medium text-ink-900">Dibayar sekarang:</span>
+        <span class="font-medium text-ink-900">{{ t('form.payment.paidNow') }}:</span>
         <span class="font-semibold text-brand-700">{{ formatRupiah(paidNowPreview) }}</span>
         <span class="text-ink-400">•</span>
-        <span class="font-medium text-ink-900">Sisa setelah update:</span>
+        <span class="font-medium text-ink-900">{{ t('form.payment.remainingAfter') }}:</span>
         <span class="font-semibold text-ink-700">{{ formatRupiah(remainingAfterPreview) }}</span>
       </div>
     </div>
 
     <div class="md:col-span-2">
-      <UiTextarea v-model="notes" label="Catatan" :error="errors.notes" />
+      <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
     </div>
     <div class="md:col-span-2 flex justify-end">
       <UiButton :disabled="submitting || !statusOptions.length" type="submit">
-        {{ submitting ? 'Menyimpan...' : 'Update pembayaran' }}
+        {{ submitting ? t('common.saving') : t('form.payment.submit') }}
       </UiButton>
     </div>
   </form>
