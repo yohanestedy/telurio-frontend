@@ -8,6 +8,7 @@ export type CalendarOrderActionId =
   | 'edit-allocation'
   | 'complete-delivery'
   | 'payment-update'
+  | 'lock-price'
   | 'open-detail'
 
 export interface CalendarOrderAction {
@@ -17,4 +18,6 @@ export interface CalendarOrderAction {
   variant: 'primary' | 'secondary' | 'ghost'
   prominent?: boolean
   iconOnly?: boolean
+  disabled?: boolean
+  disabledHint?: string
 }

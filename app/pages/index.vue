@@ -52,9 +52,11 @@ const actionSubmittingOrderId = ref('')
 const modalSubmitting = ref(false)
 const startDeliveryOpen = ref(false)
 const paymentOpen = ref(false)
+const lockPriceOpen = ref(false)
 const populationOpen = ref(false)
 const allocationModalLoading = ref(false)
 const paymentModalLoading = ref(false)
+const lockPriceModalLoading = ref(false)
 const activeOrder = ref<OrderItem | null>(null)
 const activePopulationCoop = ref<CoopItem | null>(null)
 const activeCoops = ref<CoopItem[]>([])
@@ -594,6 +596,19 @@ async function openPaymentModal(orderId: string) {
   }
 }
 
+async function openLockPriceModal(orderId: string) {
+  lockPriceModalLoading.value = true
+
+  try {
+    activeOrder.value = await loadOrderForAction(orderId)
+    lockPriceOpen.value = true
+  } catch (caught) {
+    toast.error(t('toast.lockPrice.prepareFailed'), api.mapError(caught).message)
+  } finally {
+    lockPriceModalLoading.value = false
+  }
+}
+
 function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
   const actions: CalendarOrderAction[] = []
 
@@ -630,6 +645,28 @@ function dashboardOrderActions(order: CalendarOrder): CalendarOrderAction[] {
       label: t('order.action.updatePayment'),
       icon: 'money',
       variant: 'ghost',
+    })
+  }
+
+  if (
+    can('orders.manage')
+    && order.pricePerKg === null
+    && order.deliveryStatus === 'BELUM_DIHANTAR'
+  ) {
+    // Lock price references the egg price on the order's delivery date.
+    // The dashboard only has today's price loaded, so locking is offered on the
+    // "today" tab and disabled on "tomorrow" (its daily price does not exist yet).
+    const isTodayTab = scheduledOrdersTab.value === 'today'
+    const priceAvailable = isTodayTab && !!currentPrice.value
+    actions.push({
+      id: 'lock-price',
+      label: t('order.action.lockPrice'),
+      icon: 'prices',
+      variant: 'ghost',
+      disabled: !priceAvailable,
+      disabledHint: !priceAvailable
+        ? t('order.priceForm.standardMissing')
+        : undefined,
     })
   }
 
@@ -671,6 +708,11 @@ async function handleDashboardOrderAction(order: CalendarOrder, action: Calendar
 
   if (action.id === 'payment-update') {
     await openPaymentModal(order.orderId)
+    return
+  }
+
+  if (action.id === 'lock-price') {
+    await openLockPriceModal(order.orderId)
     return
   }
 
@@ -724,6 +766,24 @@ async function submitPaymentUpdate(payload: Record<string, unknown>) {
     await loadDashboard()
   } catch (caught) {
     toast.error(t('toast.payment.updateFailed'), api.mapError(caught).message)
+  } finally {
+    modalSubmitting.value = false
+  }
+}
+
+async function submitLockPrice(payload: { customPricePerKg?: number }) {
+  if (!activeOrder.value) {
+    return
+  }
+
+  modalSubmitting.value = true
+  try {
+    await api.post(`/orders/${activeOrder.value.id}/lock-price`, payload)
+    toast.success(t('toast.lockPrice.updated'))
+    lockPriceOpen.value = false
+    await loadDashboard()
+  } catch (caught) {
+    toast.error(t('toast.lockPrice.updateFailed'), api.mapError(caught).message)
   } finally {
     modalSubmitting.value = false
   }
@@ -967,6 +1027,21 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         :total-invoice="activeOrder.totalInvoice"
         :dp-amount="activeOrder.dpAmount"
         @submit="submitPaymentUpdate"
+      />
+    </UiDialog>
+
+    <UiDialog
+      v-model:open="lockPriceOpen"
+      :title="t('dialog.lockPrice.title')"
+      :description="t('dialog.lockPrice.description')"
+    >
+      <LoadingSkeleton v-if="lockPriceModalLoading" :lines="4" />
+      <FormsOrderPriceLockForm
+        v-else-if="activeOrder"
+        :submitting="modalSubmitting"
+        :order-quantity-kg="activeOrder.quantityKg"
+        :standard-price-per-kg="currentPrice?.pricePerKg ?? null"
+        @submit="submitLockPrice"
       />
     </UiDialog>
 

@@ -306,6 +306,9 @@ const id: TranslationTable = {
   "dialog.payment.title": "Update Pembayaran",
   "dialog.payment.description":
     "Semua update pembayaran akan masuk ke riwayat pembayaran.",
+  "dialog.lockPrice.title": "Update Harga per Kg",
+  "dialog.lockPrice.description":
+    "Kunci harga per kg dan hitung total invoice untuk order ini.",
   "dialog.population.title": "Update Populasi",
   "dialog.population.description":
     "Perubahan akan disimpan sebagai histori populasi kandang.",
@@ -313,6 +316,17 @@ const id: TranslationTable = {
   "order.action.completeDelivery": "Selesai Hantar",
   "order.action.editAllocation": "Ubah Alokasi",
   "order.action.updatePayment": "Update Bayar",
+  "order.action.lockPrice": "Update Harga/Kg",
+  "order.priceForm.title": "Kunci harga order",
+  "order.priceForm.standardLabel": "Harga standar tanggal kirim",
+  "order.priceForm.useStandard": "Gunakan harga standar",
+  "order.priceForm.useCustom": "Gunakan harga custom",
+  "order.priceForm.customLabel": "Harga custom per kg",
+  "order.priceForm.previewTotal": "Preview total invoice",
+  "order.priceForm.standardMissing":
+    "Harga standar tanggal kirim belum tersedia.",
+  "order.priceForm.customRequired": "Harga custom wajib diisi",
+  "order.priceForm.customInvalid": "Harga custom harus angka bulat minimal 5.000",
   "order.action.viewDetail": "Lihat Detail",
   "order.action.saveAllocation": "Simpan perubahan alokasi",
   "order.action.cancel": "Batalkan Order",
@@ -333,6 +347,9 @@ const id: TranslationTable = {
   "toast.population.updated": "Populasi kandang berhasil diperbarui",
   "toast.population.updateFailed": "Gagal update populasi",
   "toast.payment.prepareFailed": "Gagal menyiapkan modal pembayaran",
+  "toast.lockPrice.updated": "Harga order berhasil dikunci",
+  "toast.lockPrice.updateFailed": "Gagal mengunci harga order",
+  "toast.lockPrice.prepareFailed": "Gagal menyiapkan modal harga",
   "toast.delivery.prepareFailed": "Gagal menyiapkan modal pengantaran",
   "toast.order.created": "Order berhasil dibuat",
   "toast.order.updated": "Order berhasil diperbarui",
@@ -989,6 +1006,9 @@ const en: TranslationTable = {
   "dialog.payment.title": "Payment Update",
   "dialog.payment.description":
     "Every payment update will be added to the payment history.",
+  "dialog.lockPrice.title": "Update Price per Kg",
+  "dialog.lockPrice.description":
+    "Lock the price per kg and compute the total invoice for this order.",
   "dialog.population.title": "Update Population",
   "dialog.population.description":
     "Changes will be saved as coop population history.",
@@ -996,6 +1016,18 @@ const en: TranslationTable = {
   "order.action.completeDelivery": "Complete Delivery",
   "order.action.editAllocation": "Edit Allocation",
   "order.action.updatePayment": "Update Payment",
+  "order.action.lockPrice": "Update Price/Kg",
+  "order.priceForm.title": "Lock order price",
+  "order.priceForm.standardLabel": "Standard price for delivery date",
+  "order.priceForm.useStandard": "Use standard price",
+  "order.priceForm.useCustom": "Use custom price",
+  "order.priceForm.customLabel": "Custom price per kg",
+  "order.priceForm.previewTotal": "Total invoice preview",
+  "order.priceForm.standardMissing":
+    "Standard price for the delivery date is not available.",
+  "order.priceForm.customRequired": "Custom price is required",
+  "order.priceForm.customInvalid":
+    "Custom price must be a whole number of at least 5,000",
   "order.action.viewDetail": "View Detail",
   "order.action.saveAllocation": "Save allocation changes",
   "order.action.cancel": "Cancel Order",
@@ -1016,6 +1048,9 @@ const en: TranslationTable = {
   "toast.population.updated": "Coop population updated successfully",
   "toast.population.updateFailed": "Failed to update population",
   "toast.payment.prepareFailed": "Failed to prepare payment modal",
+  "toast.lockPrice.updated": "Order price locked successfully",
+  "toast.lockPrice.updateFailed": "Failed to lock order price",
+  "toast.lockPrice.prepareFailed": "Failed to prepare price modal",
   "toast.delivery.prepareFailed": "Failed to prepare delivery modal",
   "toast.order.created": "Order created successfully",
   "toast.order.updated": "Order updated successfully",

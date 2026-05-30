@@ -197,9 +197,9 @@ function deliveryAccentClass(order: CalendarOrder) {
                 ? '!h-8 !w-8 !rounded-xl !px-0 !py-0'
                 : '',
             ]"
-            :disabled="props.actionSubmittingOrderId === order.orderId"
+            :disabled="props.actionSubmittingOrderId === order.orderId || action.disabled"
             :aria-label="action.label"
-            :title="action.label"
+            :title="action.disabled && action.disabledHint ? action.disabledHint : action.label"
             @click="emit('action', order, action)"
           >
             <span v-if="!action.iconOnly">{{ action.label }}</span>
