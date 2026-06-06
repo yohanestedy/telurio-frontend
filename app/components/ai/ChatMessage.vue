@@ -38,6 +38,13 @@ const showChoices = computed(
     parsedChoices.value.length > 0 && !props.streaming && props.canPickChoice,
 )
 
+function trimDecimalZeros(text: string): string {
+  return text.replace(/(\d[\d.]*),(\d+)\b/g, (_match: string, intPart: string, decPart: string) => {
+    const trimmed = decPart.replace(/0+$/, '')
+    return trimmed ? `${intPart},${trimmed}` : intPart
+  })
+}
+
 const visibleContent = computed(() => {
   if (props.role !== 'assistant') return props.content
   if (!props.content) return ''
@@ -50,7 +57,8 @@ const visibleContent = computed(() => {
 const renderedContent = computed(() => {
   if (props.role === 'user') return visibleContent.value
   if (!visibleContent.value) return ''
-  let html = marked.parse(visibleContent.value, { async: false }) as string
+  const cleaned = trimDecimalZeros(visibleContent.value)
+  let html = marked.parse(cleaned, { async: false }) as string
   html = html.replace(
     /<table>/g,
     '<div class="ai-table-wrap"><table>',
