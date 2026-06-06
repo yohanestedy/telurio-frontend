@@ -133,7 +133,7 @@ const onSubmit = handleSubmit((values) => {
       :placeholder="t('validation.required.coop')"
       :error="errors.coopId"
     />
-    <UiInput
+    <UiTimePicker
       v-if="!isEdit"
       v-model="collectionTime"
       :label="t('form.production.collectionTime')"
