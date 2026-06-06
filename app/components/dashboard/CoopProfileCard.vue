@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   updatePopulation: [coop: CoopItem]
+  viewPopulationHistory: [coop: CoopItem]
 }>()
 const { t, locale } = useI18n()
 
@@ -99,9 +100,20 @@ const populationLabel = computed(() =>
             </span>
             <p class="text-[11px] text-ink-500">{{ t('coopProfile.population') }}</p>
           </div>
-          <p class="mt-2 truncate text-sm font-bold text-ink-900 sm:text-base">
-            {{ populationLabel }}
-          </p>
+          <div class="mt-2 flex min-w-0 items-center gap-1.5">
+            <p class="truncate text-sm font-bold text-ink-900 sm:text-base">
+              {{ populationLabel }}
+            </p>
+            <button
+              type="button"
+              class="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-slate-200/80 bg-white/70 text-ink-500 transition hover:bg-white hover:text-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100 dark:!border-white/10 dark:!bg-[rgba(255,255,255,0.06)] dark:hover:!bg-[rgba(255,116,32,0.12)]"
+              :title="t('coopProfile.viewPopulationHistory')"
+              :aria-label="t('coopProfile.viewPopulationHistory')"
+              @click="emit('viewPopulationHistory', props.coop)"
+            >
+              <UiIcon name="search" class="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         <div class="min-w-0 pl-2">

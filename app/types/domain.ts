@@ -79,6 +79,29 @@ export interface CoopItem {
   updatedAt: string | null;
 }
 
+export type CoopPopulationChangeType = 'INITIAL' | 'ADJUSTMENT';
+
+export interface CoopPopulationHistoryItem {
+  id: string;
+  effectiveDate: string;
+  previousPopulation: number | null;
+  newPopulation: number;
+  deltaPopulation: number;
+  changeType: CoopPopulationChangeType;
+  reason: string | null;
+  createdAt: string;
+}
+
+export interface CoopPopulationHistoryResponse {
+  coopId: string;
+  coopName: string;
+  currentPopulation: number;
+  initialPopulation: number;
+  totalDelta: number;
+  latestChange: number;
+  items: CoopPopulationHistoryItem[];
+}
+
 export interface CustomerItem {
   id: string;
   name: string;

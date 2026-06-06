@@ -3,6 +3,7 @@ import type {
   AllocationItem,
   CalendarDay,
   CoopItem,
+  CoopPopulationHistoryResponse,
   GrossIncomeItem,
   LiveStockCoopItem,
   LiveStockResponse,
@@ -54,6 +55,11 @@ const startDeliveryOpen = ref(false)
 const paymentOpen = ref(false)
 const lockPriceOpen = ref(false)
 const populationOpen = ref(false)
+const populationHistoryOpen = ref(false)
+const populationHistoryLoading = ref(false)
+const populationHistoryError = ref('')
+const activePopulationHistoryCoop = ref<CoopItem | null>(null)
+const activePopulationHistory = ref<CoopPopulationHistoryResponse | null>(null)
 const allocationModalLoading = ref(false)
 const paymentModalLoading = ref(false)
 const lockPriceModalLoading = ref(false)
@@ -794,6 +800,34 @@ function openPopulationModal(coop: CoopItem) {
   populationOpen.value = true
 }
 
+async function loadPopulationHistory() {
+  if (!activePopulationHistoryCoop.value) {
+    return
+  }
+
+  populationHistoryLoading.value = true
+  populationHistoryError.value = ''
+
+  try {
+    activePopulationHistory.value = await api.get<CoopPopulationHistoryResponse>(
+      `/coops/${activePopulationHistoryCoop.value.id}/population-histories`,
+      { limit: 20 },
+    )
+  } catch (caught) {
+    populationHistoryError.value = api.mapError(caught).message
+  } finally {
+    populationHistoryLoading.value = false
+  }
+}
+
+function openPopulationHistoryModal(coop: CoopItem) {
+  activePopulationHistoryCoop.value = coop
+  activePopulationHistory.value = null
+  populationHistoryError.value = ''
+  populationHistoryOpen.value = true
+  void loadPopulationHistory()
+}
+
 async function submitPopulationUpdate(payload: { population: number; populationChangeReason?: string }) {
   if (!activePopulationCoop.value) {
     return
@@ -964,6 +998,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
               :coop="coop"
               :can-update-population="can('coops.manage')"
               @update-population="openPopulationModal"
+              @view-population-history="openPopulationHistoryModal"
             />
           </div>
           <p v-else class="text-sm text-ink-500">{{ t('dashboard.card.coopProfile.empty') }}</p>
@@ -977,6 +1012,14 @@ async function submitPopulationUpdate(payload: { population: number; populationC
           class="min-[1024px]:order-5 min-[1024px]:col-span-10 min-[1866px]:col-span-12"
         />
       </div>
+
+      <DashboardCoopPopulationHistoryDialog
+        v-model:open="populationHistoryOpen"
+        :loading="populationHistoryLoading"
+        :error="populationHistoryError"
+        :history="activePopulationHistory"
+        @retry="loadPopulationHistory"
+      />
 
       <DashboardCoopFlowDetailDialog
         v-model:open="coopFlowDetailOpen"
