@@ -8,7 +8,7 @@ export const permissionMap: Record<Permission, Role[]> = {
   "orders.deliver": ["OPERATOR"],
   "orders.pay": ["ADMIN", "OWNER", "OPERATOR"],
   "orders.cancel": ["ADMIN"],
-  "productions.view": ["ADMIN", "OPERATOR"],
+  "productions.view": ["ADMIN", "OWNER", "OPERATOR"],
   "productions.manage": ["ADMIN", "OPERATOR"],
   "expenses.view": ["ADMIN", "OWNER"],
   "expenses.manage": ["ADMIN", "OWNER"],
@@ -102,6 +102,13 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         description: "Ledger pergerakan stok",
         permission: "stocks.view",
         icon: "layers",
+      },
+      {
+        label: "Productions",
+        path: "/productions",
+        description: "Produksi telur harian",
+        permission: "productions.view",
+        icon: "productions",
       },
       {
         label: "Coop Health",
@@ -206,6 +213,13 @@ const menuMap: Record<Role, { desktop: MenuItem[]; mobile: MenuItem[] }> = {
         description: "Ledger pergerakan stok",
         permission: "stocks.view",
         icon: "layers",
+      },
+      {
+        label: "Productions",
+        path: "/productions",
+        description: "Produksi telur harian",
+        permission: "productions.view",
+        icon: "productions",
       },
       {
         label: "Expense Group",

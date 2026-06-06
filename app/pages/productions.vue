@@ -9,7 +9,7 @@ import { useListPageController } from '../composables/useListPageController'
 
 definePageMeta({
   title: 'Productions',
-  roles: ['ADMIN', 'OPERATOR'],
+  roles: ['ADMIN', 'OWNER', 'OPERATOR'],
 })
 
 const api = useApi()
