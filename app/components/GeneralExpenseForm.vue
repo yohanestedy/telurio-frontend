@@ -2,6 +2,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
+import dayjs from 'dayjs'
 import type { GeneralExpenseCategoryItem, GeneralExpenseItem } from '../types/domain'
 
 type FormValues = {
@@ -36,6 +37,8 @@ const { t } = useI18n()
 const categoryOptions = computed(() =>
   props.categories.map((c) => ({ label: c.name, value: c.id })),
 )
+
+const todayIso = dayjs().format('YYYY-MM-DD')
 
 const validationSchema = toTypedSchema(z.object({
   date: z.string().min(1, t('validation.required.date')),
@@ -96,6 +99,7 @@ const onSubmit = handleSubmit((values) => {
       v-model="date"
       :label="t('common.date')"
       :placeholder="t('date.placeholder')"
+      :max="todayIso"
       :error="errors.date"
     />
     <UiSelect

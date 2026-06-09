@@ -2,6 +2,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
+import dayjs from 'dayjs'
 import type { CoopHealthRecordType } from '../../types/domain'
 
 type FormValues = {
@@ -24,6 +25,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+const todayIso = dayjs().format('YYYY-MM-DD')
 
 const validationSchema = toTypedSchema(z.object({
   date: z.string().min(1, t('validation.required.date')),
@@ -76,7 +79,7 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiDatePicker v-model="date" :label="t('common.date')" :error="errors.date" />
+    <UiDatePicker v-model="date" :label="t('common.date')" :max="todayIso" :error="errors.date" />
     <UiSelect v-model="coopId" :options="coopOptions" :label="t('common.coop')" :error="errors.coopId" />
     <UiSelect v-model="type" :options="typeOptions" :label="t('coopHealth.type')" :error="errors.type" />
     <UiInput v-model="description" :label="t('coopHealth.descriptionField')" :error="errors.description" />

@@ -2,6 +2,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
+import dayjs from 'dayjs'
 
 type FormValues = {
   effectiveDate: string
@@ -26,6 +27,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+const todayIso = dayjs().format('YYYY-MM-DD')
 
 const validationSchema = toTypedSchema(z.object({
   effectiveDate: z.string().min(1, t('validation.required.date')),
@@ -77,6 +80,7 @@ const onSubmit = handleSubmit((values) => {
       v-model="effectiveDate"
       :label="t('form.price.effectiveDate')"
       :placeholder="t('form.price.pickEffectiveDate')"
+      :max="todayIso"
       :error="errors.effectiveDate"
     />
     <UiInput v-model="pricePerKg" :label="t('form.price.pricePerKg')" type="number" min="5000" step="1" :error="errors.pricePerKg" />

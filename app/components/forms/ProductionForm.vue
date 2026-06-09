@@ -2,6 +2,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
+import dayjs from 'dayjs'
 
 type FormValues = {
   date: string
@@ -45,6 +46,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+const todayIso = dayjs().format('YYYY-MM-DD')
 
 const positiveMessage = t('validation.min.positive')
 const optionalPositiveInt = z.preprocess(
@@ -123,6 +126,7 @@ const onSubmit = handleSubmit((values) => {
       v-model="date"
       :label="t('common.date')"
       :placeholder="t('date.placeholder')"
+      :max="todayIso"
       :error="errors.date"
     />
     <UiSelect
