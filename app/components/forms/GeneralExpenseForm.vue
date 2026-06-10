@@ -3,7 +3,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import dayjs from 'dayjs'
-import type { GeneralExpenseCategoryItem, GeneralExpenseItem } from '../types/domain'
+import type { GeneralExpenseCategoryItem, GeneralExpenseItem } from '../../types/domain'
 
 type FormValues = {
   date: string

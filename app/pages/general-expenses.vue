@@ -385,7 +385,7 @@ onMounted(async () => {
       v-model:open="dialogOpen"
       :title="editing ? t('generalExpense.edit') : t('generalExpense.add')"
     >
-      <GeneralExpenseForm
+      <FormsGeneralExpenseForm
         :initial="editing"
         :categories="categories"
         :submitting="submitting"
@@ -401,7 +401,7 @@ onMounted(async () => {
       <FormsDeleteReasonForm :submitting="submitting" @submit="deleteExpense" />
     </UiDialog>
 
-    <CategoryManageModal
+    <FormsGeneralExpenseCategoryForm
       v-model:open="categoryModalOpen"
       :title="t('generalExpense.category.title')"
       :categories="categories"

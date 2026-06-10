@@ -467,7 +467,7 @@ onMounted(async () => {
       <FormsDeleteReasonForm :submitting="submitting" @submit="deleteExpense" />
     </UiDialog>
 
-    <CategoryManageModal
+    <FormsGeneralExpenseCategoryForm
       v-model:open="categoryModalOpen"
       :title="t('expenseCategory.manage')"
       :categories="categories"

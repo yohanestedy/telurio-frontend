@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
-import { mapZodErrors } from '../utils/form'
+import { mapZodErrors } from '../../utils/form'
 
 interface CategoryItem {
   id: string
