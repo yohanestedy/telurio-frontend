@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 const props = withDefaults(defineProps<{
   orderQuantityKg: string
   standardPricePerKg: string | null
@@ -9,9 +11,8 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   submit: [{ customPricePerKg?: number }]
+  cancel: []
 }>()
-
-const { t } = useI18n()
 
 const priceMode = ref<'standard' | 'custom'>('standard')
 const customPricePerKg = ref('')
@@ -142,10 +143,9 @@ function preventNumberScroll(event: WheelEvent) {
         v-if="priceMode === 'custom'"
         v-model="customPricePerKg"
         :label="t('order.priceForm.customLabel')"
-        type="number"
-        min="5000"
-        step="1"
-        placeholder="25000"
+        thousand-separator
+        prefix="Rp"
+        placeholder="25.000"
         @wheel="preventNumberScroll"
       />
 
@@ -157,8 +157,11 @@ function preventNumberScroll(event: WheelEvent) {
       <p v-if="priceError" class="text-xs font-medium text-rose-600">{{ priceError }}</p>
     </div>
 
-    <div class="flex justify-end">
-      <UiButton :disabled="submitting" @click="onSubmit">
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" :disabled="submitting" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton icon="key" :disabled="submitting" block class="sm:w-auto" @click="onSubmit">
         {{ submitting ? t('common.saving') : t('order.action.lockPrice') }}
       </UiButton>
     </div>

@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [{ currentPassword: string; newPassword: string }]
+  cancel: []
 }>()
 
 const { t } = useI18n()
@@ -63,8 +64,11 @@ const onSubmit = handleSubmit((values) => {
       type="password"
       :error="errors.confirmPassword"
     />
-    <div class="flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('password.change') }}
       </UiButton>
     </div>

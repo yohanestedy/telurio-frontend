@@ -4,6 +4,8 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { formatKg as formatKgValue } from '../../utils/formatters'
 
+const { t } = useI18n()
+
 const validationSchema = toTypedSchema(z.object({
   allocations: z.array(
     z.object({
@@ -51,7 +53,7 @@ const props = withDefaults(defineProps<{
   todayPricePerKg: null,
   canSetPriceNow: false,
   enablePriceLock: true,
-  submitLabel: 'Mulai pengantaran',
+  submitLabel: 'Mulai Hantar',
   initialAllocations: () => [],
   combinedAvailableKg: null,
   coopStocks: () => [],
@@ -60,6 +62,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   submit: [{ allocations: Array<{ coopId: string; quantityKg: number }>; customPricePerKg?: number }]
+  cancel: []
 }>()
 
 const { handleSubmit, setFieldValue } = useForm<FormValues, SubmitValues>({
@@ -271,46 +274,46 @@ function onSubmit() {
     .map(([coopId, qty]) => ({ coopId, quantityKg: Number(qty) }))
 
   if (allocations.length === 0) {
-    error.value = 'Minimal satu alokasi kandang harus diisi'
+    error.value = t('validation.allocation.minOne')
     return
   }
 
   if (Number(total.value.toFixed(3)) !== Number(Number(props.orderQuantityKg).toFixed(3))) {
-    error.value = 'Total alokasi harus sama dengan kuantitas order'
+    error.value = t('validation.allocation.totalMismatch')
     return
   }
 
   if (overByCoop.value.size > 0) {
-    error.value = 'Satu atau lebih alokasi kandang melebihi stok live kandang'
+    error.value = t('validation.allocation.exceedsStock')
     return
   }
 
   if (combinedOverKg.value > 0) {
-    error.value = `Stok gabungan tidak cukup. Kekurangan ${formatKg(combinedOverKg.value)} kg`
+    error.value = `${t('stock.combinedShortage')} ${formatKg(combinedOverKg.value)} kg`
     return
   }
 
   let customPricePayload: string | undefined
   if (requiresPriceLock.value) {
     if (!props.canSetPriceNow) {
-      priceError.value = 'Harga order belum bisa dikunci karena tanggal kirim bukan hari ini'
+      priceError.value = t('order.priceForm.notToday')
       return
     }
 
     if (todayPricePerKgValue.value === null) {
-      priceError.value = 'Harga harian hari ini belum tersedia. Hubungi admin untuk input harga hari ini.'
+      priceError.value = t('order.priceForm.todayUnavailable')
       return
     }
 
     if (priceMode.value === 'custom') {
       if (!customPricePerKg.value) {
-        priceError.value = 'Harga custom wajib diisi'
+        priceError.value = t('order.priceForm.customRequired')
         return
       }
 
       const parsedCustom = Number(customPricePerKg.value)
       if (Number.isNaN(parsedCustom) || !Number.isFinite(parsedCustom) || !Number.isInteger(parsedCustom) || parsedCustom < 0) {
-        priceError.value = 'Harga custom harus angka bulat minimal 0'
+        priceError.value = t('order.priceForm.customInvalid')
         return
       }
 
@@ -338,35 +341,35 @@ function preventNumberScroll(event: WheelEvent) {
 <template>
   <div class="space-y-4">
     <div class="rounded-2xl border border-white/50 bg-white/65 p-4 text-sm text-ink-700">
-      Total order: <span class="font-semibold">{{ formatKg(orderQuantityKg) }} kg</span>
+      {{ t('order.total') }}: <span class="font-semibold">{{ formatKg(orderQuantityKg) }} kg</span>
       <span class="mx-2">•</span>
-      Total alokasi: <span class="font-semibold">{{ formatKg(total) }} kg</span>
+      {{ t('order.Allocations') }}: <span class="font-semibold">{{ formatKg(total) }} kg</span>
       <span class="mx-2">•</span>
-      Stok gabungan tersedia: <span class="font-semibold">{{ formatKg(combinedAvailableForForm) }} kg</span>
+      {{ t('stock.combinedAvailable') }}: <span class="font-semibold">{{ formatKg(combinedAvailableForForm) }} kg</span>
     </div>
 
     <div
       v-if="shouldShowPriceLockCard"
       class="space-y-3 rounded-2xl border border-brand-200/70 bg-brand-50/40 px-4 py-4"
     >
-      <p class="text-sm font-semibold text-ink-900">Lock harga order</p>
+      <p class="text-sm font-semibold text-ink-900">{{ t('order.priceForm.title') }}</p>
 
       <template v-if="!requiresPriceLock">
         <p class="text-xs text-ink-600">
-          Harga order sudah terkunci: <span class="font-semibold text-ink-900">{{ formatRupiah(orderPricePerKgValue) }}/kg</span>
+          {{ t('order.priceForm.standardLabel') }}: <span class="font-semibold text-ink-900">{{ formatRupiah(orderPricePerKgValue) }}/kg</span>
         </p>
       </template>
 
       <template v-else>
         <p v-if="hasPriceBlockingCondition" class="text-xs text-rose-700">
           {{ !canSetPriceNow
-            ? 'Tanggal kirim bukan hari ini, sehingga harga belum bisa dikunci.'
-            : 'Harga harian hari ini belum tersedia.' }}
+            ? t('order.priceForm.notToday')
+            : t('order.priceForm.todayUnavailable') }}
         </p>
 
         <template v-else>
           <p class="text-xs text-ink-600">
-            Harga standar hari ini: <span class="font-semibold text-ink-900">{{ formatRupiah(todayPricePerKgValue) }}/kg</span>
+            {{ t('order.priceForm.standardLabel') }}: <span class="font-semibold text-ink-900">{{ formatRupiah(todayPricePerKgValue) }}/kg</span>
           </p>
 
           <div class="grid gap-3 sm:grid-cols-2">
@@ -378,7 +381,7 @@ function preventNumberScroll(event: WheelEvent) {
                 : 'border-white/70 bg-white/70 text-ink-700 hover:bg-white'"
               @click="priceMode = 'today'"
             >
-              Gunakan harga hari ini
+              {{ t('order.priceForm.useStandard') }}
             </button>
             <button
               type="button"
@@ -388,24 +391,23 @@ function preventNumberScroll(event: WheelEvent) {
                 : 'border-white/70 bg-white/70 text-ink-700 hover:bg-white'"
               @click="priceMode = 'custom'"
             >
-              Gunakan harga custom
+              {{ t('order.priceForm.useCustom') }}
             </button>
           </div>
 
           <UiInput
             v-if="priceMode === 'custom'"
             v-model="customPricePerKg"
-            label="Harga custom per kg"
-            type="number"
-            min="0"
-            step="1"
+            :label="t('order.priceForm.customLabel')"
+            thousand-separator
+            prefix="Rp"
             placeholder="25000"
           />
         </template>
       </template>
 
       <p class="text-xs text-ink-600">
-        Preview total invoice:
+        {{ t('order.priceForm.previewTotal') }}:
         <span class="font-semibold text-ink-900">{{ previewTotalInvoice === null ? '-' : formatRupiah(previewTotalInvoice) }}</span>
       </p>
 
@@ -421,13 +423,13 @@ function preventNumberScroll(event: WheelEvent) {
         <div>
           <p class="text-sm font-medium text-ink-800">{{ coop.label }}</p>
           <p class="text-xs text-ink-600">
-            Stok tersedia: {{ formatKg(stockByCoop.get(coop.value) ?? 0) }} kg
+            {{ t('stock.available') }}: {{ formatKg(stockByCoop.get(coop.value) ?? 0) }} kg
           </p>
           <p
             v-if="overByCoop.has(coop.value)"
             class="mt-1 text-xs font-medium text-rose-600"
           >
-            Melebihi stok {{ formatKg(overByCoop.get(coop.value) ?? 0) }} kg
+            {{ t('stock.exceeds') }} {{ formatKg(overByCoop.get(coop.value) ?? 0) }} kg
           </p>
         </div>
         <div class="space-y-1 text-right">
@@ -444,12 +446,15 @@ function preventNumberScroll(event: WheelEvent) {
       </label>
     </div>
     <p v-if="combinedOverKg > 0" class="text-sm font-medium text-rose-600">
-      Stok gabungan kurang {{ formatKg(combinedOverKg) }} kg
+      {{ t('stock.combinedShortage') }} {{ formatKg(combinedOverKg) }} kg
     </p>
     <p v-if="error" class="text-sm font-medium text-rose-600">{{ error }}</p>
-    <div class="flex justify-end">
-      <UiButton :disabled="submitting || hasStockShortage || hasPriceBlockingCondition" @click="onSubmit">
-        {{ submitting ? 'Menyimpan...' : submitLabel }}
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" :disabled="submitting" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton icon="delivery" :disabled="submitting || hasStockShortage || hasPriceBlockingCondition" block class="sm:w-auto" @click="onSubmit">
+        {{ submitting ? t('common.saving') : submitLabel }}
       </UiButton>
     </div>
   </div>

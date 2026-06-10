@@ -94,28 +94,54 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiDatePicker
-      v-model="date"
-      :label="t('common.date')"
-      :placeholder="t('date.placeholder')"
-      :max="todayIso"
-      :error="errors.date"
-    />
-    <UiSelect
-      v-model="categoryId"
-      :options="categoryOptions"
-      :label="t('expense.category')"
-      placeholder="Pilih kategori"
-      :error="errors.categoryId"
-    />
-    <UiInput v-model="amount" type="number" min="500" step="1" :label="t('common.amount')" :error="errors.amount" />
-    <UiInput v-model="description" :label="t('expense.itemDescription')" :placeholder="t('generalExpense.descriptionPlaceholder')" :error="errors.description" />
-    <div class="md:col-span-2">
-      <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
+  <form class="space-y-5" @submit.prevent="onSubmit">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <UiDatePicker
+        v-model="date"
+        :label="t('common.date')"
+        :placeholder="t('date.placeholder')"
+        :max="todayIso"
+        required
+        :error="errors.date"
+      />
+      <UiSelect
+        v-model="categoryId"
+        :options="categoryOptions"
+        :label="t('expense.category')"
+        placeholder="Pilih kategori"
+        required
+        :error="errors.categoryId"
+      />
+      <UiInput
+        v-model="amount"
+        thousand-separator
+        prefix="Rp"
+        :label="t('common.amount')"
+        placeholder="0"
+        required
+        :error="errors.amount"
+      />
+      <UiInput
+        v-model="description"
+        :label="t('expense.itemDescription')"
+        :placeholder="t('generalExpense.descriptionPlaceholder')"
+        required
+        :error="errors.description"
+      />
     </div>
-    <div class="md:col-span-2 flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
+
+    <UiTextarea
+      v-model="notes"
+      :label="t('common.notes')"
+      :help="t('expense.optional')"
+      :error="errors.notes"
+    />
+
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('common.save') }}
       </UiButton>
     </div>

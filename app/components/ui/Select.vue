@@ -14,6 +14,7 @@ interface Props {
   options: Option[]
   searchable?: boolean
   disabled?: boolean
+  required?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -23,6 +24,7 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Pilih opsi',
   searchable: true,
   disabled: false,
+  required: false,
 })
 
 const emit = defineEmits<{
@@ -73,7 +75,10 @@ onClickOutside(rootRef, () => {
 
 <template>
   <label class="block space-y-2">
-    <span v-if="label" class="text-sm font-medium text-ink-700">{{ label }}</span>
+    <span v-if="label" class="text-sm font-medium text-ink-700">
+      {{ label }}
+      <span v-if="required" class="text-rose-500" aria-hidden="true">*</span>
+    </span>
     <div
       v-if="searchable"
       ref="rootRef"

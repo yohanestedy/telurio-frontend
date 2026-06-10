@@ -1054,6 +1054,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         :submit-label="allocationModalMode === 'edit' ? t('order.action.saveAllocation') : t('order.action.startDelivery')"
         :submitting="modalSubmitting"
         @submit="submitDeliveryAllocation"
+        @cancel="startDeliveryOpen = false"
       />
     </UiDialog>
 
@@ -1071,6 +1072,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         :price-per-kg="activeOrder.pricePerKg"
         :dp-amount="activeOrder.dpAmount"
         @submit="submitPaymentUpdate"
+        @cancel="paymentOpen = false"
       />
     </UiDialog>
 
@@ -1086,6 +1088,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         :order-quantity-kg="activeOrder.quantityKg"
         :standard-price-per-kg="currentPrice?.pricePerKg ?? null"
         @submit="submitLockPrice"
+        @cancel="lockPriceOpen = false"
       />
     </UiDialog>
 
@@ -1100,6 +1103,7 @@ async function submitPopulationUpdate(payload: { population: number; populationC
         :coop="activePopulationCoop"
         :submitting="modalSubmitting"
         @submit="submitPopulationUpdate"
+        @cancel="populationOpen = false"
       />
     </UiDialog>
   </div>

@@ -31,7 +31,10 @@ const emit = defineEmits<{
       populationChangeReason?: string
     },
   ]
+  cancel: []
 }>()
+
+const { t } = useI18n()
 
 const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues, SubmitValues>({
   validationSchema,
@@ -79,16 +82,17 @@ const onSubmit = handleSubmit((values) => {
     <div class="rounded-2xl border border-slate-200/80 bg-white/65 p-3 text-sm">
       <p class="font-semibold text-ink-900">{{ props.coop.name }}</p>
       <p class="mt-1 text-xs text-ink-500">
-        Populasi saat ini {{ props.coop.population.toLocaleString('id-ID') }} ekor
+        {{ t('coopProfile.currentPopulation') }} {{ props.coop.population.toLocaleString('id-ID') }} {{ t('coopProfile.populationUnit') }}
       </p>
     </div>
 
     <UiInput
       v-model="population"
-      label="Populasi aktif terbaru"
+      :label="t('form.coop.activePopulation')"
       type="number"
       min="1"
       inputmode="numeric"
+      required
       :error="errors.population"
     />
 
@@ -96,26 +100,30 @@ const onSubmit = handleSubmit((values) => {
       v-if="deltaPopulation !== null"
       class="rounded-2xl border border-slate-200/80 bg-white/60 px-3 py-2 text-xs text-ink-600"
     >
-      Selisih:
+      {{ t('coopProfile.populationChange') }}:
       <span
         class="font-semibold"
         :class="deltaPopulation >= 0 ? 'text-emerald-700' : 'text-rose-600'"
       >
-        {{ deltaPopulation > 0 ? '+' : '' }}{{ deltaPopulation.toLocaleString('id-ID') }} ekor
+        {{ deltaPopulation > 0 ? '+' : '' }}{{ deltaPopulation.toLocaleString('id-ID') }} {{ t('coopProfile.populationUnit') }}
       </span>
     </div>
 
     <UiTextarea
       v-model="populationChangeReason"
-      label="Catatan perubahan"
+      :label="t('common.notes')"
+      :help="t('expense.optional')"
       placeholder="Opsional, misal afkir, mati, koreksi hitung..."
       :rows="3"
       :error="errors.populationChangeReason"
     />
 
-    <div class="flex justify-end gap-2">
-      <UiButton type="submit" :disabled="submitting">
-        {{ submitting ? 'Menyimpan...' : 'Simpan populasi' }}
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
+        {{ submitting ? t('common.saving') : t('common.save') }}
       </UiButton>
     </div>
   </form>

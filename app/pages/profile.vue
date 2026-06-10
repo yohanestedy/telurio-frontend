@@ -50,7 +50,7 @@ async function confirmLogout() {
     </GlassCard>
 
     <TableCard :title="t('profile.securityTitle')" :description="t('profile.securityDescription')" icon="key">
-      <FormsChangePasswordForm :submitting="submitting" @submit="changePassword" />
+      <FormsChangePasswordForm :submitting="submitting" @submit="changePassword" @cancel="submitting = false" />
       <div class="mt-4 flex justify-end">
         <UiButton variant="ghost" icon="logout" @click="logoutDialogOpen = true">{{ t('common.logout') }}</UiButton>
       </div>

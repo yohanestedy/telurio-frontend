@@ -33,6 +33,7 @@ const emit = defineEmits<{
       notes: string
     },
   ]
+  cancel: []
 }>()
 
 const { t } = useI18n()
@@ -103,6 +104,7 @@ function onReset() {
       :options="coopOptions"
       :label="t('common.coop')"
       :placeholder="t('validation.required.coop')"
+      required
       :error="errors.coopId"
     />
 
@@ -139,6 +141,7 @@ function onReset() {
       step="0.01"
       :label="t('order.quantity') + ' (kg)'"
       placeholder="0.00"
+      required
       :error="errors.quantityKg"
     />
 
@@ -152,11 +155,11 @@ function onReset() {
       />
     </div>
 
-    <div class="md:col-span-2 flex justify-end gap-2">
-      <UiButton type="button" variant="ghost" :disabled="submitting" @click="onReset">
-        {{ t('common.reset') }}
+    <div class="md:col-span-2 flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" :disabled="submitting" @click="emit('cancel')">
+        {{ t('common.cancel') }}
       </UiButton>
-      <UiButton type="submit" :disabled="submitting">
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('stock.saveAdjustment') }}
       </UiButton>
     </div>

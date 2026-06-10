@@ -37,6 +37,7 @@ const emit = defineEmits<{
       isActive?: boolean
     },
   ]
+  cancel: []
 }>()
 
 const { t } = useI18n()
@@ -100,27 +101,42 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiInput v-model="name" :label="t('form.coop.name')" :error="errors.name" />
-    <UiInput v-model="population" :label="t('form.coop.activePopulation')" type="number" :error="errors.population" />
-    <UiInput v-model="chickenStrain" :label="t('form.coop.chickenStrain')" :error="errors.chickenStrain" />
-    <UiDatePicker
-      v-model="chickBirthDate"
-      :label="t('form.coop.hatchDate')"
-      :placeholder="t('form.coop.pickHatchDate')"
-      :error="errors.chickBirthDate"
-    />
-    <UiInput
-      v-model="depreciationPercent"
-      :label="t('form.coop.depreciationPercent')"
-      type="number"
-      :error="errors.depreciationPercent"
-    />
-    <div class="md:col-span-2">
-      <UiCheckbox v-model="isActive" :label="t('form.coop.active')" />
+  <form class="space-y-5" @submit.prevent="onSubmit">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <UiInput v-model="name" :label="t('form.coop.name')" required :error="errors.name" />
+      <UiInput
+        v-model="population"
+        :label="t('form.coop.activePopulation')"
+        type="number"
+        min="1"
+        inputmode="numeric"
+        required
+        :error="errors.population"
+      />
+      <UiInput v-model="chickenStrain" :label="t('form.coop.chickenStrain')" :error="errors.chickenStrain" />
+      <UiDatePicker
+        v-model="chickBirthDate"
+        :label="t('form.coop.hatchDate')"
+        :placeholder="t('form.coop.pickHatchDate')"
+        :error="errors.chickBirthDate"
+      />
+      <UiInput
+        v-model="depreciationPercent"
+        :label="t('form.coop.depreciationPercent')"
+        type="number"
+        min="0"
+        max="100"
+        inputmode="decimal"
+        required
+        :error="errors.depreciationPercent"
+      />
     </div>
-    <div class="md:col-span-2 flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
+    <UiCheckbox v-model="isActive" :label="t('form.coop.active')" />
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('form.coop.save') }}
       </UiButton>
     </div>

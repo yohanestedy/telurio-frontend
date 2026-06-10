@@ -17,6 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [{ name: string; address?: string; phone?: string }]
+  cancel: []
 }>()
 
 const { t } = useI18n()
@@ -65,12 +66,17 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <form class="grid gap-4" @submit.prevent="onSubmit">
-    <UiInput v-model="name" :label="t('form.customer.name')" :error="errors.name" />
-    <UiInput v-model="phone" :label="t('form.customer.phone')" :error="errors.phone" />
-    <UiTextarea v-model="address" :label="t('common.address')" :error="errors.address" />
-    <div class="flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
+  <form class="space-y-5" @submit.prevent="onSubmit">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <UiInput v-model="name" :label="t('form.customer.name')" required :error="errors.name" />
+      <UiInput v-model="phone" :label="t('form.customer.phone')" type="tel" inputmode="tel" :error="errors.phone" />
+    </div>
+    <UiTextarea v-model="address" :label="t('common.address')" :help="t('expense.optional')" :error="errors.address" />
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('form.customer.save') }}
       </UiButton>
     </div>

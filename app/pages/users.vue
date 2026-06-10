@@ -316,6 +316,7 @@ onMounted(async () => {
           })),
         } : undefined"
         @submit="submitUser"
+        @cancel="dialogOpen = false"
       />
     </UiDialog>
   </div>

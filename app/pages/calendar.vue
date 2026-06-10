@@ -694,6 +694,7 @@ onMounted(() => {
         :submit-label="allocationModalMode === 'edit' ? t('order.action.saveAllocation') : t('order.action.startDelivery')"
         :submitting="modalSubmitting"
         @submit="submitDeliveryAllocation"
+        @cancel="startDeliveryOpen = false"
       />
     </UiDialog>
 
@@ -711,6 +712,7 @@ onMounted(() => {
         :price-per-kg="activeOrder.pricePerKg"
         :dp-amount="activeOrder.dpAmount"
         @submit="submitPaymentUpdate"
+        @cancel="paymentOpen = false"
       />
     </UiDialog>
 
@@ -726,6 +728,7 @@ onMounted(() => {
         :order-quantity-kg="activeOrder.quantityKg"
         :standard-price-per-kg="selectedPrice?.pricePerKg ?? null"
         @submit="submitLockPrice"
+        @cancel="lockPriceOpen = false"
       />
     </UiDialog>
 

@@ -488,7 +488,7 @@ watch(dialogOpen, (open) => {
     <UiDialog
       v-model:open="dialogOpen"
       :title="editing ? t('common.edit') : t('common.add')"
-      description="Harga final akan dikunci saat delivery dimulai atau saat order langsung lunas."
+      :description="t('order.dialogDescription')"
       size="xl"
     >
       <FormsOrderForm
@@ -505,6 +505,7 @@ watch(dialogOpen, (open) => {
           notes: editing.notes ?? '',
         } : undefined"
         @submit="submitOrder"
+        @cancel="dialogOpen = false"
       />
     </UiDialog>
   </div>

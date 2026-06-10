@@ -5,13 +5,15 @@ import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { paymentMethods, paymentStatuses } from '../../types/domain'
 import type { AppIconName } from '../../utils/icons'
+
+const { t } = useI18n()
 import { formatKg as formatKgValue } from '../../utils/formatters'
 
 const createSchema = z
   .object({
-    customerId: z.string().min(1, 'Pelanggan wajib dipilih'),
-    quantityKg: z.coerce.number().min(0.1, 'Jumlah minimal 0.1 kg'),
-    deliveryDate: z.string().min(1, 'Tanggal wajib diisi'),
+    customerId: z.string().min(1, t('validation.required.customer')),
+    quantityKg: z.coerce.number().min(0.1, t('validation.min.positive')),
+    deliveryDate: z.string().min(1, t('validation.required.date')),
     deliverBefore: z.string().optional(),
     paymentStatus: z.enum(paymentStatuses),
     paymentMethod: z.preprocess(
@@ -20,7 +22,7 @@ const createSchema = z
     ),
     dpAmount: z.preprocess(
       (value) => (value === '' ? undefined : value),
-      z.coerce.number().min(1000, 'Nominal DP minimal Rp 1.000').optional(),
+      z.coerce.number().min(1000, t('validation.min.dpAmount')).optional(),
     ),
     notes: z.string().optional(),
   })
@@ -30,7 +32,7 @@ const createSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['paymentStatus'],
-        message: 'Status Lunas hanya bisa untuk pengiriman hari ini',
+        message: t('validation.payment.lunasFuture'),
       })
     }
 
@@ -39,14 +41,14 @@ const createSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['paymentMethod'],
-          message: 'Metode pembayaran wajib untuk DP',
+          message: t('validation.payment.methodRequiredForDp'),
         })
       }
       if (value.dpAmount === undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['dpAmount'],
-          message: 'Jumlah DP wajib diisi',
+          message: t('validation.payment.dpRequired'),
         })
       }
     }
@@ -55,14 +57,14 @@ const createSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['paymentMethod'],
-        message: 'Metode pembayaran wajib untuk Lunas',
+        message: t('validation.payment.methodRequiredForLunas'),
       })
     }
   })
 
 const updateSchema = z.object({
-  quantityKg: z.coerce.number().min(0.1, 'Jumlah minimal 0.1 kg'),
-  deliveryDate: z.string().min(1, 'Tanggal wajib diisi'),
+  quantityKg: z.coerce.number().min(0.1, t('validation.min.positive')),
+  deliveryDate: z.string().min(1, t('validation.required.date')),
   deliverBefore: z.string().optional(),
   notes: z.string().optional(),
 })
@@ -103,6 +105,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   submit: [Record<string, string | number | undefined>]
+  cancel: []
 }>()
 
 const validationSchema = computed(() => toTypedSchema(props.isEdit ? updateSchema : createSchema))
@@ -311,20 +314,20 @@ const onSubmit = handleSubmit((values) => {
   customPriceError.value = ''
 
   if (!props.isEdit && isTodayDelivery.value && todayPricePerKgValue.value === null) {
-    customPriceError.value = 'Harga harian hari ini belum tersedia. Hubungi admin untuk input harga hari ini.'
+    customPriceError.value = t('order.priceForm.todayUnavailable')
     return
   }
 
   let customPricePayload: number | undefined
   if (!props.isEdit && isTodayDelivery.value && priceMode.value === 'custom') {
     if (!customPricePerKg.value) {
-      customPriceError.value = 'Harga custom wajib diisi'
+      customPriceError.value = t('order.priceForm.customRequired')
       return
     }
 
     const parsedCustom = Number(customPricePerKg.value)
     if (Number.isNaN(parsedCustom) || !Number.isFinite(parsedCustom) || !Number.isInteger(parsedCustom) || parsedCustom < 5000) {
-      customPriceError.value = 'Harga custom harus angka bulat minimal Rp 5.000'
+      customPriceError.value = t('order.priceForm.customInvalid')
       return
     }
 
@@ -365,25 +368,28 @@ const onSubmit = handleSubmit((values) => {
         v-if="!isEdit"
         v-model="customerId"
         :options="customerOptions"
-        label="Pilih pelanggan"
-        placeholder="Pilih nama pelanggan..."
+        :label="t('common.customer')"
+        :placeholder="t('common.customer')"
+        required
         :error="errors.customerId"
       />
-      <UiInput v-model="quantityKg" label="Kuantitas (kg)" type="number" min="0.1" step="0.1" :error="errors.quantityKg" placeholder="0.1" />
+      <UiInput v-model="quantityKg" :label="t('order.quantity') + ' (kg)'" type="number" min="0.1" step="0.1" required :error="errors.quantityKg" placeholder="0.1" />
     </div>
 
     <div class="rounded-3xl border border-white/50 bg-white/55 p-4 sm:p-5">
       <div class="grid gap-4 sm:grid-cols-2">
         <UiDatePicker
           v-model="deliveryDate"
-          label="Tanggal antar"
-          placeholder="Pilih tanggal kirim"
+          :label="t('order.deliveryDate')"
+          :placeholder="t('order.pickDeliveryDate')"
+          required
           :error="errors.deliveryDate"
         />
         <UiTimePicker
           v-model="deliverBefore"
-          label="Antar sebelum"
+          :label="t('order.deliverBefore')"
           placeholder="--:--"
+          :help="t('expense.optional')"
           :error="errors.deliverBefore"
         />
       </div>
@@ -393,22 +399,22 @@ const onSubmit = handleSubmit((values) => {
       v-if="showCombinedStockWarning"
       class="rounded-2xl border border-amber-300 bg-amber-50/80 px-4 py-3 text-sm text-amber-800"
     >
-      Order tetap bisa dibuat, tapi alokasi tidak bisa dilakukan sebelum stok cukup.
-      Stok gabungan saat ini {{ formatKg(combinedAvailableKgValue) }} kg,
-      permintaan {{ formatKg(enteredQuantityKg) }} kg
-      (kekurangan {{ formatKg(stockShortageKg) }} kg).
+      {{ t('order.stockWarning') }}
+      {{ t('stock.combinedAvailable') }} {{ formatKg(combinedAvailableKgValue) }} kg,
+      {{ t('order.quantity') }} {{ formatKg(enteredQuantityKg) }} kg
+      ({{ t('stock.combinedShortage') }} {{ formatKg(stockShortageKg) }} kg).
     </div>
 
     <div
       v-if="!isEdit && isTodayDelivery"
       class="space-y-3 rounded-2xl border border-brand-200/70 bg-brand-50/40 px-4 py-4"
     >
-      <p class="text-sm font-semibold text-ink-900">Penguncian harga order hari ini</p>
+      <p class="text-sm font-semibold text-ink-900">{{ t('order.priceForm.title') }}</p>
       <p v-if="todayPricePerKgValue !== null" class="text-xs text-ink-600">
-        Harga standar hari ini: <span class="font-semibold text-ink-900">{{ formatRupiah(todayPricePerKgValue) }}/kg</span>
+        {{ t('order.priceForm.standardLabel') }}: <span class="font-semibold text-ink-900">{{ formatRupiah(todayPricePerKgValue) }}/kg</span>
       </p>
       <p v-else class="text-xs text-rose-700">
-        Harga harian hari ini belum tersedia.
+        {{ t('order.priceForm.todayUnavailable') }}
       </p>
 
       <div v-if="todayPricePerKgValue !== null" class="grid gap-3 sm:grid-cols-2">
@@ -420,7 +426,7 @@ const onSubmit = handleSubmit((values) => {
             : 'border-white/70 bg-white/70 text-ink-700 hover:bg-white'"
           @click="priceMode = 'today'"
         >
-          Gunakan harga hari ini
+          {{ t('order.priceForm.useStandard') }}
         </button>
         <button
           type="button"
@@ -430,23 +436,22 @@ const onSubmit = handleSubmit((values) => {
             : 'border-white/70 bg-white/70 text-ink-700 hover:bg-white'"
           @click="priceMode = 'custom'"
         >
-          Gunakan harga custom
+          {{ t('order.priceForm.useCustom') }}
         </button>
       </div>
 
       <UiInput
         v-if="todayPricePerKgValue !== null && priceMode === 'custom'"
         v-model="customPricePerKg"
-        label="Harga custom per kg"
-        type="number"
-        min="5000"
-        step="1"
-        placeholder="25000"
+        :label="t('order.priceForm.customLabel')"
+        thousand-separator
+        prefix="Rp"
+        placeholder="25.000"
         :error="customPriceError"
       />
 
       <p v-if="todayPricePerKgValue !== null" class="text-xs text-ink-600">
-        Preview total invoice:
+        {{ t('order.priceForm.previewTotal') }}:
         <span class="font-semibold text-ink-900">{{ previewTotalInvoice === null ? '-' : formatRupiah(previewTotalInvoice) }}</span>
       </p>
 
@@ -460,7 +465,7 @@ const onSubmit = handleSubmit((values) => {
     </div>
 
     <div v-if="!isEdit" class="space-y-3">
-      <p class="text-sm font-semibold text-ink-800">Status pembayaran</p>
+      <p class="text-sm font-semibold text-ink-800">{{ t('form.payment.statusLabel') }}</p>
       <div class="grid gap-3 sm:grid-cols-3">
         <button
           v-for="option in paymentStatusCards"
@@ -479,7 +484,7 @@ const onSubmit = handleSubmit((values) => {
         </button>
       </div>
       <p v-if="isFutureDelivery" class="text-xs text-amber-700">
-        Untuk tanggal kirim setelah hari ini, status Lunas tidak tersedia.
+        {{ t('validation.payment.lunasFutureHint') }}
       </p>
       <p v-if="errors.paymentStatus" class="text-xs font-medium text-rose-600">
         {{ errors.paymentStatus }}
@@ -493,18 +498,17 @@ const onSubmit = handleSubmit((values) => {
       <UiInput
         v-if="shouldShowDpAmount"
         v-model="dpAmount"
-        label="Nominal DP (Rp)"
-        type="number"
-        min="1000"
-        step="1"
-        placeholder="500000"
+        :label="t('form.payment.dpAmount')"
+        thousand-separator
+        prefix="Rp"
+        placeholder="500.000"
         :error="errors.dpAmount"
       />
       <UiSelect
         v-model="paymentMethod"
         :options="paymentMethods.map((value) => ({ label: value, value }))"
-        label="Metode pembayaran"
-        placeholder="Pilih metode"
+        :label="t('form.payment.methodLabel')"
+        required
         :error="errors.paymentMethod"
         :class="{ 'sm:col-span-2': !shouldShowDpAmount }"
       />
@@ -512,15 +516,18 @@ const onSubmit = handleSubmit((values) => {
 
     <UiTextarea
       v-model="notes"
-      label="Catatan tambahan"
-      placeholder="Contoh: packing peti kayu, titip ke satpam, dll..."
+      :label="t('common.notes')"
+      :help="t('expense.optional')"
       :error="errors.notes"
       :rows="3"
     />
 
-    <div class="flex justify-end">
-      <UiButton :disabled="submitting" type="submit" class="min-w-40">
-        {{ submitting ? 'Menyimpan...' : 'Simpan pesanan' }}
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" :disabled="submitting" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
+        {{ submitting ? t('common.saving') : t('common.save') }}
       </UiButton>
     </div>
   </form>

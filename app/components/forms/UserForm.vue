@@ -38,6 +38,7 @@ const emit = defineEmits<{
       }>
     },
   ]
+  cancel: []
 }>()
 
 const selectedCoopIds = ref<string[]>([])
@@ -139,14 +140,14 @@ const onSubmit = handleSubmit((values) => {
         v-if="!isEdit"
         v-model="role"
         :options="[
-          { label: 'Owner', value: 'OWNER' },
-          { label: 'Operator', value: 'OPERATOR' },
+          { label: t('role.OWNER'), value: 'OWNER' },
+          { label: t('role.OPERATOR'), value: 'OPERATOR' },
         ]"
-        label="Role"
+        :label="t('user.role')"
         :error="errors.role"
       />
-      <UiInput v-if="!isEdit" v-model="username" label="Username" :error="errors.username" />
-      <UiInput v-if="!isEdit" v-model="password" label="Password" type="password" :error="errors.password" />
+      <UiInput v-if="!isEdit" v-model="username" :label="t('user.username')" :error="errors.username" />
+      <UiInput v-if="!isEdit" v-model="password" :label="t('user.password')" type="password" :error="errors.password" />
     </div>
 
     <div class="rounded-[24px] border border-white/40 bg-white/55 p-4">
@@ -184,8 +185,11 @@ const onSubmit = handleSubmit((values) => {
 
     <UiCheckbox v-if="isEdit" v-model="isActive" :label="t('user.active')" />
 
-    <div class="flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('user.save') }}
       </UiButton>
     </div>

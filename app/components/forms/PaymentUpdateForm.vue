@@ -41,6 +41,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [{ paymentStatus: string; paymentMethod?: string; amountPaid?: number; notes?: string }]
+  cancel: []
 }>()
 
 const hasPrice = computed(() =>
@@ -373,9 +374,9 @@ const onSubmit = handleSubmit((values) => {
       v-if="showAmountInput"
       v-model="amountPaid"
       :label="t('form.payment.dpAmount')"
-      type="number"
-      min="1000"
-      step="1"
+      required
+      thousand-separator
+      prefix="Rp"
       :error="errors.amountPaid"
       :placeholder="t('form.payment.dpAmountPlaceholder')"
       class="md:col-span-2"
@@ -404,10 +405,13 @@ const onSubmit = handleSubmit((values) => {
     </div>
 
     <div class="md:col-span-2">
-      <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
+      <UiTextarea v-model="notes" :label="t('common.notes')" :help="t('expense.optional')" :error="errors.notes" />
     </div>
-    <div class="md:col-span-2 flex justify-end">
-      <UiButton :disabled="submitting || !statusOptions.length" type="submit">
+    <div class="md:col-span-2 flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" :disabled="submitting" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting || !statusOptions.length" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('form.payment.submit') }}
       </UiButton>
     </div>

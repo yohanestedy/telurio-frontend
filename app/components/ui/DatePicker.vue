@@ -32,6 +32,7 @@ interface Props {
   error?: string
   help?: string
   disabled?: boolean
+  required?: boolean
   min?: string
   max?: string
 }
@@ -43,6 +44,7 @@ const props = withDefaults(defineProps<Props>(), {
   error: '',
   help: '',
   disabled: false,
+  required: false,
   min: undefined,
   max: undefined,
 })
@@ -200,7 +202,10 @@ function nextYearRange() {
 
 <template>
   <label class="block space-y-2">
-    <span v-if="label" class="text-sm font-medium text-ink-700">{{ label }}</span>
+    <span v-if="label" class="text-sm font-medium text-ink-700">
+      {{ label }}
+      <span v-if="required" class="text-rose-500" aria-hidden="true">*</span>
+    </span>
 
     <DatePickerRoot
       v-model="value"

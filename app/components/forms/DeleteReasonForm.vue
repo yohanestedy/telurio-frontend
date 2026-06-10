@@ -15,6 +15,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [{ deleteReason: string }]
+  cancel: []
 }>()
 
 const { t } = useI18n()
@@ -45,8 +46,11 @@ const onSubmit = handleSubmit((values) => {
       :label="label ?? t('delete.reason')"
       :error="errors.deleteReason"
     />
-    <div class="flex justify-end">
-      <UiButton variant="destructive" :disabled="submitting" type="submit">
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" :disabled="submitting" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton variant="destructive" icon="delete" :disabled="submitting" block class="sm:w-auto" type="submit">
         {{ submitting ? t('common.processing') : t('delete.confirm') }}
       </UiButton>
     </div>

@@ -455,6 +455,7 @@ onMounted(async () => {
           notes: editing.notes ?? '',
         } : undefined"
         @submit="submitExpense"
+        @cancel="dialogOpen = false"
       />
     </UiDialog>
 

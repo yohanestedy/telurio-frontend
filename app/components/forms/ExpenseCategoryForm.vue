@@ -17,6 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [{ name: string; isActive?: boolean }]
+  cancel: []
 }>()
 
 const { t } = useI18n()
@@ -59,8 +60,11 @@ const onSubmit = handleSubmit((values) => {
   <form class="grid gap-4" @submit.prevent="onSubmit">
     <UiInput v-model="name" :label="t('expenseCategory.name')" :error="errors.name" />
     <UiCheckbox v-if="isEdit" v-model="isActive" :label="t('expenseCategory.active')" />
-    <div class="flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('expenseCategory.save') }}
       </UiButton>
     </div>

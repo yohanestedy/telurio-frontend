@@ -393,6 +393,7 @@ watch(
           :submit-label="allocationModalMode === 'edit' ? t('order.action.saveAllocation') : t('order.action.startDelivery')"
           :submitting="submitting"
           @submit="submitDeliveryAllocation"
+          @cancel="startDeliveryOpen = false"
         />
       </UiDialog>
 
@@ -408,15 +409,16 @@ watch(
           :price-per-kg="order.pricePerKg"
           :dp-amount="order.dpAmount"
           @submit="updatePayment"
+          @cancel="paymentOpen = false"
         />
       </UiDialog>
 
       <UiDialog
         v-model:open="cancelOpen"
         :title="t('order.cancel')"
-        description="Pembatalan hanya berlaku untuk order aktif yang belum dihantar."
+        :description="t('order.cancelDescription')"
       >
-        <FormsCancelOrderForm :submitting="submitting" @submit="cancelOrder" />
+        <FormsCancelOrderForm :submitting="submitting" @submit="cancelOrder" @cancel="cancelOpen = false" />
       </UiDialog>
     </template>
   </div>

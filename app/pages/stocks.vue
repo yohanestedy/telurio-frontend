@@ -404,6 +404,7 @@ onMounted(async () => {
         :coop-options="coopOptions"
         :submitting="submittingManualAdjust"
         @submit="submitManualAdjustment"
+        @cancel="manualAdjustOpen = false"
       />
     </UiDialog>
 

@@ -24,6 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [{ effectiveDate?: string; pricePerKg: number; notes?: string }]
+  cancel: []
 }>()
 
 const { t } = useI18n()
@@ -74,21 +75,35 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <form class="grid gap-4 md:grid-cols-2" @submit.prevent="onSubmit">
-    <UiDatePicker
-      v-if="!isEdit"
-      v-model="effectiveDate"
-      :label="t('form.price.effectiveDate')"
-      :placeholder="t('form.price.pickEffectiveDate')"
-      :max="todayIso"
-      :error="errors.effectiveDate"
-    />
-    <UiInput v-model="pricePerKg" :label="t('form.price.pricePerKg')" type="number" min="5000" step="1" :error="errors.pricePerKg" />
-    <div :class="{ 'md:col-span-2': !isEdit }">
-      <UiTextarea v-model="notes" :label="t('common.notes')" :error="errors.notes" />
+  <form class="space-y-5" @submit.prevent="onSubmit">
+    <div class="grid gap-4" :class="!isEdit ? 'sm:grid-cols-2' : ''">
+      <UiDatePicker
+        v-if="!isEdit"
+        v-model="effectiveDate"
+        :label="t('form.price.effectiveDate')"
+        :placeholder="t('form.price.pickEffectiveDate')"
+        :max="todayIso"
+        required
+        :error="errors.effectiveDate"
+      />
+      <UiInput
+        v-model="pricePerKg"
+        thousand-separator
+        prefix="Rp"
+        :label="t('form.price.pricePerKg')"
+        placeholder="0"
+        required
+        :error="errors.pricePerKg"
+      />
     </div>
-    <div class="md:col-span-2 flex justify-end">
-      <UiButton :disabled="submitting" type="submit">
+
+    <UiTextarea v-model="notes" :label="t('common.notes')" :help="t('expense.optional')" :error="errors.notes" />
+
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton type="submit" icon="circleCheckBig" :disabled="submitting" block class="sm:w-auto">
         {{ submitting ? t('common.saving') : t('form.price.save') }}
       </UiButton>
     </div>

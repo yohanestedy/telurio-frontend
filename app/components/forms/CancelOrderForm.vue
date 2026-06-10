@@ -3,6 +3,8 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 
+const { t } = useI18n()
+
 const schema = toTypedSchema(z.object({
   cancelReason: z.string().min(3, 'Alasan minimal 3 karakter'),
   cancelNotes: z.string().optional(),
@@ -19,6 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [{ cancelReason: string; cancelNotes?: string }]
+  cancel: []
 }>()
 
 const { defineField, errors, handleSubmit, resetForm } = useForm<FormValues>({
@@ -43,11 +46,14 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
   <form class="space-y-4" @submit.prevent="onSubmit">
-    <UiTextarea v-model="cancelReason" label="Alasan pembatalan" :error="errors.cancelReason" />
-    <UiTextarea v-model="cancelNotes" label="Catatan tambahan" :error="errors.cancelNotes" />
-    <div class="flex justify-end">
-      <UiButton variant="destructive" :disabled="submitting" type="submit">
-        {{ submitting ? 'Membatalkan...' : 'Batalkan order' }}
+    <UiTextarea v-model="cancelReason" :label="t('delete.reason')" :error="errors.cancelReason" />
+    <UiTextarea v-model="cancelNotes" :label="t('common.notes')" :help="t('expense.optional')" :error="errors.cancelNotes" />
+    <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+      <UiButton type="button" variant="ghost" block class="sm:w-auto" :disabled="submitting" @click="emit('cancel')">
+        {{ t('common.cancel') }}
+      </UiButton>
+      <UiButton variant="destructive" icon="circleX" :disabled="submitting" block class="sm:w-auto" type="submit">
+        {{ submitting ? t('common.processing') : t('order.action.cancel') }}
       </UiButton>
     </div>
   </form>
