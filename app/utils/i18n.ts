@@ -349,6 +349,7 @@ const id: TranslationTable = {
   "order.totalRp": "Total Rp",
   "order.dialogTitle.add": "Tambah Pesanan",
   "order.dialogTitle.edit": "Edit Pesanan",
+  "order.Allocations": "Alokasi",
   "order.dialogDescription": "Harga final akan dikunci saat delivery dimulai atau saat order langsung lunas.",
   "order.sourceAllocations": "Alokasi Sumber Telur",
   "order.sourceAllocationsDescription":
@@ -1123,6 +1124,7 @@ const en: TranslationTable = {
   "order.totalRp": "Total Rp",
   "order.dialogTitle.add": "Add Order",
   "order.dialogTitle.edit": "Edit Order",
+  "order.Allocations": "Allocations",
   "order.dialogDescription": "Final price will be locked when delivery starts or when order is paid in full.",
   "order.sourceAllocations": "Source Allocations",
   "order.sourceAllocationsDescription":
