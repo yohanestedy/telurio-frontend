@@ -175,7 +175,7 @@ onMounted(async () => {
       </template>
     </ListTableShell>
 
-    <UiDialog v-model:open="dialogOpen" :title="editing ? t('coopHealth.dialogTitle.edit') : t('coopHealth.dialogTitle.add')" :description="t('coopHealth.dialogDescription')" size="xl">
+    <UiDialog v-model:open="dialogOpen" :title="editing ? t('coopHealth.dialogTitle.edit') : t('coopHealth.dialogTitle.add')" size="xl">
       <FormsCoopHealthForm
         :coop-options="coopOptions"
         :type-options="typeOptions"

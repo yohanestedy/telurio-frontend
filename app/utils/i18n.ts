@@ -601,8 +601,8 @@ const id: TranslationTable = {
   "generalExpense.title": "Pengeluaran Pribadi",
   "generalExpense.description":
     "Pengeluaran di luar keperluan kandang (pribadi, rumah, dll).",
-  "generalExpense.add": "Tambah pengeluaran",
-  "generalExpense.edit": "Edit pengeluaran",
+  "generalExpense.dialogTitle.add": "Tambah pengeluaran",
+  "generalExpense.dialogTitle.edit": "Edit pengeluaran",
   "generalExpense.empty": "Belum ada pengeluaran non-kandang.",
   "generalExpense.descriptionPlaceholder": "Contoh: Listrik rumah, bensin, dll",
   "generalExpense.deleteConfirm": 'Yakin ingin menghapus "{description}"?',
@@ -1373,8 +1373,8 @@ const en: TranslationTable = {
   "expenseHub.personalDescription": "Personal expenses outside of coops.",
   "generalExpense.title": "Personal Expenses",
   "generalExpense.description": "Non-coop expenses (personal, household, etc).",
-  "generalExpense.add": "Add expense",
-  "generalExpense.edit": "Edit expense",
+  "generalExpense.dialogTitle.add": "Add expense",
+  "generalExpense.dialogTitle.edit": "Edit expense",
   "generalExpense.empty": "No general expenses yet.",
   "generalExpense.descriptionPlaceholder": "e.g. Electricity, fuel, etc",
   "generalExpense.deleteConfirm":

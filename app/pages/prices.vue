@@ -306,7 +306,7 @@ watch(dialogOpen, (isOpen) => {
     <UiDialog
       v-model:open="dialogOpen"
       :title="editing ? t('price.dialogTitle.edit') : t('price.dialogTitle.add')"
-      :description="t('price.dialogDescription')"
+
     >
       <FormsPriceForm
         :is-edit="Boolean(editing)"

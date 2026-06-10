@@ -383,7 +383,7 @@ onMounted(async () => {
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? t('generalExpense.edit') : t('generalExpense.add')"
+      :title="editing ? t('generalExpense.dialogTitle.edit') : t('generalExpense.dialogTitle.add')"
     >
       <FormsGeneralExpenseForm
         :initial="editing"

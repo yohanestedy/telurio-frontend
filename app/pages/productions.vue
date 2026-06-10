@@ -343,7 +343,7 @@ onMounted(async () => {
     <UiDialog
       v-model:open="dialogOpen"
       :title="editing ? t('production.dialogTitle.edit') : t('production.dialogTitle.add')"
-      :description="t('production.dialogDescription')"
+      
     >
       <FormsProductionForm
         :coop-options="coopOptions"

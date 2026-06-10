@@ -249,7 +249,6 @@ onMounted(async () => {
     <UiDialog
       v-model:open="dialogOpen"
       :title="editing ? t('coop.dialogTitle.edit') : t('coop.dialogTitle.add')"
-      :description="t('coop.dialogDescription')"
     >
       <FormsCoopForm
         :initial-value="editing ? {

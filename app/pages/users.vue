@@ -299,7 +299,6 @@ onMounted(async () => {
     <UiDialog
       v-model:open="dialogOpen"
       :title="editing ? t('user.dialogTitle.edit') : t('user.dialogTitle.add')"
-      :description="t('user.dialogDescription')"
       size="xl"
     >
       <FormsUserForm

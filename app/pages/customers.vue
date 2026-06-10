@@ -242,7 +242,6 @@ onMounted(async () => {
     <UiDialog
       v-model:open="dialogOpen"
       :title="editing ? t('customer.dialogTitle.edit') : t('customer.dialogTitle.add')"
-      :description="t('customer.dialogDescription')"
     >
       <FormsCustomerForm
         :initial-value="editing ? {
