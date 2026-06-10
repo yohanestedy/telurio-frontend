@@ -94,11 +94,22 @@ onClickOutside(rootRef, () => {
         <span :class="selectedOption ? 'text-ink-900' : 'text-ink-400'" class="truncate">
           {{ selectedOption?.label || placeholder }}
         </span>
-        <UiIcon
-          name="chevronDown"
-          class="h-4 w-4 text-ink-500 transition-transform"
-          :class="{ 'rotate-180': open }"
-        />
+        <span class="flex items-center gap-1.5">
+          <button
+            v-if="normalizedValue"
+            type="button"
+            class="flex h-5 w-5 items-center justify-center rounded-full text-ink-400 transition hover:bg-slate-200 hover:text-ink-700"
+            @click.stop="emit('update:modelValue', '')"
+            :aria-label="'Hapus pilihan'"
+          >
+            <UiIcon name="close" class="h-3.5 w-3.5" />
+          </button>
+          <UiIcon
+            name="chevronDown"
+            class="h-4 w-4 text-ink-500 transition-transform"
+            :class="{ 'rotate-180': open }"
+          />
+        </span>
       </button>
 
       <div

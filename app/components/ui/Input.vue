@@ -105,10 +105,19 @@ function handleWheel(event: WheelEvent) {
         :disabled="disabled"
         :aria-invalid="Boolean(error)"
         class="field-shell"
-        :class="prefix ? 'pl-10' : ''"
+        :class="[prefix ? 'pl-10' : '', modelValue !== '' && modelValue !== null && modelValue !== undefined && !disabled ? 'pr-9' : '']"
         @input="handleInput"
         @wheel="handleWheel"
       >
+      <button
+        v-if="modelValue !== '' && modelValue !== null && modelValue !== undefined && !disabled"
+        type="button"
+        class="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-ink-400 transition hover:bg-slate-200 hover:text-ink-700"
+        @click="emit('update:modelValue', '')"
+        :aria-label="'Hapus input'"
+      >
+        <UiIcon name="close" class="h-3.5 w-3.5" />
+      </button>
     </div>
     <span v-if="error" data-field-error="true" class="text-xs font-medium text-rose-600">{{ error }}</span>
     <span v-else-if="help" class="text-xs text-ink-500">{{ help }}</span>

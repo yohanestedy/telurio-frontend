@@ -226,7 +226,18 @@ function nextYearRange() {
           <span :class="value ? 'text-ink-900' : 'text-ink-400'" class="truncate text-sm">
             {{ displayValue }}
           </span>
-          <UiIcon name="calendar" class="h-4 w-4 shrink-0 text-ink-500" />
+          <span class="flex items-center gap-1">
+            <button
+              v-if="value"
+              type="button"
+              class="flex h-5 w-5 items-center justify-center rounded-full text-ink-400 transition hover:bg-slate-200 hover:text-ink-700"
+              @click.stop="emit('update:modelValue', '')"
+              :aria-label="'Hapus tanggal'"
+            >
+              <UiIcon name="close" class="h-3.5 w-3.5" />
+            </button>
+            <UiIcon name="calendar" class="h-4 w-4 shrink-0 text-ink-500" />
+          </span>
         </button>
       </DatePickerTrigger>
 

@@ -94,7 +94,17 @@ watch(open, (val) => {
           class="field-shell flex items-center justify-between gap-3 !rounded-xl !px-3 !py-2 text-left"
         >
           <span class="truncate text-sm text-ink-900">{{ displayValue }}</span>
-          <UiIcon name="calendar" class="h-4 w-4 shrink-0 text-ink-500" />
+          <span class="flex items-center gap-1">
+            <button
+              type="button"
+              class="flex h-5 w-5 items-center justify-center rounded-full text-ink-400 transition hover:bg-slate-200 hover:text-ink-700"
+              @click.stop="emit('update:month', dayjs().month() + 1); emit('update:year', dayjs().year())"
+              :aria-label="'Reset ke bulan saat ini'"
+            >
+              <UiIcon name="close" class="h-3.5 w-3.5" />
+            </button>
+            <UiIcon name="calendar" class="h-4 w-4 shrink-0 text-ink-500" />
+          </span>
         </button>
       </PopoverTrigger>
 

@@ -31,7 +31,18 @@ const emit = defineEmits<{
       <span :class="modelValue ? 'text-ink-900' : 'text-ink-400'" class="truncate text-sm">
         {{ modelValue || placeholder }}
       </span>
-      <UiIcon name="clock" class="h-4 w-4 shrink-0 text-ink-500" />
+      <span class="flex items-center gap-1">
+        <button
+          v-if="modelValue"
+          type="button"
+          class="flex h-5 w-5 items-center justify-center rounded-full text-ink-400 transition hover:bg-slate-200 hover:text-ink-700"
+          @click.stop="emit('update:modelValue', '')"
+          :aria-label="'Hapus waktu'"
+        >
+          <UiIcon name="close" class="h-3.5 w-3.5" />
+        </button>
+        <UiIcon name="clock" class="h-4 w-4 shrink-0 text-ink-500" />
+      </span>
       <input
         :value="modelValue ?? ''"
         type="time"
