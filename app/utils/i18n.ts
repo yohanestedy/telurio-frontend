@@ -576,8 +576,8 @@ const id: TranslationTable = {
   "expense.optional": "Opsional",
   "expense.itemDescription": "Deskripsi",
   "expense.emptyFiltered": "Belum ada data pengeluaran untuk filter saat ini.",
-  "expense.dialogTitle.add": "Tambah pengeluaran",
-  "expense.dialogTitle.edit": "Edit pengeluaran",
+  "expense.dialogTitle.add": "Tambah Pengeluaran Kandang",
+  "expense.dialogTitle.edit": "Edit Pengeluaran Kandang",
   "expense.dialogDescription":
     "Pengeluaran akan masuk ke laporan net income kandang.",
   "expense.deleteTitle": "Hapus pengeluaran",
@@ -601,8 +601,8 @@ const id: TranslationTable = {
   "generalExpense.title": "Pengeluaran Pribadi",
   "generalExpense.description":
     "Pengeluaran di luar keperluan kandang (pribadi, rumah, dll).",
-  "generalExpense.dialogTitle.add": "Tambah pengeluaran",
-  "generalExpense.dialogTitle.edit": "Edit pengeluaran",
+  "generalExpense.dialogTitle.add": "Tambah Pengeluaran Pribadi",
+  "generalExpense.dialogTitle.edit": "Edit Pengeluaran Pribadi",
   "generalExpense.empty": "Belum ada pengeluaran non-kandang.",
   "generalExpense.descriptionPlaceholder": "Contoh: Listrik rumah, bensin, dll",
   "generalExpense.deleteConfirm": 'Yakin ingin menghapus "{description}"?',
@@ -1350,8 +1350,8 @@ const en: TranslationTable = {
   "expense.optional": "Optional",
   "expense.itemDescription": "Description",
   "expense.emptyFiltered": "No expenses match the current filter.",
-  "expense.dialogTitle.add": "Add expense",
-  "expense.dialogTitle.edit": "Edit expense",
+  "expense.dialogTitle.add": "Add Coop Expense",
+  "expense.dialogTitle.edit": "Edit Coop Expense",
   "expense.dialogDescription":
     "Expenses will be included in the coop net income report.",
   "expense.deleteTitle": "Delete expense",
@@ -1373,8 +1373,8 @@ const en: TranslationTable = {
   "expenseHub.personalDescription": "Personal expenses outside of coops.",
   "generalExpense.title": "Personal Expenses",
   "generalExpense.description": "Non-coop expenses (personal, household, etc).",
-  "generalExpense.dialogTitle.add": "Add expense",
-  "generalExpense.dialogTitle.edit": "Edit expense",
+  "generalExpense.dialogTitle.add": "Add Personal Expense",
+  "generalExpense.dialogTitle.edit": "Edit Personal Expense",
   "generalExpense.empty": "No general expenses yet.",
   "generalExpense.descriptionPlaceholder": "e.g. Electricity, fuel, etc",
   "generalExpense.deleteConfirm":

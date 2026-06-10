@@ -438,7 +438,6 @@ onMounted(async () => {
     <UiDialog
       v-model:open="dialogOpen"
       :title="editing ? t('expense.dialogTitle.edit') : t('expense.dialogTitle.add')"
-      :description="t('expense.dialogDescription')"
       size="xl"
     >
       <FormsExpenseForm
