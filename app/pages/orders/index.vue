@@ -487,8 +487,7 @@ watch(dialogOpen, (open) => {
 
     <UiDialog
       v-model:open="dialogOpen"
-      :title="editing ? t('common.edit') : t('common.add')"
-      :description="t('order.dialogDescription')"
+      :title="editing ? t('order.dialogTitle.edit') : t('order.dialogTitle.add')"
       size="xl"
     >
       <FormsOrderForm

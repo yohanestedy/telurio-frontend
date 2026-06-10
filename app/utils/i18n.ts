@@ -346,7 +346,8 @@ const id: TranslationTable = {
     "Status pengantaran dan pembayaran dipisah sesuai flow bisnis.",
   "order.customerHeader": "Customer",
   "order.totalRp": "Total Rp",
-  "order.Allocations": "Alokasi",
+  "order.dialogTitle.add": "Tambah Pesanan",
+  "order.dialogTitle.edit": "Edit Pesanan",
   "order.dialogDescription": "Harga final akan dikunci saat delivery dimulai atau saat order langsung lunas.",
   "order.sourceAllocations": "Alokasi Sumber Telur",
   "order.sourceAllocationsDescription":
@@ -1119,7 +1120,8 @@ const en: TranslationTable = {
     "Delivery and payment statuses are separated according to the business flow.",
   "order.customerHeader": "Customer",
   "order.totalRp": "Total Rp",
-  "order.Allocations": "Allocations",
+  "order.dialogTitle.add": "Add Order",
+  "order.dialogTitle.edit": "Edit Order",
   "order.dialogDescription": "Final price will be locked when delivery starts or when order is paid in full.",
   "order.sourceAllocations": "Source Allocations",
   "order.sourceAllocationsDescription":
