@@ -114,6 +114,7 @@ const id: TranslationTable = {
   "validation.required.date": "Tanggal wajib diisi",
   "validation.required.coop": "Kandang wajib dipilih",
   "validation.required.collectionTime": "Waktu pengambilan wajib diisi",
+  "validation.required.customer": "Pelanggan wajib dipilih",
   "validation.required.notes": "Catatan wajib diisi",
   "validation.min.zero": "Minimal 0",
   "validation.min.positive": "Nilai harus lebih dari 0",
